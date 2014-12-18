@@ -1,0 +1,22 @@
+# Microsoft Developer Studio Project File - Database Project
+Begin DataProject = "db-oic"
+   MSDTVersion = "80"
+   Begin Folder = "Change Scripts"
+   End
+   Begin Folder = "Client"
+   End
+   Begin Folder = "Create Scripts"
+   End
+   Begin DBRefFolder = "Database References"
+   End
+   Begin Folder = "Logs"
+   End
+   Begin Folder = "Notification"
+   End
+   Begin Folder = "Queries"
+   End
+   Begin Folder = "SystemConfiguration"
+   End
+   Begin Folder = "User"
+   End
+End
