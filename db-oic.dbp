@@ -4,6 +4,7 @@ Begin DataProject = "db-oic"
    Begin Folder = "Change Scripts"
    End
    Begin Folder = "Client"
+      Script = "Script1.sql"
    End
    Begin Folder = "Create Scripts"
    End
