@@ -1,0 +1,19 @@
+CREATE PROCEDURE [dbo].[OIC_CurrencySel]
+AS
+
+/*
+	Created by: Dom
+	Date: 2014-12-18
+	Task: Get Currency
+	DB: DBOIC/BODB_OIC 
+	
+	Revisions:
+		
+ */
+
+BEGIN
+	SELECT exchangeid CurrencyID, Currency FROM bodb02.dbo.exchange WITH(NOLOCK)
+END
+GO
+
+GRANT EXECUTE ON [OIC_CurrencySel] TO bodbadminnet
