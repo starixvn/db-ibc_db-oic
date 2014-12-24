@@ -20,6 +20,7 @@ BEGIN
 			,sp.DefaultValue
 			,sp.PropertyType
 			,sp.[Order]
+			,s.Hint
 	FROM Service s WITH(NOLOCK)
 	INNER JOIN ServiceProperty sp  WITH(NOLOCK) ON s.ServiceId = sp.ServiceId
 	WHERE @ShowTest=1 OR IsTest = @ShowTest

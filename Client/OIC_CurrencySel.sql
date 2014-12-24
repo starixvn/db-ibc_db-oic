@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[OIC_CurrencySel]
+ALTER PROCEDURE [dbo].[OIC_CurrencySel]
 AS
 
 /*
@@ -12,7 +12,7 @@ AS
  */
 
 BEGIN
-	SELECT exchangeid CurrencyID, Currency FROM bodb02.dbo.exchange WITH(NOLOCK)
+	SELECT exchangeid CurrencyID, Code Currency FROM bodb02.dbo.exchange WITH(NOLOCK) WHERE exchangeid not in(35,43)
 END
 GO
 
