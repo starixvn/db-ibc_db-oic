@@ -12,7 +12,10 @@ AS
  */
 
 BEGIN
-	SELECT LocationId,LocationName,[Description] FROM Location WITH(NOLOCK)
+	SELECT LocationId
+		,LocationName
+		,[Description] 
+	FROM dbo.Location WITH(NOLOCK)
 END
 GO
 

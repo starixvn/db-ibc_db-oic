@@ -5,14 +5,17 @@ AS
 	Created by: Dom
 	Date: 2014-12-18
 	Task: Get Currency
-	DB: DBOIC/BODB_OIC 
+	DB: DBOIC/BODB02 
 	
 	Revisions:
 		
  */
 
 BEGIN
-	SELECT exchangeid CurrencyID, Code Currency FROM bodb02.dbo.exchange WITH(NOLOCK) WHERE exchangeid not in(35,43)
+	SELECT exchangeid CurrencyID
+			,CASE WHEN exchangeid = 20 THEN 'UUS' ELSE Code END Currency 
+	FROM dbo.exchange WITH(NOLOCK) 
+	WHERE exchangeid not in(35,43)
 END
 GO
 

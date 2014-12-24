@@ -1,4 +1,4 @@
-ALTER PROCEDURE [dbo].[OIC_ServicePropertySel]
+ALTER PROCEDURE [OIC_ServicePropertySel]
 	@ShowTest BIT = 0
 AS
 
@@ -22,9 +22,11 @@ BEGIN
 			,sp.[Order]
 			,s.Hint
 	FROM Service s WITH(NOLOCK)
-	INNER JOIN ServiceProperty sp  WITH(NOLOCK) ON s.ServiceId = sp.ServiceId
-	WHERE @ShowTest=1 OR IsTest = @ShowTest
-	ORDER BY s.ServiceId,sp.[Order]
+	INNER JOIN dbo.ServiceProperty sp WITH(NOLOCK) ON s.ServiceId = sp.ServiceId
+	WHERE @ShowTest=1 
+		OR IsTest = @ShowTest
+	ORDER BY s.ServiceId
+			,sp.[Order]
 END
 GO
 

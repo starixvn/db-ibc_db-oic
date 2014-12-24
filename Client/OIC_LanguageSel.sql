@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[OIC_LanguageSel]
+ALTER PROCEDURE [dbo].[OIC_LanguageSel]
 AS
 
 /*
@@ -12,7 +12,10 @@ AS
  */
 
 BEGIN
-	SELECT LanguageId,LanguageName,Remark FROM [Language] WITH(NOLOCK)
+	SET NOCOUNT ON
+	SELECT LanguageId
+		,LanguageName,Remark 
+	FROM dbo.[Language] WITH(NOLOCK)
 END
 GO
 

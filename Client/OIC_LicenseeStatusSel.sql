@@ -13,7 +13,12 @@ AS
  */
 
 BEGIN
-	SELECT LicenseeStatusId, StatusName, Remark FROM LicenseeStatus WITH(NOLOCK)  WHERE @ShowTest = 1 OR IsTest=@ShowTest
+	SELECT LicenseeStatusId
+		,StatusName
+		,Remark 
+	FROM dbo.LicenseeStatus WITH(NOLOCK)  
+	WHERE @ShowTest = 1 
+		OR IsTest=@ShowTest
 END
 GO
 
