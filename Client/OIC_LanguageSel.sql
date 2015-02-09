@@ -14,10 +14,10 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	SELECT LanguageId
-		,LanguageName,Remark 
+		,LanguageName 
 	FROM dbo.[Language] WITH(NOLOCK)
 END
+
+
 GO
-
-GRANT EXECUTE ON [OIC_LanguageSel] TO bodbadminnet
-
+GRANT EXECUTE ON [dbo].[OIC_LanguageSel] TO [bodbAdminNet] AS [dbo]
