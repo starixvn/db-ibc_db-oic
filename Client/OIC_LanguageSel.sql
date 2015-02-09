@@ -4,7 +4,7 @@ AS
 /*
 	Created by: Dom
 	Date: 2014-12-18
-	Task: Get Location
+	Task: Get language list [Redmine:#27752]
 	DB: DBOIC/BODB_OIC 
 	
 	Revisions:

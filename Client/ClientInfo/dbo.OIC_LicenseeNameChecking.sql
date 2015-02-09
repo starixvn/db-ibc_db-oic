@@ -7,7 +7,7 @@ AS
 /*
 	Created by: Kathy
 	Date: 2015-01-15
-	Task: Checking licensee name
+	Task: Checking licensee name [Redmine:#27752]
 	DB: DBOIC/BODB_OIC 
 	
 	Revisions:
@@ -31,6 +31,7 @@ BEGIN
 	END
 	
 END
+
 
 
 

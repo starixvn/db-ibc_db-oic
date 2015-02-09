@@ -5,7 +5,7 @@ AS
 /*
 	Created by: Dom
 	Date: 2014-12-18
-	Task: Get Licensee Status
+	Task: Get Licensee Status [Redmine:#27752]
 	DB: DBOIC/BODB_OIC 
 	
 	Revisions:
@@ -13,6 +13,7 @@ AS
  */
 
 BEGIN
+	SET NOCOUNT ON;
 	SELECT LicenseeStatusId
 		,StatusName
 		,Remark 
@@ -20,6 +21,6 @@ BEGIN
 	WHERE @ShowTest = 1 
 		OR IsTest=@ShowTest
 END
-GO
 
-GRANT EXECUTE ON OIC_LicenseeStatusSel TO bodbadminnet
+GO
+GRANT EXECUTE ON [dbo].[OIC_LicenseeStatusSel] TO [bodbAdminNet] AS [dbo]
