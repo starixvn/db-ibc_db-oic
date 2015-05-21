@@ -1,3 +1,11 @@
+USE [bodb_OIC]
+GO
+/****** Object:  StoredProcedure [dbo].[OIC_LicenseeNameChecking]    Script Date: 04/16/2015 14:22:10 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+/****** Object:  Stored Procedure dbo.OIC_LicenseeNameChecking    Script Date: 16/04/2015 9:22:41 AM ******/
 ALTER PROCEDURE [dbo].[OIC_LicenseeNameChecking]
 	@SiteName	VARCHAR(50)
 	,@Language	VARCHAR(10)		= 'E'
@@ -8,7 +16,7 @@ AS
 	Created by: Kathy
 	Date: 2015-01-15
 	Task: Checking licensee name [Redmine:#27752]
-	DB: DBOIC/BODB_OIC 
+	DB: DBOIC.bodb_OIC
 	
 	Revisions:
 	
@@ -31,10 +39,5 @@ BEGIN
 	END
 	
 END
-
-
-
-
-
 GO
 GRANT EXECUTE ON [dbo].[OIC_LicenseeNameChecking] TO [bodbAdminNet] AS [dbo]
