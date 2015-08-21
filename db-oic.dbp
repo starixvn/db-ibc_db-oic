@@ -1,23 +1,96 @@
 # Microsoft Developer Studio Project File - Database Project
 Begin DataProject = "db-oic"
    MSDTVersion = "80"
-   Begin Folder = "Change Scripts"
-   End
    Begin Folder = "Client"
-      Script = "Script1.sql"
-   End
-   Begin Folder = "Create Scripts"
+      Begin Folder = "Category"
+         Script = "dbo.OIC_LicenseeCategoryListSel.sql"
+         Script = "dbo.OIC_LicenseeCategoryManage.sql"
+         Script = "dbo.OIC_LicenseeCategorySel.sql"
+         Script = "dbo.OIC_LicenseeCategoryUpd.sql"
+      End
+      Begin Folder = "ClientInfo"
+         Script = "dbo.OIC_LicenseeInfoIns.sql"
+         Script = "dbo.OIC_LicenseeInfoIns_Step1.sql"
+         Script = "dbo.OIC_LicenseeInfoIns_Step2.sql"
+         Script = "dbo.OIC_LicenseeInfoIns_Step3.sql"
+         Script = "dbo.OIC_LicenseeInfoSel.sql"
+         Script = "dbo.OIC_LicenseeInfoUpd.sql"
+         Script = "dbo.OIC_LicenseeInfoUpd_Step1.sql"
+         Script = "dbo.OIC_LicenseeInfoUpd_Step2.sql"
+         Script = "dbo.OIC_LicenseeInfoUpd_Step3.sql"
+         Script = "dbo.OIC_LicenseeListSel.sql"
+         Script = "dbo.OIC_LicenseeNameChecking.sql"
+         Script = "dbo.OIC_UserListByPositionSel.sql"
+      End
+      Begin Folder = "Contact"
+         Script = "dbo.OIC_LicenseeContactDel.sql"
+         Script = "dbo.OIC_LicenseeContactIns.sql"
+         Script = "dbo.OIC_LicenseeContactListSel.sql"
+         Script = "dbo.OIC_LicenseeContactSel.sql"
+         Script = "dbo.OIC_LicenseeContactUpd.sql"
+         Script = "dbo.OIC_LicenseeMainContactInfoSel.sql"
+      End
+      Script = "dbo.OIC_CategoryMailingSel.sql"
+      Script = "dbo.OIC_FeatureSel.sql"
+      Script = "dbo.OIC_LicenseeListByUserSel.sql"
+      Script = "dbo.OIC_LicenseeNameChecking.sql"
+      Script = "dbo.OIC_LicenseeSel.sql"
+      Script = "dbo.OIC_LicenseeStatusSel.sql"
+      Script = "dbo.OIC_LicenseeTypeSel.sql"
+      Script = "dbo.OIC_LocationSel.sql"
+      Script = "dbo.OIC_PositionSel.sql"
+      Script = "dbo.OIC_ProductSel.sql"
+      Script = "dbo.OIC_ServicePropertySel.sql"
+      Script = "dbo.OIC_UserListByPositionSel.sql"
+      Script = "OIC_CurrencySel.sql"
+      Script = "OIC_LanguageSel.sql"
+      Script = "OIC_LicenseeStatusSel.sql"
+      Script = "OIC_LicenseeTypeSel.sql"
+      Script = "OIC_LocationSel.sql"
+      Script = "OIC_ServicePropertySel.sql"
+      Begin Folder = "ProductList"
+         Script = "dbo.OIC_LicenseeProductByLicenseeSel.sql"
+         Script = "dbo.OIC_LicenseeProductByLicenseeUpd.sql"
+         Script = "dbo.OIC_LicenseeProductByProductSel.sql"
+         Script = "dbo.OIC_LicenseeProductByProductUpd.sql"
+         Script = "dbo.OIC_LicenseeProductListSel.sql"
+      End
+      Begin Folder = "TrainingList"
+         Script = "dbo.OIC_TrainingRequestDel.sql"
+         Script = "dbo.OIC_TrainingRequestIns.sql"
+         Script = "dbo.OIC_TrainingRequestListSel.sql"
+         Script = "dbo.OIC_TrainingRequestSel.sql"
+         Script = "dbo.OIC_TrainingRequestUpd.sql"
+      End
+      Begin Folder = "UserInfo"
+         Script = "dbo.OIC_UserFirstLoginChecking.sql"
+         Script = "dbo.OIC_UserInfoListSel.sql"
+         Script = "dbo.OIC_UserInfoSel.sql"
+         Script = "dbo.OIC_UserInfoUpd.sql"
+      End
    End
    Begin DBRefFolder = "Database References"
    End
+   Begin Folder = "Function"
+      Script = "dbo.f_Get_MsgNamebyMsgID.sql"
+      Script = "dbo.f_PositionNotificationList.sql"
+      Script = "dbo.strSplit.sql"
+   End
    Begin Folder = "Logs"
+      Script = "dbo.OIC_LogRunSpIns.sql"
    End
    Begin Folder = "Notification"
-   End
-   Begin Folder = "Queries"
-   End
-   Begin Folder = "SystemConfiguration"
-   End
-   Begin Folder = "User"
+      Script = "dbo.OIC_MessageTypeSel.sql"
+      Script = "dbo.OIC_SystemNotificationIns.sql"
+      Begin Folder = "ExternalNotification"
+      End
+      Begin Folder = "InternalNotification"
+         Script = "dbo.OIC_InternalNotificationIns.sql"
+         Script = "dbo.OIC_InternalNotificationListSel.sql"
+         Script = "dbo.OIC_InternalNotificationNewestList.sql"
+         Script = "dbo.OIC_InternalNotificationNumberGet.sql"
+         Script = "dbo.OIC_InternalNotificationSenderSel.sql"
+         Script = "dbo.OIC_InternalNotificationStatusUpd.sql"
+      End
    End
 End
