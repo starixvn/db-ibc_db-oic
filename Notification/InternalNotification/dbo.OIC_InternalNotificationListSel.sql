@@ -1,6 +1,6 @@
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_InternalNotificationListSel]    Script Date: 09/07/2015 10:01:08 ******/
+/****** Object:  StoredProcedure [dbo].[OIC_InternalNotificationListSel]    Script Date: 09/08/2015 16:38:56 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -55,6 +55,7 @@ BEGIN
 		,ContentEn			NVARCHAR(4000)
 		,IsRead				BIT
 		,IsDisable			BIT
+		,ToList				VARCHAR(MAX)
 	)
 	
 	DECLARE @tblMessageType TABLE (MessageTypeId TINYINT, MessageTypeName VARCHAR(50))
@@ -168,6 +169,27 @@ BEGIN
 		SET @TotalRecords = @TotalRecords + @@rowcount
 	END
 	
+	-- get tolist if messagetype is private
+	;WITH ctePrivateMessage
+	AS(
+		SELECT t.MessageId, STUFF((SELECT ',' + u.DisplayName
+								FROM	dbo.UserMessage lm WITH(NOLOCK)					
+									INNER JOIN dbo.UserInfo u WITH(NOLOCK)
+										ON u.UserId = lm.UserId
+								WHERE	lm.MessageId = t.MessageId
+								FOR XML PATH ('')
+						),1,1,'') AS ToList
+		FROM	#tblMessage t
+		WHERE	t.MessageTypeId = 23 -- Private
+		GROUP BY t.MessageId
+	)
+	
+	UPDATE t
+		SET t.ToList = c.ToList
+	FROM #tblMessage t
+		INNER JOIN ctePrivateMessage c
+			ON t.MessageId = c.MessageId
+	
 	SELECT	MessageId
 			,MessageTypeName
 			,CreateTime
@@ -176,6 +198,7 @@ BEGIN
 			,ContentEn
 			,IsRead
 			,IsDisable
+			,ToList
 	FROM(
 		SELECT	ROW_NUMBER() OVER(ORDER BY CASE WHEN @SortBy = 0 THEN MessageTypeId END ASC 
 											,CreateTime DESC) AS RowNumber
@@ -187,11 +210,13 @@ BEGIN
 				,ContentEn
 				,IsRead
 				,IsDisable
+				,ToList
 		FROM #tblMessage
 	) Result
 	WHERE RowNumber BETWEEN @RowStart AND @RowEnd
 	
 END
+
 GO
 GRANT EXECUTE ON [dbo].[OIC_InternalNotificationListSel] TO [bodbAdminNet] AS [dbo]
 GO
