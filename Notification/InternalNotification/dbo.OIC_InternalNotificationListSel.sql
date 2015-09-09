@@ -1,6 +1,6 @@
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_InternalNotificationListSel]    Script Date: 09/08/2015 16:38:56 ******/
+/****** Object:  StoredProcedure [dbo].[OIC_InternalNotificationListSel]    Script Date: 09/09/2015 09:43:26 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -191,6 +191,7 @@ BEGIN
 			ON t.MessageId = c.MessageId
 	
 	SELECT	MessageId
+			,MessageTypeId
 			,MessageTypeName
 			,CreateTime
 			,Sender
@@ -203,6 +204,7 @@ BEGIN
 		SELECT	ROW_NUMBER() OVER(ORDER BY CASE WHEN @SortBy = 0 THEN MessageTypeId END ASC 
 											,CreateTime DESC) AS RowNumber
 				,MessageId
+				,MessageTypeId
 				,MessageTypeName
 				,CreateTime
 				,Sender
@@ -216,6 +218,7 @@ BEGIN
 	WHERE RowNumber BETWEEN @RowStart AND @RowEnd
 	
 END
+
 
 GO
 GRANT EXECUTE ON [dbo].[OIC_InternalNotificationListSel] TO [bodbAdminNet] AS [dbo]
