@@ -1,6 +1,6 @@
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_EmailNotificationRecipientSel]    Script Date: 08/28/2015 17:48:20 ******/
+/****** Object:  StoredProcedure [dbo].[OIC_EmailNotificationRecipientSel]    Script Date: 09/11/2015 10:23:48 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -67,7 +67,10 @@ BEGIN
 				,CASE WHEN ISNULL(@CcList,'') = '' THEN '' ELSE LEFT(@CcList,LEN(@CcList) - 1) END
 				,CASE WHEN ISNULL(@BccList,'') = '' THEN '' ELSE LEFT(@BccList,LEN(@BccList) - 1) END
 				
-		SET @seq = @seq + 1
+		SELECT	@seq = @seq + 1
+				,@ToList =''
+				,@CcList =''
+				,@BccList = ''
 	END
 	
 	SELECT	LicenseeId
@@ -81,6 +84,7 @@ BEGIN
 
 	
 END
+
 
 
 
