@@ -1,6 +1,6 @@
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_ExternalNotificationListSel]    Script Date: 09/07/2015 12:53:55 ******/
+/****** Object:  StoredProcedure [dbo].[OIC_ExternalNotificationListSel]    Script Date: 09/18/2015 15:02:12 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -129,7 +129,7 @@ BEGIN
 			ON f.LicenseeId = l.LicenseeId
 	WHERE	(m.MessageTypeId = @MessageTypeId
 				OR @MessageTypeId = 0)
-			AND m.MessageTypeId IN (SELECT MessageTypeId FROM @tblMessageType WHERE MessageTypeId IN(42, 43, 44))
+			AND m.MessageTypeId IN (SELECT MessageTypeId FROM @tblMessageType WHERE MessageTypeId IN(42, 43, 44, 60))
 			AND m.CreateTime BETWEEN @FromDate AND @ToDate
 			AND (m.Creator IN (SELECT UserId FROM @tblSender) 
 				OR @Sender = 'All'
@@ -152,7 +152,7 @@ BEGIN
 				ON m.MessageId = mt.MessageId
 		WHERE	(m.MessageTypeId = @MessageTypeId 
 					OR @MessageTypeId = 0)
-				AND m.MessageTypeId IN (SELECT MessageTypeId FROM @tblMessageType)				
+				AND m.MessageTypeId IN (SELECT MessageTypeId FROM @tblMessageType )				
 				AND m.CreateTime BETWEEN @FromDate AND @ToDate
 				AND (m.Creator IN (SELECT UserId FROM @tblSender) 
 					OR @Sender = 'All'
@@ -168,10 +168,10 @@ BEGIN
 		
 	SET @TotalRecords = @TotalRecords + @@rowcount
 	
-	-- get tolist if messagetype is personal
+	-- get tolist if messagetype is personal. match- delay
 	;WITH ctePersonalMessage
 	AS(
-		SELECT t.MessageId, STUFF((SELECT ',' + l.LicenseeName
+		SELECT t.MessageId, STUFF((SELECT ', ' + l.LicenseeName
 								FROM	dbo.LicenseeMessage lm WITH(NOLOCK)
 									INNER JOIN dbo.Licensee l WITH(NOLOCK)
 										ON l.LicenseeId = lm.LicenseeId
@@ -179,7 +179,7 @@ BEGIN
 								FOR XML PATH ('')
 						),1,1,'') AS ToList
 		FROM	#tblMessage t
-		WHERE	t.MessageTypeId = 42 -- personal
+		WHERE	t.MessageTypeId IN (42, 43, 44, 60) -- personal, match delay, email
 		GROUP BY t.MessageId
 	)
 	UPDATE	t 
@@ -257,6 +257,11 @@ BEGIN
 		WHERE RowNumber BETWEEN @RowStart AND @RowEnd
 	END
 END
+
+
+
+
+
 
 
 
