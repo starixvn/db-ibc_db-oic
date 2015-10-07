@@ -101,4 +101,34 @@ Begin DataProject = "db-oic"
          Script = "dbo.OIC_InternalNotificationStatusUpd.sql"
       End
    End
+   Begin Folder = "SystemConfiguration"
+      Begin Folder = "Category"
+         Script = "dbo.OIC_CategoryMailingDel.sql"
+         Script = "dbo.OIC_CategoryMailingIns.sql"
+         Script = "dbo.OIC_CategoryMailingUpd.sql"
+      End
+      Begin Folder = "Feature"
+         Script = "dbo.OIC_FeatureDel.sql"
+         Script = "dbo.OIC_FeatureIns.sql"
+         Script = "dbo.OIC_FeatureUpd.sql"
+      End
+      Begin Folder = "LicenseeType"
+         Script = "dbo.OIC_LicenseeTypeDel.sql"
+         Script = "dbo.OIC_LicenseeTypeIns.sql"
+         Script = "dbo.OIC_LicenseeTypeUpd.sql"
+      End
+      Begin Folder = "LicenseeTypeAssignment"
+         Script = "dbo.OIC_LicenseeTypeAssign.sql"
+         Script = "dbo.OIC_LicenseeTypeAssignmentList.sql"
+      End
+      Begin Folder = "Product"
+         Script = "dbo.OIC_ProductDel.sql"
+         Script = "dbo.OIC_ProductIns.sql"
+         Script = "dbo.OIC_ProductUpd.sql"
+      End
+      Begin Folder = "UserPosition"
+         Script = "dbo.OIC_UserPositionList.sql"
+         Script = "dbo.OIC_UserPositionUpd.sql"
+      End
+   End
 End
