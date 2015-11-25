@@ -1,6 +1,6 @@
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_ExternalNotificationListSel]    Script Date: 09/18/2015 15:02:12 ******/
+/****** Object:  StoredProcedure [dbo].[OIC_ExternalNotificationListSel]    Script Date: 11/03/2015 16:41:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -47,6 +47,7 @@ BEGIN
 	DECLARE @tblMessageType TABLE (MessageTypeId TINYINT, MessageTypeName VARCHAR(50))
 	
 	DECLARE @tblSender TABLE (UserId INT)
+	DECLARE @tblSelectedLicensee TABLE (LicenseeId INT)
 	
 	CREATE TABLE #tblMessage (
 		MessageId		INT PRIMARY KEY
@@ -78,6 +79,13 @@ BEGIN
 		FROM	dbo.strSplit(@Sender, ',')
 	END		
 	
+	IF @SelectedLicensee <> 'All'
+	BEGIN
+		INSERT INTO @tblSelectedLicensee (LicenseeId)
+		SELECT	val 
+		FROM	dbo.strSplit(@SelectedLicensee, ',')
+	END		
+	
 	 -- public, special
 	INSERT INTO #tblMessage (MessageId, MessageTypeId)		
 	SELECT	m.MessageId, m.MessageTypeId
@@ -90,7 +98,7 @@ BEGIN
 				OR @Sender = 'All'
 				)
 			AND (@SelectedLicensee = 'All' 
-				OR l.LicenseeId IN (SELECT val FROM dbo.strSplit(@SelectedLicensee,','))
+				OR l.LicenseeId IN (SELECT LicenseeId FROM @tblSelectedLicensee)
 				)
 	GROUP BY m.MessageId, m.MessageTypeId
 	
@@ -135,7 +143,7 @@ BEGIN
 				OR @Sender = 'All'
 				)
 			AND (@SelectedLicensee = 'All' 
-				OR l.LicenseeId IN (SELECT val FROM dbo.strSplit(@SelectedLicensee,','))
+				OR l.LicenseeId IN (SELECT LicenseeId FROM @tblSelectedLicensee)
 				)
 			AND m.MessageId NOT IN (SELECT MessageId FROM #tblMessage)
 	GROUP BY m.MessageId, m.MessageTypeId
@@ -257,6 +265,7 @@ BEGIN
 		WHERE RowNumber BETWEEN @RowStart AND @RowEnd
 	END
 END
+
 
 
 
