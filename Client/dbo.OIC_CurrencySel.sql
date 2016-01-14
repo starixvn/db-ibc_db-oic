@@ -61,6 +61,8 @@ END
 
 
 GO
+
 GRANT EXECUTE ON [dbo].[OIC_CurrencySel] TO [bodbAdminNet] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[OIC_CurrencySel] TO [vnteam] AS [dbo]
+GO
