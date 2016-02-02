@@ -1,48 +1,66 @@
+USE [bodb02]
+GO
+/****** Object:  StoredProcedure [dbo].[OIC_CurrencySel]    Script Date: 02/02/2016 15:54:19 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[OIC_CurrencySel]
-AS
+AS 
 
 /*
-	Created by: Dom
-	Date: 2014-12-18
-	Task: Get Currency [Redmine:#27752]
-	DB: DBOIC/BODB02 
-	
-	Revisions:
-		
+    Created by: Dom
+    Date: 2014-12-18
+    Task: Get Currency
+    DB: DBEXT/BODB02 
+    
+    Revisions:
+		-20160111@Kathy: Exclude currencies: H, C, RUB, CHF, BND, MXN, DKK, SEK, NOK, PLN, CZK, RON, UUS, TWD
+		-20160201@Kathy: Change ExchangeId to CurrencyId
+        
  */
 
 BEGIN
-	SET NOCOUNT ON;
+    SET NOCOUNT ON;
+
+	SELECT Exchangeid AS CurrencyId, code, code AS currency 
+	FROM
+	(
+		select exchangeid, code, currency from exchange 
+		where 
+		code not in (select a.code from (select count(code) as b, code from exchange where Code <> '' group by code having count(code)>=2) a)
+		and exchangeid not in (42, 48, 20) --PE, ZAR, UUS
+		AND Code NOT IN ('H', 'C', 'RUB', 'CHF', 'BND', 'MXN', 'DKK', 'SEK', 'NOK', 'PLN', 'CZK', 'RON','TWD')
+		union
+		select exchangeid, code, currency from exchange where code = 'USD' and currency = '$US'
+		union
+		select exchangeid, code, currency from exchange where code = 'IDR' and currency = 'IN'
+		union
+		select exchangeid, code, currency from exchange where code = 'JPY' and currency = 'JPY'
+		union
+		select exchangeid, code, currency from exchange where code = 'KRW' and currency = 'Won'
+		union
+		select exchangeid, code, currency from exchange where code = 'THB' and currency = 'THB'
+		union
+		select exchangeid, code, currency from exchange where code = 'THB' and currency = 'TB'
+		union
+		select exchangeid, code, currency from exchange where code = 'USD' and currency = 'US$'
+		--union
+		--select exchangeid, code, currency from exchange where code = '' and currency = 'UUS'
+		union 
+		select exchangeid, code, currency from exchange where code = 'CNY' and currency = 'RMB' 
+	) AS result
+	WHERE result.exchangeid NOT IN (35,43)
 	
-	SELECT exchangeid CurrencyId
-			,CASE WHEN exchangeid = 20 THEN 'UUS' ELSE Code END Currency
-	FROM (
-		SELECT exchangeid, code, currency FROM exchange 
-		WHERE 
-		code not in (SELECT a.code FROM (SELECT COUNT(code) AS b, code FROM exchange WHERE Code <> '' GROUP BY code HAVING COUNT(code)>=2) a)
-		and exchangeid not in (42, 48)
-		--UNION
-		--SELECT exchangeid, code, currency FROM exchange WHERE code = 'USD' and currency = '$US'
-		UNION
-		SELECT exchangeid, code, currency FROM exchange WHERE code = 'IDR' and currency = 'IN'
-		UNION
-		SELECT exchangeid, code, currency FROM exchange WHERE code = 'JPY' and currency = 'JPY'
-		UNION
-		SELECT exchangeid, code, currency FROM exchange WHERE code = 'KRW' and currency = 'Won'
-		--UNION
-		--SELECT exchangeid, code, currency FROM exchange WHERE code = 'THB' and currency = 'THB'
-		UNION
-		SELECT exchangeid, code, currency FROM exchange WHERE code = 'THB' and currency = 'TB'
-		UNION
-		SELECT exchangeid, code, currency FROM exchange WHERE code = 'USD' and currency = 'US$'
-		UNION
-		SELECT exchangeid, code, currency FROM exchange WHERE code = '' and currency = 'UUS'
-	) e
-	WHERE exchangeid NOT IN(35,43)
 END
+
+
+
 
 
 
 
 GO
 GRANT EXECUTE ON [dbo].[OIC_CurrencySel] TO [bodbAdminNet] AS [dbo]
+GO
+GRANT VIEW DEFINITION ON [dbo].[OIC_CurrencySel] TO [vnteam] AS [dbo]
