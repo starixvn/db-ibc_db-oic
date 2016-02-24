@@ -1,10 +1,3 @@
-USE [bodb_OIC]
-GO
-/****** Object:  StoredProcedure [dbo].[OIC_EmailNotificationRecipientSel]    Script Date: 09/11/2015 10:23:48 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[OIC_EmailNotificationRecipientSel] 
 	@CategoryId				TINYINT
 	,@SelectedLicensee		VARCHAR(MAX)
@@ -59,6 +52,7 @@ BEGIN
 				,@CcList = CASE WHEN RecipientType = 1 THEN @CcList + ISNULL(Email,'') + ';' ELSE @CcList END
 				,@BccList = CASE WHEN RecipientType = 2 THEN @BccList + ISNULL(Email,'') + ';' ELSE @BccList END
 		FROM	dbo.f_RecipientList (CAST(@LicenseeId AS VARCHAR(10)), @CategoryId, @UserId)
+		WHERE ISNULL(Email,'') <> ''
 	
 		INSERT INTO @tblResult (LicenseeId, LicenseeName, ToList, CcList, BccList)
 		SELECT	@LicenseeId
@@ -79,23 +73,15 @@ BEGIN
 			,CcList
 			,BccList
 	FROM	@tblResult
-	
-	
 
-	
 END
 
 
 
-
-
-
-
-
-
-
-
 GO
+
 GRANT EXECUTE ON [dbo].[OIC_EmailNotificationRecipientSel] TO [bodbAdminNet] AS [dbo]
 GO
+
 GRANT VIEW DEFINITION ON [dbo].[OIC_EmailNotificationRecipientSel] TO [vnteam] AS [dbo]
+GO
