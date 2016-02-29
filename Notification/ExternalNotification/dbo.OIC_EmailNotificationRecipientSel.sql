@@ -11,6 +11,7 @@ AS
 	DB: DBOIC.bodb_OIC
 	
 	Revisions:
+		- 20160226@Percy: Add field AddCC [Redmine: #52857]
 	
 	Param's Explanation:
 	
@@ -19,15 +20,16 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @ToList		VARCHAR(MAX) = ''
-			,@CcList	VARCHAR(MAX) = ''
-			,@BccList	VARCHAR(MAX) = ''
-			,@RowNumber	INT			 = 0
-			,@seq		INT			 = 1
-			,@LicenseeId INT
-			,@LicenseeName NVARCHAR(50)
+	DECLARE @ToList			VARCHAR(MAX) = ''
+			,@CcList		VARCHAR(MAX) = ''
+			,@AddtoCcList	VARCHAR(MAX) = ''
+			,@BccList		VARCHAR(MAX) = ''
+			,@RowNumber		INT			 = 0
+			,@seq			INT			 = 1
+			,@LicenseeId	INT
+			,@LicenseeName	NVARCHAR(50)
 			
-	DECLARE @tblResult TABLE (LicenseeId INT, LicenseeName NVARCHAR(50), ToList VARCHAR(MAX), CcList VARCHAR(MAX), BccList VARCHAR(MAX))
+	DECLARE @tblResult TABLE (LicenseeId INT, LicenseeName NVARCHAR(50), ToList VARCHAR(MAX), CcList VARCHAR(MAX), AddtoCcList VARCHAR(MAX), BccList VARCHAR(MAX))
 	DECLARE @tblLicensee TABLE (seq INT IDENTITY(1,1), LicenseeId INT, LicenseeName NVARCHAR(50))
 	
 	INSERT INTO @tblLicensee (LicenseeId, LicenseeName)
@@ -50,31 +52,36 @@ BEGIN
 		
 		SELECT	@ToList = CASE WHEN RecipientType = 0 THEN @ToList + ISNULL(Email,'') + ';' ELSE @ToList END
 				,@CcList = CASE WHEN RecipientType = 1 THEN @CcList + ISNULL(Email,'') + ';' ELSE @CcList END
-				,@BccList = CASE WHEN RecipientType = 2 THEN @BccList + ISNULL(Email,'') + ';' ELSE @BccList END
+				,@AddtoCcList = CASE WHEN RecipientType = 2 THEN @AddtoCcList + ISNULL(Email,'') + ';' ELSE @AddtoCcList END
+				,@BccList = CASE WHEN RecipientType = 3 THEN @BccList + ISNULL(Email,'') + ';' ELSE @BccList END
 		FROM	dbo.f_RecipientList (CAST(@LicenseeId AS VARCHAR(10)), @CategoryId, @UserId)
 		WHERE ISNULL(Email,'') <> ''
 	
-		INSERT INTO @tblResult (LicenseeId, LicenseeName, ToList, CcList, BccList)
+		INSERT INTO @tblResult (LicenseeId, LicenseeName, ToList, CcList, AddtoCcList, BccList)
 		SELECT	@LicenseeId
 				,@LicenseeName
 				,CASE WHEN ISNULL(@ToList,'') = '' THEN '' ELSE LEFT(@ToList,LEN(@ToList) - 1) END
 				,CASE WHEN ISNULL(@CcList,'') = '' THEN '' ELSE LEFT(@CcList,LEN(@CcList) - 1) END
+				,CASE WHEN ISNULL(@AddtoCcList,'') = '' THEN '' ELSE LEFT(@AddtoCcList,LEN(@AddtoCcList) - 1) END
 				,CASE WHEN ISNULL(@BccList,'') = '' THEN '' ELSE LEFT(@BccList,LEN(@BccList) - 1) END
 				
 		SELECT	@seq = @seq + 1
 				,@ToList =''
 				,@CcList =''
+				,@AddtoCcList =''
 				,@BccList = ''
 	END
 	
 	SELECT	LicenseeId
 			,LicenseeName
 			,ToList
+			,AddtoCcList
 			,CcList
 			,BccList
 	FROM	@tblResult
 
 END
+
 
 
 
