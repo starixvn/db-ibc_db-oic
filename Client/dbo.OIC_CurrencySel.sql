@@ -1,10 +1,6 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_CurrencySel]    Script Date: 02/02/2016 15:54:19 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 ALTER PROCEDURE [dbo].[OIC_CurrencySel]
 AS 
 
