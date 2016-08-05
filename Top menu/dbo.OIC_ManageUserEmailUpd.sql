@@ -72,7 +72,7 @@ BEGIN
 
 		MERGE dbo.UserLicenseeType u
 		USING (SELECT * FROM @tblLicenseeTypeEmail) t
-			ON u.LicenseeTypeId = t.LicenseeTypeId
+			ON u.LicenseeTypeId = t.LicenseeTypeId AND u.UserID = @UserID
 		WHEN MATCHED AND u.Email <> t.Email THEN UPDATE SET u.Email = t.Email
 		WHEN NOT MATCHED BY TARGET THEN INSERT (UserId, LicenseeTypeId, Email) VALUES (@UserId, t.LicenseeTypeId, t.Email)
 		WHEN NOT MATCHED BY SOURCE AND u.UserId = @UserId THEN DELETE;
