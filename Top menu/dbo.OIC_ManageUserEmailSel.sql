@@ -12,6 +12,7 @@ AS
 	Task: Manage User Mail - Select
 
 	Revisions:
+		- 20160823@Percy: Sort TOL by Id [RedmineID: #62883]
 */
 
 BEGIN
@@ -23,7 +24,7 @@ BEGIN
 		dbo.UserLicenseeType ult WITH(NOLOCK)
 		INNER JOIN dbo.LicenseeType lt WITH(NOLOCK) ON ult.LicenseeTypeId = lt.LicenseeTypeId
 	WHERE ult.UserId = @UserID
-	ORDER BY lt.LicenseeTypeName
+	ORDER BY lt.LicenseeTypeId
 END
 GO
 GRANT EXECUTE ON [dbo].[OIC_ManageUserEmailSel] TO [bodbAdminNet] AS [dbo]
