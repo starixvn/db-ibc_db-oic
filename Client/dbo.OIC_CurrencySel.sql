@@ -14,6 +14,7 @@ AS
 		- 20160111@Kathy: Exclude currencies: H, C, RUB, CHF, BND, MXN, DKK, SEK, NOK, PLN, CZK, RON, UUS, TWD
 		- 20160201@Kathy: Change ExchangeId to CurrencyId
 		- 20160506@Percy: Exclude currency: SGD [Redmine: #56935]
+		- 20160823@Percy: Sort by Code [RedmineID: #62883]
         
  */
 
@@ -48,6 +49,7 @@ BEGIN
 		select exchangeid, code, currency from exchange where code = 'CNY' and currency = 'RMB' 
 	) AS result
 	WHERE result.exchangeid NOT IN (35,43)
+	ORDER BY Code
 	
 END
 

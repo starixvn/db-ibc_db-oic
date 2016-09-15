@@ -1,11 +1,6 @@
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_LanguageSel]    Script Date: 04/16/2015 14:20:02 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.OIC_LanguageSel    Script Date: 16/04/2015 9:22:41 AM ******/
+
 ALTER PROCEDURE [dbo].[OIC_LanguageSel]
 AS
 
@@ -16,6 +11,7 @@ AS
 	DB: DBOIC.bodb_OIC
 	
 	Revisions:
+		- 20160826@Percy: Remove Other Language (ID = 4) [RedmineID: #62883]
 		
  */
 
@@ -24,6 +20,8 @@ BEGIN
 	SELECT LanguageId
 		,LanguageName 
 	FROM dbo.[Language] WITH(NOLOCK)
+	WHERE LanguageId <> 4
+	ORDER BY LanguageName
 END
 GO
 GRANT EXECUTE ON [dbo].[OIC_LanguageSel] TO [bodbAdminNet] AS [dbo]
