@@ -1,10 +1,6 @@
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_LicenseeTypeAssignmentList]    Script Date: 11/25/2015 14:34:26 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 ALTER PROCEDURE [dbo].[OIC_LicenseeTypeAssignmentList] 
 	@DisplayName			NVARCHAR(50)	= '%'
 	,@SelectedPosition		VARCHAR(100)	= 'All'
@@ -38,16 +34,18 @@ BEGIN
 			,CASE WHEN ISNULL(ui.DisplayName,'') = '' THEN ci.username ELSE ui.DisplayName END AS DisplayName
 			,p.PositionName
 	INTO	#tblResult
-	FROM bodb_NAP.dbo.UserSite u WITH(NOLOCK)
+	FROM	bodb_NAP.dbo.Users u WITH(NOLOCK)
+		INNER JOIN bodb_NAP.dbo.UserSite us WITH(NOLOCK) ON u.UserId = us.UserId
 		INNER JOIN bodb02.dbo.custInfo ci WITH(NOLOCK)
-			ON	ci.custid = u.UserId
+			ON	ci.custid = us.UserId
 		LEFT JOIN dbo.UserInfo ui WITH(NOLOCK)
 			ON ui.UserId = ci.custid
 		LEFT JOIN dbo.Position p WITH(NOLOCK)
 			ON ui.PositionId = p.PositionId
 		LEFT JOIN UserLicenseeType ul
 			ON ci.custid = ul.UserId
-	WHERE	u.SiteId = @SiteId
+	WHERE	us.SiteId = @SiteId
+			AND us.IsActive = 1
 			AND ISNULL(ui.DisplayName,ci.username) LIKE ISNULL(@DisplayName,ci.username) + '%'
 			AND (@SelectedPosition = 'All' 
 				OR (EXISTS (SELECT val FROM dbo.strSplit(@SelectedPosition,',') WHERE (val = 0 AND p.PositionId IS NULL) OR val = p.PositionId)) 
@@ -83,17 +81,8 @@ BEGIN
 					
 	EXEC (@DynamicPIVOT)
 END
-
-
-
-
-
-
-
-
-
-
 GO
 GRANT EXECUTE ON [dbo].[OIC_LicenseeTypeAssignmentList] TO [bodbAdminNet] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[OIC_LicenseeTypeAssignmentList] TO [vnteam] AS [dbo]
+GO
