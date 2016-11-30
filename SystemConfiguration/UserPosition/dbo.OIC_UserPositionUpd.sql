@@ -1,10 +1,6 @@
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_UserPositionUpd]    Script Date: 10/07/2015 15:40:33 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 ALTER PROCEDURE [dbo].[OIC_UserPositionUpd]
 	@updUserId		INT
 	,@PositionId	TINYINT		
@@ -23,7 +19,7 @@ AS
 	
 	Revisions:
 
- */
+*/
 
 BEGIN
 	SET NOCOUNT ON;
@@ -47,8 +43,7 @@ BEGIN
 	BEGIN
 		SELECT @ErrCode = 100
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](30023,@Language) -- Unable to change the user position because one or many assigned exist(s)
-		
-			RETURN
+		RETURN
 	END
 	
 	IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.UserInfo WITH(NOLOCK) WHERE UserId = @updUserId)
@@ -61,8 +56,7 @@ BEGIN
 		IF @@ROWCOUNT = 0
 		BEGIN
 			SELECT @ErrCode = 101
-				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](30021,@Language) -- User does not exist
-		
+				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](30021, @Language) -- User does not exist
 			RETURN
 		END
 		
@@ -76,7 +70,6 @@ BEGIN
 				IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.UserInfo WITH(NOLOCK) WHERE DisplayName = @newDisplayName +' (' + CAST(@seq AS VARCHAR(10)) +')') 
 				BEGIN
 					SET @newDisplayName = @newDisplayName +' (' + CAST(@seq AS VARCHAR(10)) +')' 
-					
 					BREAK
 				END
 				
@@ -86,10 +79,10 @@ BEGIN
 	END	
 	
 	IF @isNewUser = 0
-		SET @xml = (SELECT	UserId			AS '@ui'
-							,DisplayName	AS '@dn'
-							,ui.PositionId	AS '@pi'
-							,p.PositionName	AS '@pn'
+		SET @xml = (SELECT	UserId			AS '@uid'
+							,DisplayName	AS '@udn'
+							,ui.PositionId	AS '@upi'
+							,p.PositionName	AS '@upn'
 					FROM	dbo.UserInfo ui WITH(NOLOCK)
 						INNER JOIN dbo.Position p WITH (NOLOCK)
 							ON p.PositionId = ui.PositionId
@@ -97,10 +90,10 @@ BEGIN
 					FOR XML PATH('r'), TYPE
 				)
 	ELSE
-		SET @xml = (SELECT	@updUserId		AS '@ui'
-							,@newDisplayName	AS '@dn'
-							,NULL			AS '@pi'
-							,NULL			AS '@pn'
+		SET @xml = (SELECT	@updUserId			AS '@uid'
+							,@newDisplayName	AS '@ddn'
+							,NULL				AS '@dpi'
+							,NULL				AS '@dpn'
 					FOR XML PATH('r'), TYPE
 				)
 				
@@ -120,15 +113,15 @@ BEGIN
 	END TRY
 	BEGIN CATCH
 		SELECT	@ErrCode = 102
-				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](30022,@Language) -- Fail to edit user position. Please try again.
+				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](30022, @Language) -- Fail to edit user position. Please try again.
 		
 		RETURN
 	END CATCH
 	
-	SET @xml = (SELECT	UserId			AS '@ui'
-						,DisplayName	AS '@dn'
-						,ui.PositionId	AS '@pi'
-						,p.PositionName	AS '@pn'
+	SET @xml = (SELECT	UserId			AS '@uid'
+						,DisplayName	AS '@udn'
+						,ui.PositionId	AS '@upi'
+						,p.PositionName	AS '@upn'
 				FROM	dbo.UserInfo ui WITH(NOLOCK)
 					INNER JOIN dbo.Position p WITH (NOLOCK)
 						ON p.PositionId = ui.PositionId
@@ -136,29 +129,23 @@ BEGIN
 				FOR XML PATH('r'), TYPE
 				)
 		
-	SELECT @logSPData = CONVERT(NVARCHAR(MAX),@xml)
+	SELECT @logSPData = CONVERT(NVARCHAR(MAX), @xml)
 		,@endRun	= GETDATE()  
-		,@duration	= DATEDIFF(millisecond, @startRun, @endRun)   
-		,@procName	= OBJECT_NAME(@@procid)
+		,@duration	= DATEDIFF(MILLISECOND, @startRun, @endRun)   
+		,@procName	= OBJECT_NAME(@@PROCID)
 
 	EXEC dbo.OIC_LogRunSpIns
-	@UserId			= @UserId
-	,@SPName		= @procName
-	,@Language		= @Language
-	,@IP			= @IP
-	,@Data			= @logSPData
-	,@OldData		= @logSPOlddata
-	,@Duration		= @Duration	
+		@UserId			= @UserId
+		,@SPName		= @procName
+		,@Language		= @Language
+		,@IP			= @IP
+		,@Data			= @logSPData
+		,@OldData		= @logSPOlddata
+		,@Duration		= @Duration	
 	
 END
-
-
-
-
-
-
-
 GO
 GRANT EXECUTE ON [dbo].[OIC_UserPositionUpd] TO [bodbAdminNet] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[OIC_UserPositionUpd] TO [vnteam] AS [dbo]
+GO

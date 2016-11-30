@@ -55,10 +55,10 @@ BEGIN
 			dbo.UserLicenseeType ult WITH(NOLOCK)
 			INNER JOIN dbo.LicenseeType lt WITH(NOLOCK) ON ult.LicenseeTypeId = lt.LicenseeTypeId
 		WHERE ult.UserId = @UserID
-		FOR XML PATH('ltm'), ROOT('row')
+		FOR XML PATH('row'), ROOT('ltm')
 	)
 
-	SET @xml = (SELECT @UserID AS '@ui', @log_email FOR XML PATH('r'), TYPE)		
+	SET @xml = (SELECT @UserID AS '@uid', @log_email FOR XML PATH('r'), TYPE)		
 		
 	SELECT @logSPOlddata = CONVERT(NVARCHAR(MAX), @xml)
 
@@ -101,16 +101,16 @@ BEGIN
 			dbo.UserLicenseeType ult WITH(NOLOCK)
 			INNER JOIN dbo.LicenseeType lt WITH(NOLOCK) ON ult.LicenseeTypeId = lt.LicenseeTypeId
 		WHERE ult.UserId = @UserID
-		FOR XML PATH('ltm'), ROOT('row')
+		FOR XML PATH('row'), ROOT('ltm')
 	)
 
-	SET @xml = (SELECT @UserID AS '@ui', @log_email FOR XML PATH('r'), TYPE)		
+	SET @xml = (SELECT @UserID AS '@uid', @log_email FOR XML PATH('r'), TYPE)		
 		
 	SELECT
 		@logSPData	= CONVERT(NVARCHAR(MAX), @xml)
 		,@endRun	= GETDATE()  
-		,@duration	= DATEDIFF(millisecond, @startRun, @endRun)   
-		,@procName	= OBJECT_NAME(@@procid)
+		,@duration	= DATEDIFF(MILLISECOND, @startRun, @endRun)   
+		,@procName	= OBJECT_NAME(@@PROCID)
 	
 	EXEC dbo.OIC_LogRunSpIns
 		@UserId			= @UserId
