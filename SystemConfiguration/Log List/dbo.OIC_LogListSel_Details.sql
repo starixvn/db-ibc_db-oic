@@ -1214,10 +1214,66 @@ BEGIN
 			OUTER APPLY A.Data.nodes('r') d(c)
 			OUTER APPLY A.OldData.nodes('r') od(c)
 	END
+	ELSE IF @LogActionId IN (3014) -- Update Reminder
+	BEGIN
+		DECLARE 
+				@MessageId INT,
 
+				@Reminder_Date NVARCHAR(18),
+				@Reminder_Subject NVARCHAR(600),
+				@Reminder_Content NVARCHAR(MAX),
+				@Reminder_TypeId INT,
+				@Reminder_Type NVARCHAR(100),
+				@Reminder_Option NVARCHAR(MAX),
+
+				@Reminder_TypeId_Old INT,
+				@Reminder_Type_Old NVARCHAR(100),
+				@Reminder_Option_Old NVARCHAR(MAX)
+
+		SELECT
+			@MessageId = d.c.value('@mi', 'INT'), -- Message id
+			@Reminder_TypeId = d.c.value('@rti', 'TINYINT'), -- reminder type id
+			@Reminder_Option = d.c.value('@rtv', 'NVARCHAR(MAX)'), -- reminder type value
+
+			@Reminder_TypeId_Old = od.c.value('@rti', 'TINYINT'), -- reminder type id
+			@Reminder_Option_Old = od.c.value('@rtv', 'NVARCHAR(MAX)') -- reminder type value
+		FROM (
+			SELECT
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE OldData END AS OldData
+			FROM (
+				SELECT CONVERT(XML, Data).query('/r') AS Data, CONVERT(XML, OldData).query('/r') AS OldData
+				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+				WHERE Id = @ActionID
+			) B
+		) A
+			OUTER APPLY A.Data.nodes('r') d(c)
+			OUTER APPLY A.OldData.nodes('r') od(c)
+		
+		SELECT
+			@Reminder_Date = CONVERT(NVARCHAR(10), CreateTime, 101) + ' ' + RIGHT(CONVERT(NVARCHAR(19), CreateTime, 100), 7),
+			@Reminder_Subject = SubjectEn,
+			@Reminder_Content = ContentEn
+		FROM dbo.Message WITH(NOLOCK)
+		WHERE MessageId = @MessageId
+
+		SELECT @Reminder_Type = ReminderTypeName
+		FROM dbo.ReminderType WITH(NOLOCK) WHERE ReminderTypeId = @Reminder_TypeId
+
+		SELECT @Reminder_Type_Old = ReminderTypeName
+		FROM dbo.ReminderType WITH(NOLOCK) WHERE ReminderTypeId = @Reminder_TypeId_Old
+		
+		INSERT INTO @Result (ID, Field, NewValue, OldValue)
+		VALUES
+			(1, N'Date', @Reminder_Date, @Reminder_Date),
+			(2, N'Subject', @Reminder_Subject, @Reminder_Subject),
+			(3, N'Content', @Reminder_Content, @Reminder_Content),
+			(4, N'Reminder Type', @Reminder_Type, @Reminder_Type_Old),
+			(5, N'Reminder Options', @Reminder_Option, @Reminder_Option_Old)
+	END
 	
 	-- return result
-	IF @LogActionId NOT IN (101, 401) -- Update Contact/Training
+	IF @LogActionId NOT IN (101, 401, 3014) -- Update Contact/Training/Reminder
 	BEGIN
 		DELETE @Result
 		WHERE ISNULL(OldValue, N'') = ISNULL(NewValue, N'')

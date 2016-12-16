@@ -185,7 +185,7 @@ BEGIN
 				SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], CONVERT(XML, ISNULL(ISNULL(ll.NewAction, ll.OldAction), N'<r></r>')) AS [Target], ll.DoneBy
 				FROM #LogList ll
 					INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
-				WHERE la.LogActionId IN (2001, 3013)
+				WHERE la.LogActionId IN (2001, 3013, 3014)
 			) A
 				CROSS APPLY A.[Target].nodes('r') d(c)
 				INNER JOIN dbo.UserInfo u WITH(NOLOCK) ON d.c.value('@uid','VARCHAR(100)') = u.UserId

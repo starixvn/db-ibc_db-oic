@@ -133,6 +133,7 @@ BEGIN
 			,@Duration		= @Duration
 	END
 END
+GO
 GRANT EXECUTE ON [dbo].[OIC_LicenseeCategoryDel] TO [bodbAdminNet] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[OIC_LicenseeCategoryDel] TO [vnteam] AS [dbo]
