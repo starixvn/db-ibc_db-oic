@@ -1,23 +1,18 @@
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_InternalNotificationListSel]    Script Date: 09/21/2015 14:49:17 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.OIC_InternalNotificationListSel    Script Date: 26/08/2015 12:33:24 PM ******/
+
 ALTER PROCEDURE [dbo].[OIC_InternalNotificationListSel]
-	@MessageTypeId	TINYINT				= 0
+	@MessageTypeId	TINYINT			= 0
 	,@FromDate		DATETIME 
 	,@ToDate		DATETIME 
 	,@UserId		INT
-	,@Sender		VARCHAR(1000)		= 'All'
-	,@ReadStatus	SMALLINT			= 2 -- ALL
-	,@SortBy		BIT					= 0
+	,@Sender		VARCHAR(1000)	= 'All'
+	,@ReadStatus	SMALLINT		= 2 -- ALL
+	,@SortBy		BIT				= 0
 	
-	,@PageSize				INT			= 10
-	,@PageIndex				INT			= 0
-	,@TotalRecords			INT			= 0 OUTPUT
+	,@PageSize		INT				= 10
+	,@PageIndex		INT				= 0
+	,@TotalRecords	INT				= 0 OUTPUT
 	
 	
 AS
@@ -28,6 +23,7 @@ AS
 	DB: DBOIC.bodb_OIC
 	
 	Revisions:
+		- 20161216@Percy: Support sort message type [RedmineID: #68774]
 	
 	Param's Explanation:
 		@ReadStatus: 0: un-read
@@ -48,7 +44,8 @@ BEGIN
 	CREATE TABLE #tblMessage(
 		MessageId			INT PRIMARY KEY
 		,MessageTypeId		TINYINT
-		,MessageTypeName	VARCHAR(50)
+		,ReminderTypeId		TINYINT
+		,ReminderTypeValue	XML
 		,CreateTime			DATETIME
 		,Sender				NVARCHAR(50)
 		,SubjectEn			NVARCHAR(300)
@@ -94,19 +91,21 @@ BEGIN
 	END	
 	
 	INSERT INTO #tblMessage(
-			MessageId			
+			MessageId
 			,MessageTypeId
-			,MessageTypeName	
-			,CreateTime		
-			,Sender	
-			,SubjectEn			
-			,ContentEn			
-			,IsRead		
-			,IsDisable		
+			,ReminderTypeId
+			,ReminderTypeValue
+			,CreateTime
+			,Sender
+			,SubjectEn
+			,ContentEn
+			,IsRead
+			,IsDisable
 		)
 	SELECT  m.MessageId
 			,MessageTypeId
-			,(SELECT MessageTypeName FROM dbo.MessageType WITH(NOLOCK) WHERE MessageTypeId = m.MessageTypeId) AS MessageTypeName
+			,m.ReminderTypeId
+			,m.ReminderTypeValue
 			,m.CreateTime
 			,CASE WHEN m.Creator <> 0 THEN (SELECT DisplayName FROM dbo.UserInfo WITH(NOLOCK) WHERE UserId = m.Creator) ELSE 'System' END AS Sender
 			,m.SubjectEn
@@ -122,7 +121,11 @@ BEGIN
 			AND m.CreateTime BETWEEN @FromDate AND @ToDate
 			AND ( m.Creator IN (SELECT UserId FROM @tblSender) OR @Sender = 'All')
 			AND um.UserId = @UserId
-			AND (um.IsRead = @ReadStatus OR @ReadStatus = 2)
+			AND (
+				@ReadStatus = 2
+				OR m.MessageTypeId = 24
+				OR um.IsRead = @ReadStatus
+			)
 	
 	SET @TotalRecords = @@rowcount
 	
@@ -132,7 +135,8 @@ BEGIN
 		AS(
 			SELECT	m.MessageId
 					,MessageTypeId
-					,(SELECT MessageTypeName FROM dbo.MessageType WITH(NOLOCK) WHERE MessageTypeId = m.MessageTypeId) MessageTypeName
+					,m.ReminderTypeId
+					,m.ReminderTypeValue
 					,m.CreateTime
 					,CASE WHEN m.Creator <> 0 THEN (SELECT DisplayName FROM dbo.UserInfo WITH(NOLOCK) WHERE UserId = m.Creator) ELSE 'System' END AS Sender
 					,m.SubjectEn
@@ -149,12 +153,13 @@ BEGIN
 							OR mt.PositionId = @PositionId
 						)
 					AND m.MessageId NOT IN (SELECT MessageId FROM #tblMessage)
-			GROUP BY m.MessageId, MessageTypeId, CreateTime, m.Creator, SubjectEn, ContentEn
+			--GROUP BY m.MessageId, MessageTypeId, CreateTime, m.Creator, SubjectEn, ContentEn,m.ReminderTypeId,ISNULL(m.ReminderTypeValue, '')
 		)
 		INSERT INTO #tblMessage(
 			MessageId			
 			,MessageTypeId
-			,MessageTypeName	
+			,ReminderTypeId
+			,ReminderTypeValue
 			,CreateTime	
 			,Sender		
 			,SubjectEn			
@@ -163,8 +168,9 @@ BEGIN
 			,IsDisable		
 		)
 		SELECT	MessageId	
-				,MessageTypeId		
-				,MessageTypeName	
+				,MessageTypeId
+				,ReminderTypeId
+				,ReminderTypeValue	
 				,CreateTime	
 				,Sender		
 				,SubjectEn			
@@ -200,6 +206,9 @@ BEGIN
 	SELECT	MessageId
 			,MessageTypeId
 			,MessageTypeName
+			,ReminderTypeId
+			,ReminderTypeName
+			,ReminderTypeValue
 			,CreateTime
 			,Sender
 			,SubjectEn
@@ -208,11 +217,13 @@ BEGIN
 			,IsDisable
 			,ToList
 	FROM(
-		SELECT	ROW_NUMBER() OVER(ORDER BY CASE WHEN @SortBy = 0 THEN MessageTypeId END ASC 
-											,CreateTime DESC) AS RowNumber
+		SELECT	ROW_NUMBER() OVER(ORDER BY CASE WHEN @SortBy = 0 THEN mt.[Order] END ASC ,CreateTime DESC) AS RowNumber
 				,MessageId
-				,MessageTypeId
-				,MessageTypeName
+				,mt.MessageTypeId
+				,mt.MessageTypeName
+				,m.ReminderTypeId
+				,m.ReminderTypeValue
+				,rt.ReminderTypeName
 				,CreateTime
 				,Sender
 				,SubjectEn
@@ -220,16 +231,12 @@ BEGIN
 				,IsRead
 				,IsDisable
 				,ToList
-		FROM #tblMessage
+		FROM #tblMessage m
+			INNER JOIN dbo.MessageType mt WITH (NOLOCK) ON m.MessageTypeId = mt.MessageTypeId
+			LEFT JOIN dbo.ReminderType rt WITH(NOLOCK) ON m.ReminderTypeId = rt.ReminderTypeId
 	) Result
 	WHERE RowNumber BETWEEN @RowStart AND @RowEnd
-	
 END
-
-
-
-
-
 GO
 GRANT EXECUTE ON [dbo].[OIC_InternalNotificationListSel] TO [bodbAdminNet] AS [dbo]
 GO
