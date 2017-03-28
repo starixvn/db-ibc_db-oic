@@ -6,7 +6,7 @@ ALTER PROCEDURE [dbo].[OIC_InternalNotificationListSel]
 	,@FromDate		DATETIME 
 	,@ToDate		DATETIME 
 	,@UserId		INT
-	,@Sender		VARCHAR(1000)	= 'All'
+	,@Sender		VARCHAR(MAX)	= 'All'
 	,@ReadStatus	SMALLINT		= 2 -- ALL
 	,@SortBy		BIT				= 0
 	
@@ -24,6 +24,8 @@ AS
 	
 	Revisions:
 		- 20161216@Percy: Support sort message type [RedmineID: #68774]
+		- 20170302@Percy: Expand length of Content [RedmineID: #70322]
+
 	
 	Param's Explanation:
 		@ReadStatus: 0: un-read
@@ -49,7 +51,7 @@ BEGIN
 		,CreateTime			DATETIME
 		,Sender				NVARCHAR(50)
 		,SubjectEn			NVARCHAR(300)
-		,ContentEn			NVARCHAR(4000)
+		,ContentEn			NVARCHAR(MAX)
 		,IsRead				BIT
 		,IsDisable			BIT
 		,ToList				VARCHAR(MAX)

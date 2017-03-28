@@ -1,11 +1,5 @@
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_SystemNotificationIns]    Script Date: 08/24/2015 09:12:44 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.OIC_SystemNotificationIns    Script Date: 12/08/2015 5:55:46 PM ******/
 
 ALTER PROCEDURE [dbo].[OIC_SystemNotificationIns] 
 	@MessageTypeId		TINYINT
@@ -24,6 +18,7 @@ AS
 	DB: DBOIC.bodb_OIC
 	
 	Revisions:
+		- 20170302@Percy: Expand length of Content [RedmineID: #70322]
 	
 	Param's Explanation:
 		@MessageContent	=	<root>
@@ -53,7 +48,7 @@ BEGIN
 			,@LicenseeTypeId	TINYINT = 0
 			,@IsTesting		BIT = 0	
 			
-	DECLARE @tblContent TABLE (seq INT IDENTITY(1,1), EventId INT, LicenseeTypeId TINYINT, LicenseeId INT, SubjectEn NVARCHAR(300), ContentEn NVARCHAR(4000))
+	DECLARE @tblContent TABLE (seq INT IDENTITY(1,1), EventId INT, LicenseeTypeId TINYINT, LicenseeId INT, SubjectEn NVARCHAR(300), ContentEn NVARCHAR(MAX))
 	DECLARE @tblUser TABLE (UserId INT)
 	
 	SET @startRun = GETDATE()

@@ -6,7 +6,7 @@ ALTER PROCEDURE [dbo].[OIC_ReminderSel]
 	@SelectedReminder	VARCHAR(1000) = 'All',
 	@FromDate			DATETIME,
 	@ToDate				DATETIME,
-	@SelectedSender		VARCHAR(1000) = 'All',
+	@SelectedSender		VARCHAR(MAX) = 'All',
 
 	@PageSize			INT = 10,
 	@PageIndex			INT = 0,
@@ -20,6 +20,7 @@ AS
 	Task: System Configuration - Select Reminder
 
 	Revisions:
+		- 20170302@Percy: Expand length of Content [RedmineID: #70322]
 
 	Param's Explanation:
 */
@@ -43,7 +44,7 @@ BEGIN
 		,CreateTime			DATETIME
 		,SenderId			INT
 		,SubjectEn			NVARCHAR(300)
-		,ContentEn			NVARCHAR(4000)
+		,ContentEn			NVARCHAR(MAX)
 		,IsRead				BIT
 		,IsDisable			BIT
 		,ReminderTypeId		TINYINT
@@ -113,7 +114,7 @@ BEGIN
 
 	-- Result
 	CREATE TABLE #Result (RowNumber INT, MessageId INT, MessageTypeId TINYINT, CreateTime DATETIME, SenderId INT,
-						SubjectEn NVARCHAR(300), ContentEn NVARCHAR(4000), IsRead BIT, IsDisable BIT, ReminderTypeId TINYINT, ReminderTypeValue XML)
+						SubjectEn NVARCHAR(300), ContentEn NVARCHAR(MAX), IsRead BIT, IsDisable BIT, ReminderTypeId TINYINT, ReminderTypeValue XML)
 
 	INSERT INTO #Result (RowNumber, MessageId, MessageTypeId, CreateTime, SenderId, SubjectEn, ContentEn, IsRead, IsDisable, ReminderTypeId, ReminderTypeValue)
 	SELECT RowNumber, MessageId, MessageTypeId, CreateTime, SenderId, SubjectEn, ContentEn, IsRead, IsDisable, ISNULL(ReminderTypeId, 1), ReminderTypeValue
