@@ -1,1 +1,1 @@
-Log\dbo.OIC_LogRunSpIns.sql
+Logs\dbo.OIC_LogRunSpIns.sql
