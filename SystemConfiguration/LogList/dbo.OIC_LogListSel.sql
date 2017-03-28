@@ -65,6 +65,12 @@ BEGIN
 		WHERE
 			(@ActionID = 'All' OR ul.LogActionId IN (SELECT ActionID FROM @Action))
 			AND ul.LogDate BETWEEN @FDate AND @TDate
+			AND EXISTS (
+				SELECT TOP 1 1
+				FROM dbo.LogActionType lt WITH(NOLOCK)
+					INNER JOIN dbo.LogAction l WITH(NOLOCK) ON lt.LogActionTypeId = l.LogActionTypeId
+				WHERE lt.LogActionTypeId <> 4  AND l.[Enable] = 1 AND ul.LogActionId  = l.LogActionId
+			) 
 
 		-- Target: Client
 		IF EXISTS (SELECT TOP 1 1 FROM dbo.LogAction WITH(NOLOCK) WHERE LogActionTypeId = 1 AND (@ActionID = 'All' OR LogActionId IN (SELECT ActionID FROM @Action)))

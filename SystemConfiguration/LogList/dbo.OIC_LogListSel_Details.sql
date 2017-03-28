@@ -953,13 +953,13 @@ BEGIN
 
 		;WITH CTE_Feature AS (
 			SELECT
-				d.c.value('@fid', 'INT') AS FeatureId, -- featureid
-				d.c.value('@fn', 'NVARCHAR(100)') AS Feature, -- feature
+				d.c.value('@fn', 'NVARCHAR(100)') AS Feature, -- Feature
+				d.c.value('@fid', 'INT') AS FeatureOrder, -- Feature
 				d.c.value('@lld', 'DATE') AS LaunchDate, -- launch date
 				d.c.value('@ltd', 'DATE') AS TerminatedDate, -- termination date
 
-				od.c.value('@fid', 'INT') AS FeatureId_old, -- featureid
-				od.c.value('@fn', 'NVARCHAR(100)') AS Feature_old, -- feature
+				od.c.value('@fn', 'NVARCHAR(100)') AS Feature_old, -- Feature
+				od.c.value('@fid', 'INT') AS FeatureOrder_old, -- Feature
 				od.c.value('@lld', 'DATE') AS LaunchDate_old, -- launch date
 				od.c.value('@ltd', 'DATE') AS TerminatedDate_old -- termination date
 			FROM (
@@ -975,12 +975,13 @@ BEGIN
 				OUTER APPLY A.Data.nodes('row') d(c)
 				OUTER APPLY A.OldData.nodes('row') od(c)
 		)
-		SELECT	@Client_Features = (SELECT STUFF((SELECT '<br/>' + Feature + CASE WHEN LaunchDate IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), LaunchDate, 101) END + CASE WHEN TerminatedDate IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), TerminatedDate, 101) END FROM (SELECT DISTINCT FeatureId, Feature, LaunchDate, TerminatedDate FROM CTE_Feature) CTE_Feature ORDER BY FeatureId FOR XML PATH('')), 1, 11, '')),
-				@Client_Features_old = (SELECT STUFF((SELECT '<br/>' + Feature_old + CASE WHEN LaunchDate_old IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), LaunchDate_old, 101) END + CASE WHEN TerminatedDate_old IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), TerminatedDate_old, 101) END FROM (SELECT DISTINCT FeatureId_old, Feature_old, LaunchDate_old, TerminatedDate_old FROM CTE_Feature) CTE_Feature ORDER BY FeatureId_old FOR XML PATH('')), 1, 11, ''))
+		SELECT	@Client_Features = (SELECT STUFF((SELECT '<br/>' + Feature + CASE WHEN LaunchDate IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), LaunchDate, 101) END + CASE WHEN TerminatedDate IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), TerminatedDate, 101) END FROM (SELECT DISTINCT Feature, FeatureOrder, LaunchDate, TerminatedDate FROM CTE_Feature) CTE_Feature ORDER BY FeatureOrder FOR XML PATH('')), 1, 11, '')),
+				@Client_Features_old = (SELECT STUFF((SELECT '<br/>' + Feature_old + CASE WHEN LaunchDate_old IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), LaunchDate_old, 101) END + CASE WHEN TerminatedDate_old IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), TerminatedDate_old, 101) END FROM (SELECT DISTINCT Feature_old, FeatureOrder_old, LaunchDate_old, TerminatedDate_old FROM CTE_Feature) CTE_Feature ORDER BY FeatureOrder_old FOR XML PATH('')), 1, 11, ''))
 
 		INSERT INTO @Result (ID, Field, NewValue, OldValue)
 		VALUES
-			(1, N'Product - Launch - Termination', @Client_Features, @Client_Features_old)
+			(1, N'Feature - Launch - Termination', @Client_Features, @Client_Features_old)
+
 	END
 	ELSE IF @LogActionId IN (400,401,402) -- Insert/Update/Delete Training
 	BEGIN
