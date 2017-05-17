@@ -1,3 +1,5 @@
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 USE [bodb_OIC]
 GO
 
@@ -20,6 +22,7 @@ AS
 	Task: Select Log List [RedmineID: #64713]
 
 	Revisions:
+		- 20170328@Percy: Add new function: Client List [RemineID: #70323]
 
 	Param's Explanation:
 		- @ActionID: '1,2' -- List of LogActionID
@@ -65,6 +68,12 @@ BEGIN
 		WHERE
 			(@ActionID = 'All' OR ul.LogActionId IN (SELECT ActionID FROM @Action))
 			AND ul.LogDate BETWEEN @FDate AND @TDate
+			AND EXISTS (
+				SELECT TOP 1 1
+				FROM dbo.LogActionType lt WITH(NOLOCK)
+					INNER JOIN dbo.LogAction l WITH(NOLOCK) ON lt.LogActionTypeId = l.LogActionTypeId
+				WHERE lt.LogActionTypeId <> 4  AND l.[Enable] = 1 AND ul.LogActionId  = l.LogActionId
+			) 
 
 		-- Target: Client
 		IF EXISTS (SELECT TOP 1 1 FROM dbo.LogAction WITH(NOLOCK) WHERE LogActionTypeId = 1 AND (@ActionID = 'All' OR LogActionId IN (SELECT ActionID FROM @Action)))
@@ -136,7 +145,7 @@ BEGIN
 		END
 		
 		-- Target: Feature
-		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (3009, 3010, 3011)))
+		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (3009, 3010, 3011, 500)))
 		BEGIN
 			INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy)
 			SELECT DISTINCT A.LogID, A.LogDate, A.[Action], d.c.value('@fn','VARCHAR(100)'), A.DoneBy
@@ -147,6 +156,17 @@ BEGIN
 				WHERE la.LogActionId IN (3009, 3010, 3011)
 			) A
 				CROSS APPLY A.[Target].nodes('r') d(c)
+			WHERE d.c.value('@fn','VARCHAR(100)') LIKE @Target
+
+			INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy)
+			SELECT DISTINCT A.LogID, A.LogDate, A.[Action], d.c.value('@fn','VARCHAR(100)'), A.DoneBy
+			FROM (
+				SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], CONVERT(XML, ISNULL(ISNULL(ll.NewAction, ll.OldAction), N'<r><lf><row /></lf></r>')) AS [Target], ll.DoneBy
+				FROM #LogList ll
+					INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
+				WHERE la.LogActionId = 500
+			) A
+				CROSS APPLY A.[Target].nodes('r/lf/row') d(c)
 			WHERE d.c.value('@fn','VARCHAR(100)') LIKE @Target
 		END
 		
@@ -234,8 +254,4 @@ BEGIN
 	DROP TABLE #LogList
 	DROP TABLE #Result
 END
-GO
-GRANT EXECUTE ON [dbo].[OIC_LogListSel] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_LogListSel] TO [vnteam] AS [dbo]
 GO

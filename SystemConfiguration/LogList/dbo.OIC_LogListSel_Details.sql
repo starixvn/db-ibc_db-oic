@@ -1,3 +1,5 @@
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 USE [bodb_OIC]
 GO
 
@@ -11,6 +13,7 @@ AS
 	Task: View detail of log list [RedmineID: #64713]
 
 	Revisions:
+		- 20170328@Percy: Add new function: Client List [RemineID: #70323]
 
 */
 BEGIN
@@ -870,6 +873,119 @@ BEGIN
 		VALUES
 			(1, N'Product - Launch - Termination', @Client_Products, @Client_Products_old)
 	END
+	ELSE IF @LogActionId IN (500) -- Update Client list of a Feature
+	BEGIN
+		DECLARE
+			@Feature NVARCHAR(100),
+			@Feature_Clients NVARCHAR(MAX),
+
+			@Feature_old NVARCHAR(100),
+			@Feature_Clients_old NVARCHAR(MAX)
+
+		SELECT
+			@Feature = d.c.value('@fn', 'NVARCHAR(100)'), -- feature
+
+			@Feature_old = od.c.value('@fn', 'NVARCHAR(100)') -- feature
+		FROM (
+			SELECT
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE OldData END AS OldData
+			FROM (
+				SELECT CONVERT(XML, Data).query('/r') AS Data, CONVERT(XML, OldData).query('/r') AS OldData
+				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+				WHERE Id = @ActionID
+			) B
+		) A
+			OUTER APPLY A.Data.nodes('r') d(c)
+			OUTER APPLY A.OldData.nodes('r') od(c)
+
+		;WITH CTE_Feature AS (
+			SELECT
+				d.c.value('@ln', 'NVARCHAR(100)') AS Feature, -- client
+				d.c.value('@lfld', 'DATE') AS LaunchDate, -- launch date
+				d.c.value('@lftd', 'DATE') AS TerminatedDate, -- termination date
+
+				od.c.value('@ln', 'NVARCHAR(100)') AS Feature_old, -- client
+				od.c.value('@lfld', 'DATE') AS LaunchDate_old, -- launch date
+				od.c.value('@lftd', 'DATE') AS TerminatedDate_old -- termination date
+			FROM (
+				SELECT
+					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE Data END AS Data,
+					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE OldData END AS OldData
+				FROM (
+					SELECT CONVERT(XML, Data).query('/r/lf/row') AS Data, CONVERT(XML, OldData).query('/r/lf/row') AS OldData
+					FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+					WHERE Id = @ActionID
+				) B
+			) A
+				OUTER APPLY A.Data.nodes('row') d(c)
+				OUTER APPLY A.OldData.nodes('row') od(c)
+		)
+		SELECT	@Feature_Clients = (SELECT STUFF((SELECT DISTINCT '<br/>' + Feature + CASE WHEN LaunchDate IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), LaunchDate, 101) END + CASE WHEN TerminatedDate IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), TerminatedDate, 101) END FROM CTE_Feature WITH(NOLOCK) FOR XML PATH('')), 1, 11, '')),
+				@Feature_Clients_old = (SELECT STUFF((SELECT DISTINCT '<br/>' + Feature_old + CASE WHEN LaunchDate_old IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), LaunchDate_old, 101) END + CASE WHEN TerminatedDate_old IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), TerminatedDate_old, 101) END FROM CTE_Feature WITH(NOLOCK) FOR XML PATH('')), 1, 11, ''))
+
+		INSERT INTO @Result (ID, Field, NewValue, OldValue)
+		VALUES
+			(1, N'Client - Launch - Termination', @Feature_Clients, @Feature_Clients_old)
+	END
+	ELSE IF @LogActionId IN (501) -- Update Features for a Client
+	BEGIN
+		DECLARE
+			@Clients NVARCHAR(100),
+			@Client_Features NVARCHAR(MAX),
+
+			@Clients_old NVARCHAR(100),
+			@Client_Features_old NVARCHAR(MAX)
+
+		SELECT
+			@Clients = d.c.value('@ln', 'NVARCHAR(100)'), -- client
+
+			@Clients_old = od.c.value('@ln', 'NVARCHAR(100)') -- client
+		FROM (
+			SELECT
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE OldData END AS OldData
+			FROM (
+				SELECT CONVERT(XML, Data).query('/r') AS Data, CONVERT(XML, OldData).query('/r') AS OldData
+				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+				WHERE Id = @ActionID
+			) B
+		) A
+			OUTER APPLY A.Data.nodes('r') d(c)
+			OUTER APPLY A.OldData.nodes('r') od(c)
+
+		;WITH CTE_Feature AS (
+			SELECT
+				d.c.value('@fn', 'NVARCHAR(100)') AS Feature, -- Feature
+				d.c.value('@fid', 'INT') AS FeatureOrder, -- Feature
+				d.c.value('@lld', 'DATE') AS LaunchDate, -- launch date
+				d.c.value('@ltd', 'DATE') AS TerminatedDate, -- termination date
+
+				od.c.value('@fn', 'NVARCHAR(100)') AS Feature_old, -- Feature
+				od.c.value('@fid', 'INT') AS FeatureOrder_old, -- Feature
+				od.c.value('@lld', 'DATE') AS LaunchDate_old, -- launch date
+				od.c.value('@ltd', 'DATE') AS TerminatedDate_old -- termination date
+			FROM (
+				SELECT
+					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE Data END AS Data,
+					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE OldData END AS OldData
+				FROM (
+					SELECT CONVERT(XML, Data).query('/r/lf/row') AS Data, CONVERT(XML, OldData).query('/r/lf/row') AS OldData
+					FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+					WHERE Id = @ActionID
+				) B
+			) A
+				OUTER APPLY A.Data.nodes('row') d(c)
+				OUTER APPLY A.OldData.nodes('row') od(c)
+		)
+		SELECT	@Client_Features = (SELECT STUFF((SELECT '<br/>' + Feature + CASE WHEN LaunchDate IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), LaunchDate, 101) END + CASE WHEN TerminatedDate IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), TerminatedDate, 101) END FROM (SELECT DISTINCT Feature, FeatureOrder, LaunchDate, TerminatedDate FROM CTE_Feature) CTE_Feature ORDER BY FeatureOrder FOR XML PATH('')), 1, 11, '')),
+				@Client_Features_old = (SELECT STUFF((SELECT '<br/>' + Feature_old + CASE WHEN LaunchDate_old IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), LaunchDate_old, 101) END + CASE WHEN TerminatedDate_old IS NULL THEN '' ELSE ' - ' + CONVERT(VARCHAR(10), TerminatedDate_old, 101) END FROM (SELECT DISTINCT Feature_old, FeatureOrder_old, LaunchDate_old, TerminatedDate_old FROM CTE_Feature) CTE_Feature ORDER BY FeatureOrder_old FOR XML PATH('')), 1, 11, ''))
+
+		INSERT INTO @Result (ID, Field, NewValue, OldValue)
+		VALUES
+			(1, N'Feature - Launch - Termination', @Client_Features, @Client_Features_old)
+
+	END
 	ELSE IF @LogActionId IN (400,401,402) -- Insert/Update/Delete Training
 	BEGIN
 		DECLARE
@@ -1290,8 +1406,4 @@ BEGIN
 	FROM CTE_Result
 	ORDER BY rownum 
 END
-GO
-GRANT EXECUTE ON [dbo].[OIC_LogListSel_Details] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_LogListSel_Details] TO [vnteam] AS [dbo]
 GO
