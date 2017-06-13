@@ -3,7 +3,7 @@
 USE [bodb_OIC]
 GO
 
-ALTER PROCEDURE [dbo].[OIC_LogListSel_Details_xtest]
+ALTER PROCEDURE [dbo].[OIC_LogListSel_Details]
 	@ActionID INT
 AS
 /*
