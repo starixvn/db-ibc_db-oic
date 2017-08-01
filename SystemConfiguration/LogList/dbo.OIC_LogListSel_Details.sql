@@ -14,6 +14,7 @@ AS
 
 	Revisions:
 		- 20170328@Percy: Add new function: Client List [RemineID: #70323]
+		- 20170525@Percy: Implement new request [RedmineID: #70326, #74330, #74879]
 
 */
 BEGIN
@@ -68,6 +69,8 @@ BEGIN
 			@Acc NVARCHAR(MAX),
 			@CS NVARCHAR(MAX),
 			@TA NVARCHAR(MAX),
+			@IsChineseMarketOnly NVARCHAR(MAX),
+			@InternalURL NVARCHAR(MAX),
 
 			@TypeOfLicensee_old NVARCHAR(30),
 			@Sitename_old NVARCHAR(100),
@@ -109,7 +112,9 @@ BEGIN
 			@PM_old NVARCHAR(100),
 			@Acc_old NVARCHAR(MAX),
 			@CS_old NVARCHAR(MAX),
-			@TA_old NVARCHAR(MAX)
+			@TA_old NVARCHAR(MAX),
+			@IsChineseMarketOnly_old NVARCHAR(MAX),
+			@InternalURL_old NVARCHAR(MAX)
 
 		-- Client Info
 		SELECT
@@ -126,6 +131,8 @@ BEGIN
 			@ClientLocation = d.c.value('@lc', 'NVARCHAR(50)'), -- location
 			@PM = d.c.value('@pmn', 'NVARCHAR(50)'), -- project manager
 			@AM = d.c.value('@amn', 'NVARCHAR(50)'), -- account manager
+			@IsChineseMarketOnly = d.c.value('@icm', 'NVARCHAR(1)'),
+			@InternalURL = d.c.value('@iu', 'NVARCHAR(100)'),
 
 			@TypeOfLicensee_old = od.c.value('@tn', 'NVARCHAR(30)'), -- type of licensee
 			@Sitename_old = od.c.value('@ln', 'NVARCHAR(100)'), -- site name
@@ -139,7 +146,9 @@ BEGIN
 			@Remark_old = od.c.value('@rm', 'NVARCHAR(600)'), -- remark
 			@ClientLocation_old = od.c.value('@lc', 'NVARCHAR(50)'), -- location
 			@PM_old = od.c.value('@pmn', 'NVARCHAR(50)'), -- project manager
-			@AM_old = od.c.value('@amn', 'NVARCHAR(50)') -- account manager
+			@AM_old = od.c.value('@amn', 'NVARCHAR(50)'), -- account manager
+			@IsChineseMarketOnly_old = od.c.value('@icm', 'NVARCHAR(1)'),
+			@InternalURL_old = od.c.value('@iu', 'NVARCHAR(100)')
 		FROM (
 				SELECT
 					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
@@ -152,6 +161,21 @@ BEGIN
 		) A
 			OUTER APPLY A.Data.nodes('r') d(c)
 			OUTER APPLY A.OldData.nodes('r') od(c)
+
+		IF ISNULL(@IsChineseMarketOnly, '0') = '0'
+			SELECT @IsChineseMarketOnly = 'Unchecked'
+		ELSE
+			SELECT @IsChineseMarketOnly = 'Checked'
+
+		IF ISNULL(@IsChineseMarketOnly_old, '0') = '0'
+			SELECT @IsChineseMarketOnly_old = 'Unchecked'
+		ELSE
+			SELECT @IsChineseMarketOnly_old = 'Checked'
+
+		IF @LogActionId = 7
+		BEGIN
+			SELECT @IsChineseMarketOnly_old = NULL
+		END
 
 		-- Backup domain
 		;WITH CTE_Url AS (
@@ -508,43 +532,45 @@ BEGIN
 			(2, N'Site name', @Sitename, @Sitename_old),
 			(3, N'Company name', @CompanyName, @CompanyName_old),
 			(4, N'Client Status', @ClientStatus, @ClientStatus_old),
-			(5, N'Soft Launch', @SoftLaunch, @SoftLaunch_old),
-			(6, N'Full Launch', @FullLaunch, @FullLaunch_old),
-			(7, N'Main domain URL', @MainUrl, @MainUrl_old),
-			(8, N'Backup Domain URL', @BackupUrl, @BackupUrl_old),
-			(9, N'API URL', @APIUrl, @APIUrl_old),
-			(10, N'Main Contact - Name', @ContactName, @ContactName_old),
-			(11, N'Main Contact - Position', @ContactPosition, @ContactPosition_old),
-			(12, N'Main Contact - Department', @ContactDepartment, @ContactDepartment_old),
-			(13, N'Main Contact - Email', @ContactEmail, @ContactEmail_old),
-			(14, N'Main Contact - Mobile Number', @ContactMobile, @ContactMobile_old),
-			(15, N'Main Contact - Skype username', @ContactSkype, @ContactSkype_old),
-			(16, N'Main Contact - Remark', @ContactRemark, @ContactRemark_old),
-			(17, N'Offered currencies', @OfferedCurrencies, @OfferedCurrencies_old),
-			(18, N'Sportsbook offered languages', @SBOfferedLanguages, @SBOfferedLanguages_old),
-			(19, N'Client Location', @ClientLocation, @ClientLocation_old),
-			(20, N'Client targeted market', @ClientTargetMarket, @ClientTargetMarket_old),
-			(21, N'Preferred communication language', @CommunicationLanguages, @CommunicationLanguages_old),
-			(22, N'Unas service', @UnasService, @UnasService_old),
-			(23, N'Unas service - Username', @UnasService_Username, @UnasService_Username_old),
-			(24, N'Unas service - Password', @UnasService_Password, @UnasService_Password_old),
-			(25, N'Mobile betting service', @MobileService, @MobileService_old),
-			(26, N'Mobile betting service - WAP site URL', @MobileService_WAP, @MobileService_WAP_old),
-			(27, N'Mobile betting service - Smartphone site URL', @MobileService_Smartphone, @MobileService_Smartphone_old),
-			(28, N'BA Agreement', @BAAgreement, @BAAgreement_old),
-			(29, N'BA Agreement - Group', @BAAgreement_Group, @BAAgreement_Group_old),
-			(30, N'BA Agreement - BA Joined date', @BAAgreement_JoinDate, @BAAgreement_JoinDate_old),
-			(31, N'Affiliate Agreement', @Affiliate, @Affiliate_old),
-			(32, N'Client country restrict list', @RestrictedCountry, @RestrictedCountry_old),
-			(33, N'Add exception for client country restrict list', @RestrictedCountry_Exception, @RestrictedCountry_Exception_old),
-			(34, N'Remark', @Remark, @Remark_old),
-			(35, N'Products - Launch - Termination', @Products, @Products_old),
-			(36, N'Features - Launch - Termination', @Features, @Features_old),
-			(37, N'Client Account Manager', @AM, @AM_old),
-			(38, N'Client Project Manager', @PM, @PM_old),
-			(39, N'Customer front end: Username - Password', @Acc, @Acc_old),
-			(40, N'OneonOne CS (username - password)', @CS, @CS_old),
-			(41, N'Training Account (username - password)', @TA, @TA_old)
+			(5, N'Chinese Market Only', @IsChineseMarketOnly, @IsChineseMarketOnly_old),
+			(6, N'Soft Launch', @SoftLaunch, @SoftLaunch_old),
+			(7, N'Full Launch', @FullLaunch, @FullLaunch_old),
+			(8, N'Main domain URL', @MainUrl, @MainUrl_old),
+			(9, N'Backup Domain URL', @BackupUrl, @BackupUrl_old),
+			(10, N'API URL', @APIUrl, @APIUrl_old),
+			(11, N'Main Contact - Name', @ContactName, @ContactName_old),
+			(12, N'Main Contact - Position', @ContactPosition, @ContactPosition_old),
+			(13, N'Main Contact - Department', @ContactDepartment, @ContactDepartment_old),
+			(14, N'Main Contact - Email', @ContactEmail, @ContactEmail_old),
+			(15, N'Main Contact - Mobile Number', @ContactMobile, @ContactMobile_old),
+			(16, N'Main Contact - Skype username', @ContactSkype, @ContactSkype_old),
+			(17, N'Main Contact - Remark', @ContactRemark, @ContactRemark_old),
+			(18, N'Offered currencies', @OfferedCurrencies, @OfferedCurrencies_old),
+			(19, N'Sportsbook offered languages', @SBOfferedLanguages, @SBOfferedLanguages_old),
+			(20, N'Client Location', @ClientLocation, @ClientLocation_old),
+			(21, N'Client targeted market', @ClientTargetMarket, @ClientTargetMarket_old),
+			(22, N'Preferred communication language', @CommunicationLanguages, @CommunicationLanguages_old),
+			(23, N'Unas service', @UnasService, @UnasService_old),
+			(24, N'Unas service - Username', @UnasService_Username, @UnasService_Username_old),
+			(25, N'Unas service - Password', @UnasService_Password, @UnasService_Password_old),
+			(26, N'Mobile betting service', @MobileService, @MobileService_old),
+			(27, N'Mobile betting service - WAP site URL', @MobileService_WAP, @MobileService_WAP_old),
+			(28, N'Mobile betting service - Smartphone site URL', @MobileService_Smartphone, @MobileService_Smartphone_old),
+			(29, N'BA Agreement', @BAAgreement, @BAAgreement_old),
+			(30, N'BA Agreement - Group', @BAAgreement_Group, @BAAgreement_Group_old),
+			(31, N'BA Agreement - BA Joined date', @BAAgreement_JoinDate, @BAAgreement_JoinDate_old),
+			(32, N'Affiliate Agreement', @Affiliate, @Affiliate_old),
+			(33, N'Client country restrict list', @RestrictedCountry, @RestrictedCountry_old),
+			(34, N'Add exception for client country restrict list', @RestrictedCountry_Exception, @RestrictedCountry_Exception_old),
+			(35, N'Remark', @Remark, @Remark_old),
+			(36, N'Products - Launch - Termination', @Products, @Products_old),
+			(37, N'Features - Launch - Termination', @Features, @Features_old),
+			(38, N'Client Account Manager', @AM, @AM_old),
+			(39, N'Client Project Manager', @PM, @PM_old),
+			(40, N'Customer front end: Username - Password', @Acc, @Acc_old),
+			(41, N'Internal backend URL', @InternalURL, @InternalURL_old),
+			(42, N'OneonOne CS (username - password)', @CS, @CS_old),
+			(43, N'Training Account (username - password)', @TA, @TA_old)
 	END
 	ELSE IF @LogActionId IN (100,101,102) -- Insert/Update/Delete Contact
 	BEGIN
@@ -989,12 +1015,24 @@ BEGIN
 	ELSE IF @LogActionId IN (400,401,402) -- Insert/Update/Delete Training
 	BEGIN
 		DECLARE
+			@TrainingLicenseeName VARCHAR(50),
+			@TrainingStatusName VARCHAR(200),
+			@TrainingStatusValue VARCHAR(50),
+			@TrainingStatusValue_DateTime DATETIME,
+			@TrainingStatusValue_Date VARCHAR(50),
+			@TrainingStatusValue_Time VARCHAR(50),
 			@Language NVARCHAR(30),
 			@Date NVARCHAR(10),
 			@StartTime NVARCHAR(20),
 			@TimeZone NVARCHAR(10),
 			@Attendee NVARCHAR(MAX),
 
+			@TrainingLicenseeName_old VARCHAR(50),
+			@TrainingStatusName_old VARCHAR(200),
+			@TrainingStatusValue_old VARCHAR(50),
+			@TrainingStatusValue_DateTime_old DATETIME,
+			@TrainingStatusValue_Date_old VARCHAR(50),
+			@TrainingStatusValue_Time_old VARCHAR(50),
 			@Language_old NVARCHAR(30),
 			@Date_old NVARCHAR(10),
 			@StartTime_old NVARCHAR(20),
@@ -1002,11 +1040,17 @@ BEGIN
 			@Attendee_old NVARCHAR(MAX)
 
 		SELECT
+			@TrainingLicenseeName = d.c.value('@ln', 'VARCHAR(50)'), -- licensee
+			@TrainingStatusName = d.c.value('@tsn', 'VARCHAR(200)'), -- status
+			@TrainingStatusValue = d.c.value('@tsv', 'VARCHAR(50)'), -- status value
 			@Language = d.c.value('@lu', 'NVARCHAR(30)'), -- language
 			@Date = CONVERT(VARCHAR(10), d.c.value('@td', 'DATE'), 101), -- date
 			@StartTime = d.c.value('@td', 'DATETIME'), -- start time
 			@TimeZone = d.c.value('@tz', 'NVARCHAR(10)'), -- time zone
 
+			@TrainingLicenseeName_old = od.c.value('@ln', 'VARCHAR(50)'), -- licensee
+			@TrainingStatusName_old = od.c.value('@tsn', 'VARCHAR(200)'), -- status
+			@TrainingStatusValue_old = od.c.value('@tsv', 'VARCHAR(50)'), -- status value
 			@Language_old = od.c.value('@lu', 'NVARCHAR(30)'), -- language
 			@Date_old = CONVERT(VARCHAR(10), od.c.value('@td', 'DATE'), 101), -- date
 			@StartTime_old = od.c.value('@td', 'DATETIME'), -- start time
@@ -1026,17 +1070,64 @@ BEGIN
 
 		IF ISNULL(@TimeZone, N'') <> N'' AND ISNUMERIC(@TimeZone) = 1
 		BEGIN
-			SELECT @StartTime = RIGHT(CONVERT(VARCHAR(19), DATEADD(HOUR, CONVERT(INT, @TimeZone), CONVERT(DATETIME, @StartTime)), 100), 7)
+			SELECT @StartTime = LTRIM(RTRIM(RIGHT(CONVERT(VARCHAR(19), DATEADD(HOUR, CONVERT(INT, @TimeZone), CONVERT(DATETIME, @StartTime)), 100), 7)))
+			SELECT @StartTime = LEFT(@StartTime, LEN(@StartTime) - 2) + ' ' + RIGHT(@StartTime, 2)
+		END
+		
+		IF ISNULL(@TimeZone_old, N'') <> N'' AND ISNUMERIC(@TimeZone_old) = 1
+		BEGIN
+			SELECT @StartTime_old = LTRIM(RTRIM(RIGHT(CONVERT(VARCHAR(19), DATEADD(HOUR, CONVERT(INT, @TimeZone_old), CONVERT(DATETIME, @StartTime_old)), 100), 7)))
+			SELECT @StartTime_old = LEFT(@StartTime_old, LEN(@StartTime_old) - 2) + ' ' + RIGHT(@StartTime_old, 2)
+		END
 
+		IF ISNULL(@TrainingStatusValue, N'') <> N'' AND ISNUMERIC(@TimeZone) = 1
+		BEGIN
+			BEGIN TRY
+				SELECT @TrainingStatusValue_DateTime = CONVERT(DATETIME, @TrainingStatusValue)
+				SELECT @TrainingStatusValue_DateTime = DATEADD(HOUR, CONVERT(INT, @TimeZone), @TrainingStatusValue_DateTime)
+
+				SELECT @TrainingStatusValue_Date = CONVERT(DATE, @TrainingStatusValue_DateTime)
+
+				SELECT @TrainingStatusValue_Time = LTRIM(RTRIM(RIGHT(CONVERT(VARCHAR(19), @TrainingStatusValue_DateTime, 100), 7)))
+				SELECT @TrainingStatusValue_Time = LEFT(@TrainingStatusValue_Time, LEN(@TrainingStatusValue_Time) - 2) + ' ' + RIGHT(@TrainingStatusValue_Time, 2)
+
+				
+			END TRY
+			BEGIN CATCH
+				SELECT @TrainingStatusValue_Date = NULL
+				SELECT @TrainingStatusValue_Time = NULL
+			END CATCH
+		END
+
+		IF ISNULL(@TrainingStatusValue_old, N'') <> N'' AND ISNUMERIC(@TimeZone_old) = 1
+		BEGIN
+			BEGIN TRY
+				SELECT @TrainingStatusValue_DateTime_old = CONVERT(DATETIME, @TrainingStatusValue_old)
+				SELECT @TrainingStatusValue_DateTime_old = DATEADD(HOUR, CONVERT(INT, @TimeZone_old), @TrainingStatusValue_DateTime_old)
+
+				SELECT @TrainingStatusValue_Date_old = CONVERT(DATE, @TrainingStatusValue_DateTime_old)
+
+				SELECT @TrainingStatusValue_Time_old = LTRIM(RTRIM(RIGHT(CONVERT(VARCHAR(19), @TrainingStatusValue_DateTime_old, 100), 7)))
+				SELECT @TrainingStatusValue_Time_old = LEFT(@TrainingStatusValue_Time_old, LEN(@TrainingStatusValue_Time_old) - 2) + ' ' + RIGHT(@TrainingStatusValue_Time_old, 2)
+
+				
+			END TRY
+			BEGIN CATCH
+				SELECT @TrainingStatusValue_Date_old = NULL
+				SELECT @TrainingStatusValue_Time_old = NULL
+			END CATCH
+		END
+
+		IF ISNUMERIC(@TimeZone) = 1
+		BEGIN
 			IF CONVERT(INT, @TimeZone) < 0
 				SELECT @TimeZone = 'GMT' + @TimeZone
 			ELSE
 				SELECT @TimeZone = 'GMT+' + @TimeZone
 		END
-		IF ISNULL(@TimeZone_old, N'') <> N'' AND ISNUMERIC(@TimeZone_old) = 1
-		BEGIN
-			SELECT @StartTime_old = RIGHT(CONVERT(VARCHAR(19), DATEADD(HOUR, CONVERT(INT, @TimeZone_old), CONVERT(DATETIME, @StartTime_old)), 100), 7)
 
+		IF ISNUMERIC(@TimeZone_old) = 1
+		BEGIN
 			IF CONVERT(INT, @TimeZone_old) < 0
 				SELECT @TimeZone_old = 'GMT' + @TimeZone_old
 			ELSE
@@ -1070,11 +1161,15 @@ BEGIN
 
 		INSERT INTO @Result (ID, Field, NewValue, OldValue)
 		VALUES
+			(1, N'Site name', @TrainingLicenseeName, @TrainingLicenseeName_old),
 			(1, N'Language', @Language, @Language_old),
 			(2, N'Date', @Date, @Date_old),
 			(3, N'Start time', @StartTime, @StartTime_old),
 			(4, N'Time zone', @TimeZone, @TimeZone_old),
-			(5, N'Attendee - Position - Skype', @Attendee, @Attendee_old)
+			(5, N'Attendee - Position - Skype', @Attendee, @Attendee_old),
+			(6, N'Status', @TrainingStatusName, @TrainingStatusName_old),
+			(7, N'Available Date', @TrainingStatusValue_Date, @TrainingStatusValue_Date_old),
+			(8, N'Available Time', @TrainingStatusValue_Time, @TrainingStatusValue_Time_old)
 	END
 	ELSE IF @LogActionId IN (2000) -- Update User Profile
 	BEGIN
