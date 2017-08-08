@@ -1,5 +1,4 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-
 USE [bodb_OIC]
 GO
 
@@ -15,7 +14,7 @@ AS
 	Revisions:
 		- 20170328@Percy: Add new function: Client List [RemineID: #70323]
 		- 20170525@Percy: Implement new request [RedmineID: #70326, #74330, #74879]
-
+		- 20170802@Percy: Support Url testing account [RedmineID: #80712]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -66,7 +65,16 @@ BEGIN
 			@Features NVARCHAR(MAX), -- list of features
 			@AM NVARCHAR(100),
 			@PM NVARCHAR(100),
-			@Acc NVARCHAR(MAX),
+			@Acc1 NVARCHAR(MAX),
+			@AccUrl1 NVARCHAR(MAX),
+			@Acc2 NVARCHAR(MAX),
+			@AccUrl2 NVARCHAR(MAX),
+			@Acc3 NVARCHAR(MAX),
+			@AccUrl3 NVARCHAR(MAX),
+			@Acc4 NVARCHAR(MAX),
+			@AccUrl4 NVARCHAR(MAX),
+			@Acc5 NVARCHAR(MAX),
+			@AccUrl5 NVARCHAR(MAX),
 			@CS NVARCHAR(MAX),
 			@TA NVARCHAR(MAX),
 			@IsChineseMarketOnly NVARCHAR(MAX),
@@ -110,7 +118,16 @@ BEGIN
 			@Features_old NVARCHAR(MAX), -- list of features
 			@AM_old NVARCHAR(100),
 			@PM_old NVARCHAR(100),
-			@Acc_old NVARCHAR(MAX),
+			@Acc1_old NVARCHAR(MAX),
+			@AccUrl1_old NVARCHAR(MAX),
+			@Acc2_old NVARCHAR(MAX),
+			@AccUrl2_old NVARCHAR(MAX),
+			@Acc3_old NVARCHAR(MAX),
+			@AccUrl3_old NVARCHAR(MAX),
+			@Acc4_old NVARCHAR(MAX),
+			@AccUrl4_old NVARCHAR(MAX),
+			@Acc5_old NVARCHAR(MAX),
+			@AccUrl5_old NVARCHAR(MAX),
 			@CS_old NVARCHAR(MAX),
 			@TA_old NVARCHAR(MAX),
 			@IsChineseMarketOnly_old NVARCHAR(MAX),
@@ -462,11 +479,13 @@ BEGIN
 				d.c.value('@lap', 'NVARCHAR(100)') AS [Password], -- password
 				d.c.value('@lat', 'NVARCHAR(10)') AS [Type], -- type -- 1: Customer front end, 2: Internal backend (OneonOne CS), 3: Internal backend (Training Account)
 				d.c.value('@lod', 'NVARCHAR(10)') AS [Order], -- order
+				d.c.value('@lu', 'VARCHAR(100)') AS Url, -- url
 
 				od.c.value('@lan', 'NVARCHAR(100)') AS Username_old, -- username
 				od.c.value('@lap', 'NVARCHAR(100)') AS Password_old, -- password
 				od.c.value('@lat', 'NVARCHAR(10)') AS Type_old,  -- type -- 1: Customer front end, 2: Internal backend (OneonOne CS), 3: Internal backend (Training Account)
-				od.c.value('@lod', 'NVARCHAR(10)') AS Order_old -- order
+				od.c.value('@lod', 'NVARCHAR(10)') AS Order_old, -- order
+				od.c.value('@lu', 'VARCHAR(100)') AS Url_old -- url
 			FROM (
 				SELECT
 					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE Data END AS Data,
@@ -479,15 +498,57 @@ BEGIN
 			) A
 				OUTER APPLY A.Data.nodes('row') d(c)
 				OUTER APPLY A.OldData.nodes('row') od(c)
-			WHERE d.c.value('@lod', 'NVARCHAR(10)') = od.c.value('@lod', 'NVARCHAR(10)')
-				AND ISNULL(d.c.value('@lat', 'NVARCHAR(10)'), N'') = ISNULL(od.c.value('@lat', 'NVARCHAR(10)'), N'')
-				AND (
-					ISNULL(d.c.value('@lan', 'NVARCHAR(100)'), N'') <> ISNULL(od.c.value('@lan', 'NVARCHAR(100)'), N'')
-					OR ISNULL(d.c.value('@lap', 'NVARCHAR(100)'), N'') <> ISNULL(od.c.value('@lap', 'NVARCHAR(100)'), N'')
-				)
 		)
-		SELECT	@Acc = (SELECT STUFF((SELECT DISTINCT '<br/>' + 'Account ' + [Order] + ': ' + Username + ' - ' + [Password] FROM CTE_Account_Font WHERE [Type] = N'1' FOR XML PATH('')), 1, 11, '')),
-				@Acc_old = (SELECT STUFF((SELECT DISTINCT '<br/>' + 'Account ' + Order_old + ': ' + Username_old + ' - ' + Password_old FROM CTE_Account_Font WHERE [Type_old] = N'1' FOR XML PATH('')), 1, 11, ''))
+		SELECT
+			@Acc1 = CASE WHEN [Type] = N'1' AND [Order] = 1 THEN Username + ' - ' + [Password] ELSE @Acc1 END,
+			@Acc2 = CASE WHEN [Type] = N'1' AND [Order] = 2 THEN Username + ' - ' + [Password] ELSE @Acc2 END,
+			@Acc3 = CASE WHEN [Type] = N'1' AND [Order] = 3 THEN Username + ' - ' + [Password] ELSE @Acc3 END,
+			@Acc4 = CASE WHEN [Type] = N'1' AND [Order] = 4 THEN Username + ' - ' + [Password] ELSE @Acc4 END,
+			@Acc5 = CASE WHEN [Type] = N'1' AND [Order] = 5 THEN Username + ' - ' + [Password] ELSE @Acc5 END,
+
+			@Acc1_old = CASE WHEN [Type_old] = N'1' AND [Order_old] = 1 THEN Username_old + ' - ' + [Password_old] ELSE @Acc1_old END,
+			@Acc2_old = CASE WHEN [Type_old] = N'1' AND [Order_old] = 2 THEN Username_old + ' - ' + [Password_old] ELSE @Acc2_old END,
+			@Acc3_old = CASE WHEN [Type_old] = N'1' AND [Order_old] = 3 THEN Username_old + ' - ' + [Password_old] ELSE @Acc3_old END,
+			@Acc4_old = CASE WHEN [Type_old] = N'1' AND [Order_old] = 4 THEN Username_old + ' - ' + [Password_old] ELSE @Acc4_old END,
+			@Acc5_old = CASE WHEN [Type_old] = N'1' AND [Order_old] = 5 THEN Username_old + ' - ' + [Password_old] ELSE @Acc5_old END,
+
+			@AccUrl1 = CASE WHEN [Type] = N'1' AND [Order] = 1 THEN Url ELSE @AccUrl1 END,
+			@AccUrl2 = CASE WHEN [Type] = N'1' AND [Order] = 2 THEN Url ELSE @AccUrl2 END,
+			@AccUrl3 = CASE WHEN [Type] = N'1' AND [Order] = 3 THEN Url ELSE @AccUrl3 END,
+			@AccUrl4 = CASE WHEN [Type] = N'1' AND [Order] = 4 THEN Url ELSE @AccUrl4 END,
+			@AccUrl5 = CASE WHEN [Type] = N'1' AND [Order] = 5 THEN Url ELSE @AccUrl5 END,
+
+			@AccUrl1_old = CASE WHEN [Type_old] = N'1' AND [Order_old] = 1 THEN Url_old ELSE @AccUrl1_old END,
+			@AccUrl2_old = CASE WHEN [Type_old] = N'1' AND [Order_old] = 2 THEN Url_old ELSE @AccUrl2_old END,
+			@AccUrl3_old = CASE WHEN [Type_old] = N'1' AND [Order_old] = 3 THEN Url_old ELSE @AccUrl3_old END,
+			@AccUrl4_old = CASE WHEN [Type_old] = N'1' AND [Order_old] = 4 THEN Url_old ELSE @AccUrl4_old END,
+			@AccUrl5_old = CASE WHEN [Type_old] = N'1' AND [Order_old] = 5 THEN Url_old ELSE @AccUrl5_old END
+		FROM CTE_Account_Font
+
+		SELECT
+			@Acc1 = ISNULL(@Acc1, ' - '),
+			@Acc2 = ISNULL(@Acc2, ' - '),
+			@Acc3 = ISNULL(@Acc3, ' - '),
+			@Acc4 = ISNULL(@Acc4, ' - '),
+			@Acc5 = ISNULL(@Acc5, ' - '),
+
+			@Acc1_old = ISNULL(@Acc1_old, ' - '),
+			@Acc2_old = ISNULL(@Acc2_old, ' - '),
+			@Acc3_old = ISNULL(@Acc3_old, ' - '),
+			@Acc4_old = ISNULL(@Acc4_old, ' - '),
+			@Acc5_old = ISNULL(@Acc5_old, ' - '),
+
+			@AccUrl1 = ISNULL(@AccUrl1, ''),
+			@AccUrl2 = ISNULL(@AccUrl2, ''),
+			@AccUrl3 = ISNULL(@AccUrl3, ''),
+			@AccUrl4 = ISNULL(@AccUrl4, ''),
+			@AccUrl5 = ISNULL(@AccUrl5, ''),
+
+			@AccUrl1_old = ISNULL(@AccUrl1_old, ''),
+			@AccUrl2_old = ISNULL(@AccUrl2_old, ''),
+			@AccUrl3_old = ISNULL(@AccUrl3_old, ''),
+			@AccUrl4_old = ISNULL(@AccUrl4_old, ''),
+			@AccUrl5_old = ISNULL(@AccUrl5_old, '')
 
 		;WITH CTE_Account_End AS (
 			SELECT
@@ -512,8 +573,10 @@ BEGIN
 			) A
 				OUTER APPLY A.Data.nodes('row') d(c)
 				OUTER APPLY A.OldData.nodes('row') od(c)
-			WHERE  ISNULL(d.c.value('@lat', 'NVARCHAR(10)'), N'') IN (N'2', N'3')
+			WHERE
+				(  ISNULL(d.c.value('@lat', 'NVARCHAR(10)'), N'') IN (N'2', N'3')
 					OR ISNULL(od.c.value('@lat', 'NVARCHAR(10)'), N'') IN (N'2', N'3')
+				)
 				AND (
 					ISNULL(d.c.value('@lan', 'NVARCHAR(100)'), N'') <> ISNULL(od.c.value('@lan', 'NVARCHAR(100)'), N'')
 					OR ISNULL(d.c.value('@lap', 'NVARCHAR(100)'), N'') <> ISNULL(od.c.value('@lap', 'NVARCHAR(100)'), N'')
@@ -567,10 +630,19 @@ BEGIN
 			(37, N'Features - Launch - Termination', @Features, @Features_old),
 			(38, N'Client Account Manager', @AM, @AM_old),
 			(39, N'Client Project Manager', @PM, @PM_old),
-			(40, N'Customer front end: Username - Password', @Acc, @Acc_old),
-			(41, N'Internal backend URL', @InternalURL, @InternalURL_old),
-			(42, N'OneonOne CS (username - password)', @CS, @CS_old),
-			(43, N'Training Account (username - password)', @TA, @TA_old)
+			(40, N'Account 1''s URL', @AccUrl1, @AccUrl1_old),
+			(41, N'Account 1 (username - password)', @Acc1, @Acc1_old),
+			(42, N'Account 2''s URL', @AccUrl2, @AccUrl2_old),
+			(43, N'Account 2 (username - password)', @Acc2, @Acc2_old),
+			(44, N'Account 3''s URL', @AccUrl3, @AccUrl3_old),
+			(45, N'Account 3 (username - password)', @Acc3, @Acc3_old),
+			(46, N'Account 4''s URL', @AccUrl4, @AccUrl4_old),
+			(47, N'Account 4 (username - password)', @Acc4, @Acc4_old),
+			(48, N'Account 5''s URL', @AccUrl5, @AccUrl5_old),
+			(49, N'Account 5 (username - password)', @Acc5, @Acc5_old),
+			(50, N'Internal backend URL', @InternalURL, @InternalURL_old),
+			(51, N'OneonOne CS (username - password)', @CS, @CS_old),
+			(52, N'Training Account (username - password)', @TA, @TA_old)
 	END
 	ELSE IF @LogActionId IN (100,101,102) -- Insert/Update/Delete Contact
 	BEGIN
