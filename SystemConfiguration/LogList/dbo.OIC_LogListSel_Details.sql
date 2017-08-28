@@ -33,9 +33,9 @@ BEGIN
 			@ClientStatus NVARCHAR(30),
 			@SoftLaunch NVARCHAR(10), -- datetime format: mm/dd/yyyy
 			@FullLaunch NVARCHAR(10), -- datetime format: mm/dd/yyyy
-			@MainUrl NVARCHAR(50),
+			@MainUrl NVARCHAR(MAX),
 			@BackupUrl NVARCHAR(MAX), -- list of backup link
-			@APIUrl NVARCHAR(50),
+			@APIUrl NVARCHAR(MAX),
 			@ContactName NVARCHAR(100),
 			@ContactPosition NVARCHAR(100),
 			@ContactDepartment NVARCHAR(100),
@@ -52,8 +52,8 @@ BEGIN
 			@UnasService_Username NVARCHAR(100),
 			@UnasService_Password NVARCHAR(100),
 			@MobileService NVARCHAR(100),
-			@MobileService_WAP NVARCHAR(100),
-			@MobileService_Smartphone NVARCHAR(100),
+			@MobileService_WAP NVARCHAR(MAX),
+			@MobileService_Smartphone NVARCHAR(MAX),
 			@BAAgreement NVARCHAR(100),
 			@BAAgreement_Group NVARCHAR(100),
 			@BAAgreement_JoinDate NVARCHAR(100),
@@ -86,9 +86,9 @@ BEGIN
 			@ClientStatus_old NVARCHAR(30),
 			@SoftLaunch_old NVARCHAR(10), -- datetime format: mm/dd/yyyy
 			@FullLaunch_old NVARCHAR(10), -- datetime format: mm/dd/yyyy
-			@MainUrl_old NVARCHAR(50),
+			@MainUrl_old NVARCHAR(MAX),
 			@BackupUrl_old NVARCHAR(MAX), -- list of backup link
-			@APIUrl_old NVARCHAR(50),
+			@APIUrl_old NVARCHAR(MAX),
 			@ContactName_old NVARCHAR(100),
 			@ContactPosition_old NVARCHAR(100),
 			@ContactDepartment_old NVARCHAR(100),
@@ -105,8 +105,8 @@ BEGIN
 			@UnasService_Username_old NVARCHAR(100),
 			@UnasService_Password_old NVARCHAR(100),
 			@MobileService_old NVARCHAR(100),
-			@MobileService_WAP_old NVARCHAR(100),
-			@MobileService_Smartphone_old NVARCHAR(100),
+			@MobileService_WAP_old NVARCHAR(MAX),
+			@MobileService_Smartphone_old NVARCHAR(MAX),
 			@BAAgreement_old NVARCHAR(100),
 			@BAAgreement_Group_old NVARCHAR(100),
 			@BAAgreement_JoinDate_old NVARCHAR(100),
@@ -141,15 +141,15 @@ BEGIN
 			@ClientStatus = d.c.value('@sn', 'NVARCHAR(30)'), -- client status
 			@SoftLaunch = d.c.value('@sl', 'DATE'), -- soft launch
 			@FullLaunch = d.c.value('@fl', 'DATE'), -- full launch
-			@MainUrl = d.c.value('@mu', 'NVARCHAR(50)'), -- main domain url
-			@APIUrl = d.c.value('@au', 'NVARCHAR(50)'), -- api url
+			@MainUrl = d.c.value('@mu', 'NVARCHAR(MAX)'), -- main domain url
+			@APIUrl = d.c.value('@au', 'NVARCHAR(MAX)'), -- api url
 			@RestrictedCountry_Exception = d.c.value('@rlr', 'NVARCHAR(2000)'), -- add exception for client country restrict list
 			@Remark = d.c.value('@rm', 'NVARCHAR(600)'), -- remark
 			@ClientLocation = d.c.value('@lc', 'NVARCHAR(50)'), -- location
 			@PM = d.c.value('@pmn', 'NVARCHAR(50)'), -- project manager
 			@AM = d.c.value('@amn', 'NVARCHAR(50)'), -- account manager
 			@IsChineseMarketOnly = d.c.value('@icm', 'NVARCHAR(1)'),
-			@InternalURL = d.c.value('@iu', 'NVARCHAR(100)'),
+			@InternalURL = d.c.value('@iu', 'NVARCHAR(MAX)'),
 
 			@TypeOfLicensee_old = od.c.value('@tn', 'NVARCHAR(30)'), -- type of licensee
 			@Sitename_old = od.c.value('@ln', 'NVARCHAR(100)'), -- site name
@@ -157,15 +157,15 @@ BEGIN
 			@ClientStatus_old = od.c.value('@sn', 'NVARCHAR(30)'), -- client status
 			@SoftLaunch_old = od.c.value('@sl', 'DATE'), -- soft launch
 			@FullLaunch_old = od.c.value('@fl', 'DATE'), -- full launch
-			@MainUrl_old = od.c.value('@mu', 'NVARCHAR(50)'), -- main domain url
-			@APIUrl_old = od.c.value('@au', 'NVARCHAR(50)'), -- api url
+			@MainUrl_old = od.c.value('@mu', 'NVARCHAR(MAX)'), -- main domain url
+			@APIUrl_old = od.c.value('@au', 'NVARCHAR(MAX)'), -- api url
 			@RestrictedCountry_Exception_old = od.c.value('@rlr', 'NVARCHAR(2000)'), -- add exception for client country restrict list
 			@Remark_old = od.c.value('@rm', 'NVARCHAR(600)'), -- remark
 			@ClientLocation_old = od.c.value('@lc', 'NVARCHAR(50)'), -- location
 			@PM_old = od.c.value('@pmn', 'NVARCHAR(50)'), -- project manager
 			@AM_old = od.c.value('@amn', 'NVARCHAR(50)'), -- account manager
 			@IsChineseMarketOnly_old = od.c.value('@icm', 'NVARCHAR(1)'),
-			@InternalURL_old = od.c.value('@iu', 'NVARCHAR(100)')
+			@InternalURL_old = od.c.value('@iu', 'NVARCHAR(MAX)')
 		FROM (
 				SELECT
 					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
@@ -195,26 +195,31 @@ BEGIN
 		END
 
 		-- Backup domain
-		;WITH CTE_Url AS (
+		;WITH CTE_Url AS
+		(
 			SELECT
-				d.c.value('@lbul', 'NVARCHAR(100)') AS Url, -- backup domain url
-
-				od.c.value('@lbul', 'NVARCHAR(100)') AS Url_old -- backup domain url
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE Data END AS Data,
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE OldData END AS OldData
 			FROM (
-				SELECT
-					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE Data END AS Data,
-					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE OldData END AS OldData
-				FROM (
-					SELECT CONVERT(XML, Data).query('/r/bk/row') AS Data, CONVERT(XML, OldData).query('/r/bk/row') AS OldData
-					FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
-					WHERE Id = @ActionID
-				) B
-			) A
-				OUTER APPLY A.Data.nodes('row') d(c)
-				OUTER APPLY A.OldData.nodes('row') od(c)
+				SELECT CONVERT(XML, Data).query('/r/bk/row') AS Data, CONVERT(XML, OldData).query('/r/bk/row') AS OldData
+				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+				WHERE Id = 16956
+			) B
 		)
-		SELECT	@BackupUrl = (SELECT STUFF((SELECT DISTINCT '<br/>' + Url FROM CTE_Url FOR XML PATH('')), 1, 11, '')),
-				@BackupUrl_old = (SELECT STUFF((SELECT DISTINCT '<br/>' + Url_old FROM CTE_Url FOR XML PATH('')), 1, 11, ''))
+		, CTE1 AS (
+			SELECT
+				d.c.value('@lbul', 'NVARCHAR(MAX)') AS Url -- backup domain url
+			FROM CTE_Url A
+				OUTER APPLY A.Data.nodes('row') d(c)
+		)
+		, CTE2 AS (
+			SELECT
+				od.c.value('@lbul', 'NVARCHAR(MAX)') AS Url_old -- backup domain url
+			FROM CTE_Url A
+				OUTER APPLY A.OldData.nodes('row') od(c) 
+		) 
+		SELECT	@BackupUrl = (SELECT STUFF((SELECT '<br/>' + Url FROM CTE1 FOR XML PATH('')), 1, 11, '')),
+				@BackupUrl_old = (SELECT STUFF((SELECT '<br/>' + Url_old FROM CTE2 FOR XML PATH('')), 1, 11, ''))
 
 		-- Main Contact Info
 		SELECT
@@ -340,12 +345,12 @@ BEGIN
 				d.c.value('@lsid', 'NVARCHAR(100)') AS ServiceId, -- service id
 				d.c.value('@lsn', 'NVARCHAR(100)') AS ServiceName, -- service name
 				d.c.value('@lspid', 'NVARCHAR(100)') AS SubServiceId, -- service-child id
-				d.c.value('@lspv', 'NVARCHAR(100)') AS SubServiceName, -- service-child name
+				d.c.value('@lspv', 'NVARCHAR(MAX)') AS SubServiceName, -- service-child name
 
 				od.c.value('@lsid', 'NVARCHAR(100)') AS ServiceId_old, -- service id
 				od.c.value('@lsn', 'NVARCHAR(100)') AS ServiceName_old, -- service name
 				od.c.value('@lspid', 'NVARCHAR(100)') AS SubServiceId_old, -- service-child id
-				od.c.value('@lspv', 'NVARCHAR(100)') AS SubServiceName_old  -- service-child name
+				od.c.value('@lspv', 'NVARCHAR(MAX)') AS SubServiceName_old  -- service-child name
 			FROM (
 				SELECT
 					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE Data END AS Data,
@@ -479,13 +484,13 @@ BEGIN
 				d.c.value('@lap', 'NVARCHAR(100)') AS [Password], -- password
 				d.c.value('@lat', 'NVARCHAR(10)') AS [Type], -- type -- 1: Customer front end, 2: Internal backend (OneonOne CS), 3: Internal backend (Training Account)
 				d.c.value('@lod', 'NVARCHAR(10)') AS [Order], -- order
-				d.c.value('@lu', 'VARCHAR(100)') AS Url, -- url
+				d.c.value('@lu', 'VARCHAR(MAX)') AS Url, -- url
 
 				od.c.value('@lan', 'NVARCHAR(100)') AS Username_old, -- username
 				od.c.value('@lap', 'NVARCHAR(100)') AS Password_old, -- password
 				od.c.value('@lat', 'NVARCHAR(10)') AS Type_old,  -- type -- 1: Customer front end, 2: Internal backend (OneonOne CS), 3: Internal backend (Training Account)
 				od.c.value('@lod', 'NVARCHAR(10)') AS Order_old, -- order
-				od.c.value('@lu', 'VARCHAR(100)') AS Url_old -- url
+				od.c.value('@lu', 'VARCHAR(MAX)') AS Url_old -- url
 			FROM (
 				SELECT
 					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE Data END AS Data,
