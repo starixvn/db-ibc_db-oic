@@ -15,6 +15,7 @@ AS
 		- 20170328@Percy: Add new function: Client List [RemineID: #70323]
 		- 20170525@Percy: Implement new request [RedmineID: #70326, #74330, #74879]
 		- 20170802@Percy: Support Url testing account [RedmineID: #80712]
+		- 20170828@Scofield: Add Reseller [#82144]
 */
 BEGIN
 	SET NOCOUNT ON
