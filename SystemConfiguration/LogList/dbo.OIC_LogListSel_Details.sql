@@ -78,6 +78,7 @@ BEGIN
 			@CS NVARCHAR(MAX),
 			@TA NVARCHAR(MAX),
 			@IsChineseMarketOnly NVARCHAR(MAX),
+			@Reseller NVARCHAR(MAX),
 			@InternalURL NVARCHAR(MAX),
 
 			@TypeOfLicensee_old NVARCHAR(30),
@@ -131,6 +132,7 @@ BEGIN
 			@CS_old NVARCHAR(MAX),
 			@TA_old NVARCHAR(MAX),
 			@IsChineseMarketOnly_old NVARCHAR(MAX),
+			@Reseller_old NVARCHAR(MAX),
 			@InternalURL_old NVARCHAR(MAX)
 
 		-- Client Info
@@ -149,6 +151,7 @@ BEGIN
 			@PM = d.c.value('@pmn', 'NVARCHAR(50)'), -- project manager
 			@AM = d.c.value('@amn', 'NVARCHAR(50)'), -- account manager
 			@IsChineseMarketOnly = d.c.value('@icm', 'NVARCHAR(1)'),
+			@Reseller = d.c.value('@res', 'NVARCHAR(1)'),
 			@InternalURL = d.c.value('@iu', 'NVARCHAR(MAX)'),
 
 			@TypeOfLicensee_old = od.c.value('@tn', 'NVARCHAR(30)'), -- type of licensee
@@ -165,6 +168,7 @@ BEGIN
 			@PM_old = od.c.value('@pmn', 'NVARCHAR(50)'), -- project manager
 			@AM_old = od.c.value('@amn', 'NVARCHAR(50)'), -- account manager
 			@IsChineseMarketOnly_old = od.c.value('@icm', 'NVARCHAR(1)'),
+			@Reseller_old = od.c.value('@res', 'NVARCHAR(1)'),
 			@InternalURL_old = od.c.value('@iu', 'NVARCHAR(MAX)')
 		FROM (
 				SELECT
@@ -188,10 +192,21 @@ BEGIN
 			SELECT @IsChineseMarketOnly_old = 'Unchecked'
 		ELSE
 			SELECT @IsChineseMarketOnly_old = 'Checked'
+			
+		IF ISNULL(@Reseller, '0') = '0'
+			SELECT @Reseller = 'No'
+		ELSE
+			SELECT @Reseller = 'Yes'
+		
+		IF ISNULL(@Reseller_old, '0') = '0'
+			SELECT @Reseller_old = 'No'
+		ELSE
+			SELECT @Reseller_old = 'Yes'
 
 		IF @LogActionId = 7
 		BEGIN
 			SELECT @IsChineseMarketOnly_old = NULL
+			SELECT @Reseller_old = NULL
 		END
 
 		-- Backup domain
@@ -647,7 +662,8 @@ BEGIN
 			(49, N'Account 5 (username - password)', @Acc5, @Acc5_old),
 			(50, N'Internal backend URL', @InternalURL, @InternalURL_old),
 			(51, N'OneonOne CS (username - password)', @CS, @CS_old),
-			(52, N'Training Account (username - password)', @TA, @TA_old)
+			(52, N'Training Account (username - password)', @TA, @TA_old),
+			(53, N'Reseller', @Reseller, @Reseller_old)
 	END
 	ELSE IF @LogActionId IN (100,101,102) -- Insert/Update/Delete Contact
 	BEGIN
