@@ -219,7 +219,7 @@ BEGIN
 			FROM (
 				SELECT CONVERT(XML, Data).query('/r/bk/row') AS Data, CONVERT(XML, OldData).query('/r/bk/row') AS OldData
 				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
-				WHERE Id = 16956
+				WHERE Id = @ActionID
 			) B
 		)
 		, CTE1 AS (
