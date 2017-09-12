@@ -15,6 +15,7 @@ AS
 		- 20170328@Percy: Add new function: Client List [RemineID: #70323]
 		- 20170525@Percy: Implement new request [RedmineID: #70326, #74330, #74879]
 		- 20170802@Percy: Support Url testing account [RedmineID: #80712]
+		- 20170828@Scofield: Add Reseller [#82144]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -78,6 +79,7 @@ BEGIN
 			@CS NVARCHAR(MAX),
 			@TA NVARCHAR(MAX),
 			@IsChineseMarketOnly NVARCHAR(MAX),
+			@Reseller NVARCHAR(MAX),
 			@InternalURL NVARCHAR(MAX),
 
 			@TypeOfLicensee_old NVARCHAR(30),
@@ -131,6 +133,7 @@ BEGIN
 			@CS_old NVARCHAR(MAX),
 			@TA_old NVARCHAR(MAX),
 			@IsChineseMarketOnly_old NVARCHAR(MAX),
+			@Reseller_old NVARCHAR(MAX),
 			@InternalURL_old NVARCHAR(MAX)
 
 		-- Client Info
@@ -149,6 +152,7 @@ BEGIN
 			@PM = d.c.value('@pmn', 'NVARCHAR(50)'), -- project manager
 			@AM = d.c.value('@amn', 'NVARCHAR(50)'), -- account manager
 			@IsChineseMarketOnly = d.c.value('@icm', 'NVARCHAR(1)'),
+			@Reseller = d.c.value('@res', 'NVARCHAR(1)'),
 			@InternalURL = d.c.value('@iu', 'NVARCHAR(MAX)'),
 
 			@TypeOfLicensee_old = od.c.value('@tn', 'NVARCHAR(30)'), -- type of licensee
@@ -165,6 +169,7 @@ BEGIN
 			@PM_old = od.c.value('@pmn', 'NVARCHAR(50)'), -- project manager
 			@AM_old = od.c.value('@amn', 'NVARCHAR(50)'), -- account manager
 			@IsChineseMarketOnly_old = od.c.value('@icm', 'NVARCHAR(1)'),
+			@Reseller_old = od.c.value('@res', 'NVARCHAR(1)'),
 			@InternalURL_old = od.c.value('@iu', 'NVARCHAR(MAX)')
 		FROM (
 				SELECT
@@ -188,10 +193,21 @@ BEGIN
 			SELECT @IsChineseMarketOnly_old = 'Unchecked'
 		ELSE
 			SELECT @IsChineseMarketOnly_old = 'Checked'
+			
+		IF ISNULL(@Reseller, '0') = '0'
+			SELECT @Reseller = 'No'
+		ELSE
+			SELECT @Reseller = 'Yes'
+		
+		IF ISNULL(@Reseller_old, '0') = '0'
+			SELECT @Reseller_old = 'No'
+		ELSE
+			SELECT @Reseller_old = 'Yes'
 
 		IF @LogActionId = 7
 		BEGIN
 			SELECT @IsChineseMarketOnly_old = NULL
+			SELECT @Reseller_old = NULL
 		END
 
 		-- Backup domain
@@ -203,7 +219,7 @@ BEGIN
 			FROM (
 				SELECT CONVERT(XML, Data).query('/r/bk/row') AS Data, CONVERT(XML, OldData).query('/r/bk/row') AS OldData
 				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
-				WHERE Id = 16956
+				WHERE Id = @ActionID
 			) B
 		)
 		, CTE1 AS (
@@ -601,53 +617,54 @@ BEGIN
 			(3, N'Company name', @CompanyName, @CompanyName_old),
 			(4, N'Client Status', @ClientStatus, @ClientStatus_old),
 			(5, N'Chinese Market Only', @IsChineseMarketOnly, @IsChineseMarketOnly_old),
-			(6, N'Soft Launch', @SoftLaunch, @SoftLaunch_old),
-			(7, N'Full Launch', @FullLaunch, @FullLaunch_old),
-			(8, N'Main domain URL', @MainUrl, @MainUrl_old),
-			(9, N'Backup Domain URL', @BackupUrl, @BackupUrl_old),
-			(10, N'API URL', @APIUrl, @APIUrl_old),
-			(11, N'Main Contact - Name', @ContactName, @ContactName_old),
-			(12, N'Main Contact - Position', @ContactPosition, @ContactPosition_old),
-			(13, N'Main Contact - Department', @ContactDepartment, @ContactDepartment_old),
-			(14, N'Main Contact - Email', @ContactEmail, @ContactEmail_old),
-			(15, N'Main Contact - Mobile Number', @ContactMobile, @ContactMobile_old),
-			(16, N'Main Contact - Skype username', @ContactSkype, @ContactSkype_old),
-			(17, N'Main Contact - Remark', @ContactRemark, @ContactRemark_old),
-			(18, N'Offered currencies', @OfferedCurrencies, @OfferedCurrencies_old),
-			(19, N'Sportsbook offered languages', @SBOfferedLanguages, @SBOfferedLanguages_old),
-			(20, N'Client Location', @ClientLocation, @ClientLocation_old),
-			(21, N'Client targeted market', @ClientTargetMarket, @ClientTargetMarket_old),
-			(22, N'Preferred communication language', @CommunicationLanguages, @CommunicationLanguages_old),
-			(23, N'Unas service', @UnasService, @UnasService_old),
-			(24, N'Unas service - Username', @UnasService_Username, @UnasService_Username_old),
-			(25, N'Unas service - Password', @UnasService_Password, @UnasService_Password_old),
-			(26, N'Mobile betting service', @MobileService, @MobileService_old),
-			(27, N'Mobile betting service - WAP site URL', @MobileService_WAP, @MobileService_WAP_old),
-			(28, N'Mobile betting service - Smartphone site URL', @MobileService_Smartphone, @MobileService_Smartphone_old),
-			(29, N'BA Agreement', @BAAgreement, @BAAgreement_old),
-			(30, N'BA Agreement - Group', @BAAgreement_Group, @BAAgreement_Group_old),
-			(31, N'BA Agreement - BA Joined date', @BAAgreement_JoinDate, @BAAgreement_JoinDate_old),
-			(32, N'Affiliate Agreement', @Affiliate, @Affiliate_old),
-			(33, N'Client country restrict list', @RestrictedCountry, @RestrictedCountry_old),
-			(34, N'Add exception for client country restrict list', @RestrictedCountry_Exception, @RestrictedCountry_Exception_old),
-			(35, N'Remark', @Remark, @Remark_old),
-			(36, N'Products - Launch - Termination', @Products, @Products_old),
-			(37, N'Features - Launch - Termination', @Features, @Features_old),
-			(38, N'Client Account Manager', @AM, @AM_old),
-			(39, N'Client Project Manager', @PM, @PM_old),
-			(40, N'Account 1''s URL', @AccUrl1, @AccUrl1_old),
-			(41, N'Account 1 (username - password)', @Acc1, @Acc1_old),
-			(42, N'Account 2''s URL', @AccUrl2, @AccUrl2_old),
-			(43, N'Account 2 (username - password)', @Acc2, @Acc2_old),
-			(44, N'Account 3''s URL', @AccUrl3, @AccUrl3_old),
-			(45, N'Account 3 (username - password)', @Acc3, @Acc3_old),
-			(46, N'Account 4''s URL', @AccUrl4, @AccUrl4_old),
-			(47, N'Account 4 (username - password)', @Acc4, @Acc4_old),
-			(48, N'Account 5''s URL', @AccUrl5, @AccUrl5_old),
-			(49, N'Account 5 (username - password)', @Acc5, @Acc5_old),
-			(50, N'Internal backend URL', @InternalURL, @InternalURL_old),
-			(51, N'OneonOne CS (username - password)', @CS, @CS_old),
-			(52, N'Training Account (username - password)', @TA, @TA_old)
+			(6, N'Reseller', @Reseller, @Reseller_old),
+			(7, N'Soft Launch', @SoftLaunch, @SoftLaunch_old),
+			(8, N'Full Launch', @FullLaunch, @FullLaunch_old),
+			(9, N'Main domain URL', @MainUrl, @MainUrl_old),
+			(10, N'Backup Domain URL', @BackupUrl, @BackupUrl_old),
+			(11, N'API URL', @APIUrl, @APIUrl_old),
+			(12, N'Main Contact - Name', @ContactName, @ContactName_old),
+			(13, N'Main Contact - Position', @ContactPosition, @ContactPosition_old),
+			(14, N'Main Contact - Department', @ContactDepartment, @ContactDepartment_old),
+			(15, N'Main Contact - Email', @ContactEmail, @ContactEmail_old),
+			(16, N'Main Contact - Mobile Number', @ContactMobile, @ContactMobile_old),
+			(17, N'Main Contact - Skype username', @ContactSkype, @ContactSkype_old),
+			(18, N'Main Contact - Remark', @ContactRemark, @ContactRemark_old),
+			(19, N'Offered currencies', @OfferedCurrencies, @OfferedCurrencies_old),
+			(20, N'Sportsbook offered languages', @SBOfferedLanguages, @SBOfferedLanguages_old),
+			(21, N'Client Location', @ClientLocation, @ClientLocation_old),
+			(22, N'Client targeted market', @ClientTargetMarket, @ClientTargetMarket_old),
+			(23, N'Preferred communication language', @CommunicationLanguages, @CommunicationLanguages_old),
+			(24, N'Unas service', @UnasService, @UnasService_old),
+			(25, N'Unas service - Username', @UnasService_Username, @UnasService_Username_old),
+			(26, N'Unas service - Password', @UnasService_Password, @UnasService_Password_old),
+			(27, N'Mobile betting service', @MobileService, @MobileService_old),
+			(28, N'Mobile betting service - WAP site URL', @MobileService_WAP, @MobileService_WAP_old),
+			(29, N'Mobile betting service - Smartphone site URL', @MobileService_Smartphone, @MobileService_Smartphone_old),
+			(30, N'BA Agreement', @BAAgreement, @BAAgreement_old),
+			(31, N'BA Agreement - Group', @BAAgreement_Group, @BAAgreement_Group_old),
+			(32, N'BA Agreement - BA Joined date', @BAAgreement_JoinDate, @BAAgreement_JoinDate_old),
+			(33, N'Affiliate Agreement', @Affiliate, @Affiliate_old),
+			(34, N'Client country restrict list', @RestrictedCountry, @RestrictedCountry_old),
+			(35, N'Add exception for client country restrict list', @RestrictedCountry_Exception, @RestrictedCountry_Exception_old),
+			(36, N'Remark', @Remark, @Remark_old),
+			(37, N'Products - Launch - Termination', @Products, @Products_old),
+			(38, N'Features - Launch - Termination', @Features, @Features_old),
+			(39, N'Client Account Manager', @AM, @AM_old),
+			(40, N'Client Project Manager', @PM, @PM_old),
+			(41, N'Account 1''s URL', @AccUrl1, @AccUrl1_old),
+			(42, N'Account 1 (username - password)', @Acc1, @Acc1_old),
+			(43, N'Account 2''s URL', @AccUrl2, @AccUrl2_old),
+			(44, N'Account 2 (username - password)', @Acc2, @Acc2_old),
+			(45, N'Account 3''s URL', @AccUrl3, @AccUrl3_old),
+			(46, N'Account 3 (username - password)', @Acc3, @Acc3_old),
+			(47, N'Account 4''s URL', @AccUrl4, @AccUrl4_old),
+			(48, N'Account 4 (username - password)', @Acc4, @Acc4_old),
+			(49, N'Account 5''s URL', @AccUrl5, @AccUrl5_old),
+			(50, N'Account 5 (username - password)', @Acc5, @Acc5_old),
+			(51, N'Internal backend URL', @InternalURL, @InternalURL_old),
+			(52, N'OneonOne CS (username - password)', @CS, @CS_old),
+			(53, N'Training Account (username - password)', @TA, @TA_old)			
 	END
 	ELSE IF @LogActionId IN (100,101,102) -- Insert/Update/Delete Contact
 	BEGIN
