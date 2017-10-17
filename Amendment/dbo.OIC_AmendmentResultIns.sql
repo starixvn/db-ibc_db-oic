@@ -1,7 +1,7 @@
 USE [bodb_OIC]
 GO
 
-ALTER PROCEDURE [dbo].[OIC_AmendmentMessageIns]
+CREATE PROCEDURE [dbo].[OIC_AmendmentResultIns]
 	 @Title			NVARCHAR(300)
 	,@ContentEn		NVARCHAR(MAX)	= ''
 	,@ReceivedDate	DATETIME
@@ -16,7 +16,7 @@ AS
 /*
 	Created by: bruce.bui
 	Date: 20171010
-	Task: Insert amendment message [Redmine:#81860]
+	Task: Insert amendment result [Redmine:#81860]
 	DB: DBOIC.bodb_OIC
 	
 	Revisions:	
@@ -78,8 +78,8 @@ BEGIN
 END
 GO
 
-GRANT EXECUTE ON [dbo].[OIC_AmendmentMessageIns] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[OIC_AmendmentResultIns] TO [bodbAdminNet] AS [dbo]
 GO
 
-GRANT VIEW DEFINITION ON [dbo].[OIC_AmendmentMessageIns] TO [vnteam] AS [dbo]
+GRANT VIEW DEFINITION ON [dbo].[OIC_AmendmentResultIns] TO [vnteam] AS [dbo]
 GO
