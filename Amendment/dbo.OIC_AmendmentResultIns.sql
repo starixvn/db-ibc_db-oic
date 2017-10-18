@@ -22,7 +22,7 @@ AS
 	Revisions:	
 	Param's Explanation:
 		@SiteId: 0 - Special delete
-				 1 - LRF
+				 -1 - LRF
 		@Tickets: xml format
 			<root>
 				<ticket name="licensee name1" path="file path1"/>
@@ -47,12 +47,10 @@ BEGIN
 				
 	END TRY
 	BEGIN CATCH	
-		SELECT	@Errcode = ERROR_NUMBER(), @ErrMsg = LEFT('Fail to add new amendment message: '+ ERROR_MESSAGE(), 300)	
+		SELECT	@Errcode = ERROR_NUMBER(), @ErrMsg = LEFT('Fail to add new amendment result: '+ ERROR_MESSAGE(), 300)	
 		RETURN
 	END CATCH
 
-	IF @IsTest = 1 RETURN
-	
 	-- write log
 	DECLARE @xml XML = (
 		SELECT	CONVERT(NVARCHAR(MAX),@Tickets) AS '@t'
