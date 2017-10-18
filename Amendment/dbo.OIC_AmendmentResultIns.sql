@@ -1,7 +1,7 @@
 USE [bodb_OIC]
 GO
 
-CREATE PROCEDURE [dbo].[OIC_AmendmentResultIns]
+ALTER PROCEDURE [dbo].[OIC_AmendmentResultIns]
 	 @Title			NVARCHAR(300)
 	,@ContentEn		NVARCHAR(MAX)	= ''
 	,@ReceivedDate	DATETIME
