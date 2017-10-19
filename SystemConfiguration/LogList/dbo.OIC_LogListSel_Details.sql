@@ -16,6 +16,7 @@ AS
 		- 20170525@Percy: Implement new request [RedmineID: #70326, #74330, #74879]
 		- 20170802@Percy: Support Url testing account [RedmineID: #80712]
 		- 20170828@Scofield: Add Reseller [#82144]
+		- 20171019@Scofield: Update log for update Amendment Notification [#84004]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -1575,6 +1576,64 @@ BEGIN
 			(3, N'Content', @Reminder_Content, @Reminder_Content),
 			(4, N'Reminder Type', @Reminder_Type, @Reminder_Type_Old),
 			(5, N'Reminder Options', @Reminder_Option, @Reminder_Option_Old)
+	END
+	ELSE IF @LogActionId IN (5000) -- Update Amendment Notification
+	BEGIN
+		DECLARE
+			@Status NVARCHAR(100),
+			@SubjectEn NVARCHAR(300),
+			@SubjectCh NVARCHAR(300),
+			@SubjectCs NVARCHAR(300),
+			@ContentEn NVARCHAR(MAX),
+			@ContentCh NVARCHAR(MAX),
+			@ContentCs NVARCHAR(MAX),
+			
+			@Status_old NVARCHAR(100),
+			@SubjectEn_old NVARCHAR(300),
+			@SubjectCh_old NVARCHAR(300),
+			@SubjectCs_old NVARCHAR(300),
+			@ContentEn_old NVARCHAR(MAX),
+			@ContentCh_old NVARCHAR(MAX),
+			@ContentCs_old NVARCHAR(MAX)
+
+		SELECT
+			@Status = d.c.value('@sta', 'NVARCHAR(100)'),
+			@SubjectEn = d.c.value('@sen', 'NVARCHAR(300)'),
+			@SubjectCh = d.c.value('@sch', 'NVARCHAR(300)'),
+			@SubjectCs = d.c.value('@scs', 'NVARCHAR(300)'),
+			@ContentEn = d.c.value('@cen', 'NVARCHAR(MAX)'),
+			@ContentCh = d.c.value('@cch', 'NVARCHAR(MAX)'),
+			@ContentCs = d.c.value('@ccs', 'NVARCHAR(MAX)'),
+			
+			@Status_old = od.c.value('@sta', 'NVARCHAR(100)'),
+			@SubjectEn_old = od.c.value('@sen', 'NVARCHAR(300)'),
+			@SubjectCh_old = od.c.value('@sch', 'NVARCHAR(300)'),
+			@SubjectCs_old = od.c.value('@scs', 'NVARCHAR(300)'),
+			@ContentEn_old = od.c.value('@cen', 'NVARCHAR(MAX)'),
+			@ContentCh_old = od.c.value('@cch', 'NVARCHAR(MAX)'),
+			@ContentCs_old = od.c.value('@ccs', 'NVARCHAR(MAX)')
+		FROM (
+			SELECT
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE OldData END AS OldData
+			FROM (
+				SELECT CONVERT(XML, Data).query('/r') AS Data, CONVERT(XML, OldData).query('/r') AS OldData
+				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+				WHERE Id = @ActionID
+			) B
+		) A
+			OUTER APPLY A.Data.nodes('r') d(c)
+			OUTER APPLY A.OldData.nodes('r') od(c)		
+
+		INSERT INTO @Result (ID, Field, NewValue, OldValue)
+		VALUES
+			(1, N'Status', @Status, @Status_old),
+			(2, N'SubjectEn', @SubjectEn, @SubjectEn_old),
+			(3, N'SubjectCh', @SubjectCh, @SubjectCh_old),
+			(4, N'SubjectCs', @SubjectCs, @SubjectCs_old),
+			(5, N'ContentEn', @ContentEn, @ContentEn_old),
+			(6, N'ContentCh', @ContentCh, @ContentCh_old),
+			(7, N'ContentCs', @ContentCs, @ContentCs_old)			
 	END
 	
 	-- return result
