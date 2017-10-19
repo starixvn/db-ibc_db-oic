@@ -9,7 +9,7 @@ GO
 ALTER PROCEDURE [dbo].[OIC_AmendmentNotificationListSel]
 	@FromDate			DATETIME,
 	@ToDate				DATETIME, 
-	@AmendmentStatus	VARCHAR(50) 	= 'all',
+	@AmendmentStatus	INT	 			= 'all',
 	@SelectedLanguage	VARCHAR(10)		= 'En',		
 	@PageSize			INT				= 10,
 	@PageIndex			INT				= 0,
@@ -62,7 +62,7 @@ BEGIN
 			ELSE ContentEn
 			END AS Content	
 	FROM dbo.AmendmentMessage
-	WHERE (@AmendmentStatus = 'all' OR Status IN (SELECT val FROM dbo.strSplit(@AmendmentStatus, ','))) 
+	WHERE (@AmendmentStatus = -1 OR Status = @AmendmentStatus) 
 		AND (ReceivedDate BETWEEN @FromDate AND @ToDate)
 		AND IsTest = 0	
 	
