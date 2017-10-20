@@ -8,11 +8,11 @@ GO
 
 ALTER PROCEDURE [dbo].[OIC_AmendmentNotificationListSel]
 	@FromDate			DATETIME,
-	@ToDate			DATETIME, 
+	@ToDate				DATETIME, 
 	@AmendmentStatus	INT	 			=  -1,
 	@SelectedLanguage	VARCHAR(10)		= 'En',		
 	@PageSize			INT				= 10,
-	@PageIndex		INT				= 0,
+	@PageIndex			INT				= 0,
 	@TotalRecords		INT				= 0	OUTPUT
 AS
 /*
@@ -30,8 +30,8 @@ BEGIN
 			@RowEnd	INT
 	
 	SELECT	@PageIndex   = @PageIndex, 
-			@RowStart	   = @PageSize * @PageIndex + 1,
-			@RowEnd	   = @RowStart + @PageSize - 1
+			@RowStart	 = @PageSize * @PageIndex + 1,
+			@RowEnd	     = @RowStart + @PageSize - 1
 			
 	DECLARE @messageResult TABLE (
 		MessageId 	INT, 
@@ -51,7 +51,7 @@ BEGIN
 			WHEN @SelectedLanguage = 'Cs' AND ISNULL(ContentCs, '') <> '' THEN ContentCs
 			ELSE ContentEn
 			END AS Content	
-	FROM dbo.AmendmentMessage
+	FROM dbo.AmendmentMessage WITH(NOLOCK)
 	WHERE (@AmendmentStatus = -1 OR Status = @AmendmentStatus) 
 		AND (ReceivedDate BETWEEN @FromDate AND @ToDate)
 		AND IsTest = 0)	
@@ -68,7 +68,7 @@ BEGIN
 	FROM @messageResult
 	
 	SELECT TicketId, MessageId, LicenseeName AS SiteName, DataFilePath
-	FROM dbo.AmendmentTicket
+	FROM dbo.AmendmentTicket WITH(NOLOCK)
 	WHERE MessageId IN (SELECT MessageId FROM @messageResult)
 	
 	SET @TotalRecords = (SELECT TOP 1 TotalRecords FROM @messageResult)

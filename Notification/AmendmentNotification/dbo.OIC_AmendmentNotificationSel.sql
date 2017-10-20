@@ -18,10 +18,10 @@ BEGIN
 	SET NOCOUNT ON
 		
 	SELECT MessageId, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, Status, ReceivedDate
-	FROM dbo.AmendmentMessage
+	FROM dbo.AmendmentMessage WITH(NOLOCK)
 	WHERE MessageID = @MessageId
 			
 	SELECT TicketId, MessageId, LicenseeName AS SiteName, DataFilePath
-	FROM dbo.AmendmentTicket
+	FROM dbo.AmendmentTicket WITH(NOLOCK)
 	WHERE MessageID = @MessageId
 END
