@@ -47,7 +47,8 @@ BEGIN
 				
 	END TRY
 	BEGIN CATCH	
-		SELECT	@Errcode = ERROR_NUMBER(), @ErrMsg = LEFT('Fail to add new amendment result: '+ ERROR_MESSAGE(), 300)	
+		SELECT	@Errcode = 100,
+				@ErrMsg = dbo.f_Get_MsgNamebyMsgID (50000, 'E')
 		RETURN
 	END CATCH
 
