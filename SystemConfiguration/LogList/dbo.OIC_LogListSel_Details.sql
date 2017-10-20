@@ -1577,7 +1577,7 @@ BEGIN
 			(4, N'Reminder Type', @Reminder_Type, @Reminder_Type_Old),
 			(5, N'Reminder Options', @Reminder_Option, @Reminder_Option_Old)
 	END
-	ELSE IF @LogActionId IN (5000) -- Update Amendment Notification
+	ELSE IF @LogActionId IN (4006) -- Update Amendment Notification
 	BEGIN
 		DECLARE
 			@Status NVARCHAR(100),

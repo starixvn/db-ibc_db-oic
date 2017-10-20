@@ -1,14 +1,15 @@
-
-INSERT INTO dbo.LogActionType( ActionTypeNameEn )
-VALUES( 'Amendment Result' );
+USE [bodb_OIC]
+GO
 
 INSERT INTO dbo.LogAction( LogActionId, LogActionTypeId, SPName, ActionNameEn, Enable, "Order" )
-VALUES( 5000, 5, 'OIC_AmendmentNotificationUpd', 'Update Result Amendment Notification', 1, 5001 );
+VALUES ( 4005, 4, 'OIC_AmendmentResultIns', 'Insert Result Amendment Notification', 1, 4006 ),
+	( 4006, 4, 'OIC_AmendmentNotificationUpd', 'Update Result Amendment Notification', 1, 4007 );
 
-
-INSERT INTO dbo.MessageErrorGroup( GroupName )
-VALUES( 'Amendment Result' );
-
-INSERT INTO MessageError(MessageErrorId, MessageErrorGroupId, ContentEn)
-VALUES (50000, 5, 'Fail to add new amendment result'),
-	(50001, 5, 'Fail to update new amendment result')
+INSERT INTO dbo.MessageError(MessageErrorId, MessageErrorGroupId, ContentEn)
+VALUES (40002, 4, 'Fail to add new amendment result'),
+	(40003, 4, 'Fail to update amendment result');
+	
+UPDATE dbo.LogAction
+  SET
+      Enable = 0
+WHERE LogActionId IN(4000, 4001, 4002, 4003, 4004);

@@ -73,7 +73,7 @@ BEGIN
 				SELECT TOP 1 1
 				FROM dbo.LogActionType lt WITH(NOLOCK)
 					INNER JOIN dbo.LogAction l WITH(NOLOCK) ON lt.LogActionTypeId = l.LogActionTypeId
-				WHERE lt.LogActionTypeId <> 4  AND l.[Enable] = 1 AND ul.LogActionId  = l.LogActionId
+				WHERE l.[Enable] = 1 AND ul.LogActionId  = l.LogActionId
 			) 
 
 		-- Target: Client
@@ -234,7 +234,7 @@ BEGIN
 		END
 		
 		-- Target Notification
-		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (5000)))			
+		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (4006)))			
 		BEGIN
 			INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy)
 			SELECT DISTINCT A.LogID, A.LogDate, A.[Action], A.[Target], A.DoneBy
@@ -242,7 +242,7 @@ BEGIN
 				SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], 'Notification' AS [Target], ll.DoneBy
 				FROM #LogList ll
 					INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
-				WHERE la.LogActionId IN (5000)
+				WHERE la.LogActionId IN (4006)
 			) A			
 		END
 	END

@@ -48,7 +48,7 @@ BEGIN
 	END TRY
 	BEGIN CATCH	
 		SELECT	@Errcode = 100,
-				@ErrMsg = dbo.f_Get_MsgNamebyMsgID (50000, 'E')
+				@ErrMsg = dbo.f_Get_MsgNamebyMsgID (40002, 'E')
 		RETURN
 	END CATCH
 
