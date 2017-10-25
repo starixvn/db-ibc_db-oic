@@ -116,7 +116,7 @@ BEGIN
 			,0 AS IsDisable
 	FROM	dbo.Message m WITH(NOLOCK)
 	INNER JOIN dbo.UserMessage um WITH(NOLOCK)
-		ON	m.MessageId = um.MessageId
+		ON	m.MessageId = um.MessageId AND um.LicenseeName IS NULL -- for Internal Notifications
 	WHERE	(m.MessageTypeId = @MessageTypeId 
 				OR @MessageTypeId = 0)
 			AND m.MessageTypeId IN (SELECT MessageTypeId FROM @tblMessageType)
@@ -190,7 +190,7 @@ BEGIN
 		SELECT t.MessageId, STUFF((SELECT ', ' + u.DisplayName
 								FROM	dbo.UserMessage lm WITH(NOLOCK)					
 									INNER JOIN dbo.UserInfo u WITH(NOLOCK)
-										ON u.UserId = lm.UserId
+										ON u.UserId = lm.UserId AND lm.LicenseeName IS NULL -- for Internal Notifications
 								WHERE	lm.MessageId = t.MessageId
 								FOR XML PATH ('')
 						),1,1,'') AS ToList

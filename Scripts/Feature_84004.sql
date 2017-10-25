@@ -15,3 +15,5 @@ UPDATE dbo.LogAction
   SET
       Enable = 0
 WHERE LogActionId IN(4000, 4001, 4002, 4003, 4004);
+
+ALTER TABLE dbo.UserMessage ADD LicenseeName VARCHAR(300); 
