@@ -73,3 +73,9 @@ BEGIN
 	
 	SET @TotalRecords = (SELECT TOP 1 TotalRecords FROM @messageResult)
 END
+GO
+
+GO
+GRANT EXECUTE ON [dbo].OIC_AmendmentNotificationListSel TO [bodbAdminNet] AS [dbo]
+GO
+GRANT VIEW DEFINITION ON [dbo].OIC_AmendmentNotificationListSel TO [vnteam] AS [dbo]

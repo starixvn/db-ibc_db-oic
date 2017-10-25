@@ -6,8 +6,8 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER PROCEDURE [dbo].[OIC_AmendmentMessageUserIns]
-	@TicketID			INT,
+ALTER PROCEDURE [dbo].[OIC_APIUserMessageIns]
+	@MessageID		INT,
 	@UserId			INT,
 	@LicenseeName		VARCHAR(300),
 	@IP				VARCHAR(50)	= NULL,
@@ -32,19 +32,19 @@ BEGIN
 
     SET @startRun = GETDATE()	
 	
-	BEGIN TRY	
-		INSERT INTO dbo.AmendmentMessageUser (TicketID, UserID, LicenseeName, IsRead, UpdatedDate)
-		VALUES (@TicketID, @UserId, @LicenseeName, 1, GETDATE())
+	BEGIN TRY		
+		INSERT INTO dbo.UserMessage (MessageId, UserID, LicenseeName, IsRead, LastReadTime)
+		VALUES (@MessageID, @UserId, @LicenseeName, 1, GETDATE())
 	END TRY
 	BEGIN CATCH	
 		SELECT	@Errcode = 100,
-				@ErrMsg = dbo.f_Get_MsgNamebyMsgID (40004, 'E')
+				@ErrMsg = dbo.f_Get_MsgNamebyMsgID (40005, 'E')
 		RETURN
 	END CATCH
 	
 	-- write log
 	SET @xml = (
-			 SELECT	@TicketID			AS '@tid',
+			 SELECT	@MessageID			AS '@mid',
 					   @UserId		AS '@uid',
 					   @LicenseeName	AS '@lin'
 			 FOR XML PATH('r'), TYPE)		
@@ -61,6 +61,11 @@ BEGIN
 		,@IP			= @IP
 		,@Data		= @logSPData
 		,@OldData		= Null
-		,@Duration	= @duration
-	
+		,@Duration	= @duration	
 END
+GO
+
+GO
+GRANT EXECUTE ON [dbo].OIC_APIUserMessageIns TO [bodbAdminNet] AS [dbo]
+GO
+GRANT VIEW DEFINITION ON [dbo].OIC_APIUserMessageIns TO [vnteam] AS [dbo]

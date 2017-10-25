@@ -1,7 +1,7 @@
 USE [bodb_OIC]
 GO
 
-ALTER PROCEDURE [dbo].[OIC_AmendmentResultIns]
+ALTER PROCEDURE [dbo].[OIC_APIAmendmentResultIns]
 	 @Title			NVARCHAR(300)
 	,@ContentEn		NVARCHAR(MAX)	= ''
 	,@ReceivedDate	DATETIME
@@ -77,8 +77,8 @@ BEGIN
 END
 GO
 
-GRANT EXECUTE ON [dbo].[OIC_AmendmentResultIns] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[OIC_APIAmendmentResultIns] TO [bodbAdminNet] AS [dbo]
 GO
 
-GRANT VIEW DEFINITION ON [dbo].[OIC_AmendmentResultIns] TO [vnteam] AS [dbo]
+GRANT VIEW DEFINITION ON [dbo].[OIC_APIAmendmentResultIns] TO [vnteam] AS [dbo]
 GO

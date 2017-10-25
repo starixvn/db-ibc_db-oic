@@ -6,7 +6,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER PROCEDURE [dbo].[OIC_AmendmentMessageListSel]
+ALTER PROCEDURE [dbo].[OIC_APIAmendmentMessageListSel]
 	@FromDate			DATETIME,
 	@ToDate				DATETIME, 
 	@UserId				INT,
@@ -21,8 +21,7 @@ AS
 	Date: 20171023 [#84004]
 	DB: DBOIC.bodb_OIC
 
-	Param's Explanation:
-		@SelectedLanguage: 'En', 'Ch', 'Cs'
+	Param's Explanation:		
  */
 BEGIN
 	SET NOCOUNT ON
@@ -53,8 +52,7 @@ BEGIN
 		am.MessageID, am.SubjectEn, am.SubjectCh, am.SubjectCs, am.ContentEn, am.ContentCh, am.ContentCs, am.ReceivedDate, at.TicketID, at.DataFilePath
 	FROM dbo.AmendmentMessage am WITH(NOLOCK)
 	INNER JOIN dbo.AmendmentTicket at WITH(NOLOCK) ON am.MessageID = at.MessageID
-	LEFT JOIN (SELECT * FROM dbo.AmendmentMessageUser 
-				WHERE UserID = @UserId AND LicenseeName = @LicenseeName) mu ON at.TicketID = mu.TicketID
+	LEFT JOIN dbo.AmendmentMessageUser mu ON at.TicketID = mu.TicketID AND mu.UserID = @UserId AND mu.LicenseeName = @LicenseeName
 	WHERE am.Status = @ActiveStatus AND (am.ReceivedDate BETWEEN @FromDate AND @ToDate) AND am.IsTest = 0
 		AND LOWER(RTRIM(LTRIM(at.LicenseeName))) = LOWER(RTRIM(LTRIM(@LicenseeName)))
 		AND (@IsOnlyUnread = 0 OR mu.TicketID IS NULL)
@@ -73,3 +71,10 @@ BEGIN
 	
 	SET @TotalRecords = (SELECT TOP 1 TotalRecords FROM @messageResult)
 END
+GO
+
+GRANT EXECUTE ON [dbo].[OIC_APIAmendmentMessageListSel] TO [bodbAdminNet] AS [dbo]
+GO
+
+GRANT VIEW DEFINITION ON [dbo].[OIC_APIAmendmentMessageListSel] TO [vnteam] AS [dbo]
+GO

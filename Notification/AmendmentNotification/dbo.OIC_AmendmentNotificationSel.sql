@@ -25,3 +25,9 @@ BEGIN
 	FROM dbo.AmendmentTicket WITH(NOLOCK)
 	WHERE MessageID = @MessageId
 END
+GO
+
+GO
+GRANT EXECUTE ON [dbo].OIC_AmendmentNotificationSel TO [bodbAdminNet] AS [dbo]
+GO
+GRANT VIEW DEFINITION ON [dbo].OIC_AmendmentNotificationSel TO [vnteam] AS [dbo]
