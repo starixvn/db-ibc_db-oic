@@ -1,12 +1,12 @@
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_AmendmentResultIns]    Script Date: 10/26/2017 8:57:07 AM ******/
+
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER PROCEDURE [dbo].[OIC_AmendmentResultIns]
+ALTER PROCEDURE [dbo].[OIC_APIAmendmentResultIns]
 	 @Title			NVARCHAR(300)
 	,@ReceivedDate	DATETIME
 	,@Tickets		XML

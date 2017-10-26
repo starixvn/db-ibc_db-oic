@@ -44,12 +44,14 @@ BEGIN
 		ContentCh 		VARCHAR(MAX), 
 		ContentCs 		VARCHAR(MAX), 
 		Date			DateTime,
+		IsRead			BIT,
 		DataFilePath	VARCHAR(MAX),
 		TotalRecords	INT)	
 	 
 	;WITH tempMessage AS
 	(SELECT ROW_NUMBER() OVER(ORDER BY am.ReceivedDate DESC) AS RowNumber,
-		am.MessageID, am.SubjectEn, am.SubjectCh, am.SubjectCs, am.ContentEn, am.ContentCh, am.ContentCs, am.ReceivedDate, at.TicketID, at.DataFilePath
+		am.MessageID, am.SubjectEn, am.SubjectCh, am.SubjectCs, am.ContentEn, am.ContentCh, am.ContentCs, am.ReceivedDate, at.TicketID, at.DataFilePath, 
+		ISNULL(mu.IsRead, 0) AS IsRead
 	FROM dbo.AmendmentMessage am WITH(NOLOCK)
 	INNER JOIN dbo.AmendmentTicket at WITH(NOLOCK) ON am.MessageID = at.MessageID
 	LEFT JOIN dbo.AmendmentMessageUser mu ON at.TicketID = mu.TicketID AND mu.UserID = @UserId AND mu.LicenseeName = @LicenseeName
@@ -58,15 +60,15 @@ BEGIN
 		AND (@IsOnlyUnread = 0 OR mu.TicketID IS NULL)
 	)
 		
-	INSERT INTO @messageResult(MessageID, TicketID, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, Date, DataFilePath, TotalRecords)
-	SELECT tmp.MessageID, tmp.TicketID, tmp.SubjectEn, tmp.SubjectCh, tmp.SubjectCs, tmp.ContentEn, tmp.ContentCh, tmp.ContentCs, tmp.ReceivedDate AS Date, tmp.DataFilePath, 
+	INSERT INTO @messageResult(MessageID, TicketID, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, Date, DataFilePath, IsRead, TotalRecords)
+	SELECT tmp.MessageID, tmp.TicketID, tmp.SubjectEn, tmp.SubjectCh, tmp.SubjectCs, tmp.ContentEn, tmp.ContentCh, tmp.ContentCs, tmp.ReceivedDate AS Date, tmp.DataFilePath, tmp.IsRead,
 		(SELECT MAX(RowNumber) FROM tempMessage) AS TotalRecords
 	FROM tempMessage tmp
 	WHERE tmp.RowNumber BETWEEN @RowStart AND @RowEnd
 	ORDER BY tmp.ReceivedDate DESC
 	
 	-- Select Results
-	SELECT MessageID, TicketID, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, Date, DataFilePath
+	SELECT MessageID, TicketID, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, Date, DataFilePath, IsRead
 	FROM @messageResult
 	
 	SET @TotalRecords = (SELECT TOP 1 TotalRecords FROM @messageResult)
