@@ -1,12 +1,15 @@
 USE [bodb_OIC]
 GO
+/****** Object:  StoredProcedure [dbo].[OIC_AmendmentResultIns]    Script Date: 10/26/2017 8:57:07 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-ALTER PROCEDURE [dbo].[OIC_APIAmendmentResultIns]
+ALTER PROCEDURE [dbo].[OIC_AmendmentResultIns]
 	 @Title			NVARCHAR(300)
-	,@ContentEn		NVARCHAR(MAX)	= ''
 	,@ReceivedDate	DATETIME
 	,@Tickets		XML
-	,@Status		SMALLINT
 	,@SiteId		SMALLINT
 	,@IsTest		BIT				= 0
 	,@IP			VARCHAR(50)		= NULL
@@ -28,6 +31,7 @@ AS
 				<ticket name="licensee name1" path="file path1"/>
 				<ticket name="licensee name2" path="file path2"/>
 			</root>
+	     status column = 0 -- for new result.
 */
 BEGIN
 	SET NOCOUNT ON
@@ -36,8 +40,8 @@ BEGIN
 	SELECT @Errcode = 0, @ErrMsg = ''
 	
 	BEGIN TRY		
-		INSERT INTO dbo.AmendmentMessage(SubjectEn, ContentEn, [Status], ReceivedDate, IsTest)
-		SELECT	@Title, @ContentEn, @Status, @ReceivedDate, @IsTest
+		INSERT INTO dbo.AmendmentMessage(SubjectEn, [Status], ReceivedDate, IsTest)
+		SELECT	@Title, 0, @ReceivedDate, @IsTest
 		
 		DECLARE @MessageId INT = SCOPE_IDENTITY()
 		
@@ -56,9 +60,9 @@ BEGIN
 	DECLARE @xml XML = (
 		SELECT	CONVERT(NVARCHAR(MAX),@Tickets) AS '@t'
 			,@ReceivedDate			AS '@rcd'
-			,@Status				AS '@st'
+			,0				AS '@st'
 			,@Title					AS '@tt'
-			,@ContentEn				AS '@ce'
+			
 		FOR XML PATH('r'), TYPE
 	)		
 		
@@ -75,10 +79,3 @@ BEGIN
 		,@OldData		= NULL
 		,@Duration		= @Duration	
 END
-GO
-
-GRANT EXECUTE ON [dbo].[OIC_APIAmendmentResultIns] TO [bodbAdminNet] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[OIC_APIAmendmentResultIns] TO [vnteam] AS [dbo]
-GO
