@@ -64,6 +64,7 @@ BEGIN
 	INNER JOIN dbo.Licensee l ON lm.LicenseeId = l.LicenseeId
 	LEFT JOIN dbo.UserMessage um ON um.MessageId = m.MessageId AND um.UserId = @UserId AND um.LicenseeName = @LicenseeName
 	WHERE (@MessageTypeId = 0 OR m.MessageTypeId =@MessageTypeId)
+		AND m.MessageTypeId IN (40, 41, 42, 43, 44)
 		AND m.CreateTime BETWEEN @FromDate AND @ToDate
 		AND LOWER(RTRIM(LTRIM(l.LicenseeName))) = LOWER(RTRIM(LTRIM(@LicenseeName)))
 		AND (@IsOnlyUnread = 0 OR um.MessageId IS NULL)
