@@ -1,9 +1,6 @@
-USE [bodb_OIC]
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+USE [bodb_OIC]
 GO
 
 CREATE PROCEDURE [dbo].[OIC_APIAmendmentResultIns]
@@ -79,3 +76,4 @@ BEGIN
 		,@OldData		= NULL
 		,@Duration		= @Duration	
 END
+GO
