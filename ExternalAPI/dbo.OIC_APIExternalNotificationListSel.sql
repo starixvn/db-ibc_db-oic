@@ -19,6 +19,9 @@ AS
 	Date: 20171025
 	Task: [Redmine:#84004]
 	DB: DBOIC.bodb_OIC
+	
+	Revisions:	
+		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
 
 	Param's Explanation:
 		@MessageTypeId:	 

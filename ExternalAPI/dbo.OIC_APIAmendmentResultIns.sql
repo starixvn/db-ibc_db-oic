@@ -20,6 +20,8 @@ AS
 	DB: DBOIC.bodb_OIC
 	
 	Revisions:	
+		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
+
 	Param's Explanation:
 		@SiteId: 0 - Special delete
 				 -1 - LRF
