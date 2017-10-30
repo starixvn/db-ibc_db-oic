@@ -1,9 +1,6 @@
-USE [bodb_OIC]
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+USE [bodb_OIC]
 GO
 
 ALTER PROCEDURE [dbo].[OIC_AmendmentNotificationSel]
@@ -13,6 +10,9 @@ AS
 	Created by: Scofield
 	Date: 20171017 [#84004]
 	DB: DBOIC.bodb_OIC
+	
+	Revisions:	
+		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
  */
 BEGIN
 	SET NOCOUNT ON
@@ -26,8 +26,3 @@ BEGIN
 	WHERE MessageID = @MessageId
 END
 GO
-
-GO
-GRANT EXECUTE ON [dbo].OIC_AmendmentNotificationSel TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].OIC_AmendmentNotificationSel TO [vnteam] AS [dbo]

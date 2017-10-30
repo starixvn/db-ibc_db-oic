@@ -1,9 +1,6 @@
-USE [bodb_OIC]
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+USE [bodb_OIC]
 GO
 
 ALTER PROCEDURE [dbo].[OIC_AmendmentNotificationListSel]
@@ -19,6 +16,9 @@ AS
 	Created by: Scofield
 	Date: 20171017 [#84004]
 	DB: DBOIC.bodb_OIC
+	
+	Revisions:	
+		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
 
 	Param's Explanation:
 		@@AmendmentStatus: -1: All, 0: New, 1: Active, 2: Inactive, 3: Expired		
@@ -74,8 +74,3 @@ BEGIN
 	SET @TotalRecords = (SELECT TOP 1 TotalRecords FROM @messageResult)
 END
 GO
-
-GO
-GRANT EXECUTE ON [dbo].OIC_AmendmentNotificationListSel TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].OIC_AmendmentNotificationListSel TO [vnteam] AS [dbo]

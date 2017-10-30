@@ -1,3 +1,5 @@
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+
 USE [bodb_OIC]
 GO
 
@@ -136,6 +138,3 @@ BEGIN
 	DROP TABLE #tblMessage
 END
 GO
-GRANT EXECUTE ON [dbo].[OIC_ReminderSel] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_ReminderSel] TO [vnteam] AS [dbo]
