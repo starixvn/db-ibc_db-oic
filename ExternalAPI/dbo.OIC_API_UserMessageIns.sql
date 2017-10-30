@@ -3,7 +3,7 @@
 USE [bodb_OIC]
 GO
 
-CREATE PROCEDURE [dbo].[OIC_APIUserMessageIns]
+CREATE PROCEDURE [dbo].[OIC_API_UserMessageIns]
 	@MessageID		INT,
 	@UserId			INT,
 	@LicenseeName		VARCHAR(300),

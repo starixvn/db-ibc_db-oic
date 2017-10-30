@@ -3,7 +3,7 @@
 USE [bodb_OIC]
 GO
 
-CREATE PROCEDURE [dbo].[OIC_APIExternalNotificationListSel]
+CREATE PROCEDURE [dbo].[OIC_API_ExternalNotificationListSel]
 	@MessageTypeId		INT			= 0,
 	@FromDate			DATETIME,
 	@ToDate				DATETIME, 
