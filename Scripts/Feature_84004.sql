@@ -7,7 +7,7 @@ CREATE TABLE [dbo].[AmendmentMessageUser](
 	[LicenseeName] [nvarchar](300) NOT NULL,
 	[IsRead] [bit] NOT NULL,
 	[UpdatedDate] [datetime] NOT NULL,
- CONSTRAINT [PK_TicketIdUserIdLicenseeName] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_AmendmentMessageUser] PRIMARY KEY CLUSTERED 
 (
 	[TicketID] ASC,
 	[UserID] ASC,
@@ -48,9 +48,6 @@ GO
 ALTER TABLE dbo.UserMessage ADD LicenseeName VARCHAR(300) NOT NULL DEFAULT '';
 ALTER TABLE dbo.UserMessage DROP CONSTRAINT PK_UserMessage;
 ALTER TABLE dbo.UserMessage ADD CONSTRAINT PK_UserMessage PRIMARY KEY (MessageId, UserId, LicenseeName);
-GO
-
-ALTER TABLE dbo.AmendmentMessageUser ADD CONSTRAINT PK_AmendmentMessageUser PRIMARY KEY (TicketID, UserId, LicenseeName);
 GO
 
 INSERT INTO dbo.LogAction( LogActionId, LogActionTypeId, SPName, ActionNameEn, Enable, "Order" )
