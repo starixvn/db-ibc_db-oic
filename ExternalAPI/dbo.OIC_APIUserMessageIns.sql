@@ -32,6 +32,13 @@ BEGIN
 
     SET @startRun = GETDATE()	
 	
+	IF NOT EXISTS (SELECT 1 FROM dbo.Message WHERE MessageId = @MessageID)
+	BEGIN
+		SELECT	@Errcode = 100,
+				@ErrMsg = dbo.f_Get_MsgNamebyMsgID (40005, 'E')
+		RETURN
+	END
+	
 	BEGIN TRY		
 		INSERT INTO dbo.UserMessage (MessageId, UserID, LicenseeName, IsRead, LastReadTime)
 		VALUES (@MessageID, @UserId, @LicenseeName, 1, GETDATE())

@@ -32,6 +32,13 @@ BEGIN
 
     SET @startRun = GETDATE()	
 	
+	IF NOT EXISTS (SELECT 1 FROM dbo.AmendmentTicket WHERE TicketID = @TicketID)
+	BEGIN
+		SELECT	@Errcode = 100,
+				@ErrMsg = dbo.f_Get_MsgNamebyMsgID (40004, 'E')
+		RETURN
+	END
+	
 	BEGIN TRY	
 		INSERT INTO dbo.AmendmentMessageUser (TicketID, UserID, LicenseeName, IsRead, UpdatedDate)
 		VALUES (@TicketID, @UserId, @LicenseeName, 1, GETDATE())
