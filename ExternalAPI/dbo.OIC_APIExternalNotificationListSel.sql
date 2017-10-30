@@ -6,7 +6,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER PROCEDURE [dbo].[OIC_APIExternalNotificationListSel]
+CREATE PROCEDURE [dbo].[OIC_APIExternalNotificationListSel]
 	@MessageTypeId		INT			= 0,
 	@FromDate			DATETIME,
 	@ToDate				DATETIME, 

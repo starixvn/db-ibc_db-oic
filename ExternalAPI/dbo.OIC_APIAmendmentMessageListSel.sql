@@ -6,7 +6,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER PROCEDURE [dbo].[OIC_APIAmendmentMessageListSel]
+CREATE PROCEDURE [dbo].[OIC_APIAmendmentMessageListSel]
 	@FromDate			DATETIME,
 	@ToDate				DATETIME, 
 	@UserId				INT,

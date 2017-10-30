@@ -6,7 +6,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER PROCEDURE [dbo].[OIC_APIUserMessageIns]
+CREATE PROCEDURE [dbo].[OIC_APIUserMessageIns]
 	@MessageID		INT,
 	@UserId			INT,
 	@LicenseeName		VARCHAR(300),

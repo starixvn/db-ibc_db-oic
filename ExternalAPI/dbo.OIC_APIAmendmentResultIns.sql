@@ -6,7 +6,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER PROCEDURE [dbo].[OIC_APIAmendmentResultIns]
+CREATE PROCEDURE [dbo].[OIC_APIAmendmentResultIns]
 	 @Title			NVARCHAR(300)
 	,@ReceivedDate	DATETIME
 	,@Tickets		XML

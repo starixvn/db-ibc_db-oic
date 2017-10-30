@@ -6,7 +6,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER PROCEDURE [dbo].[OIC_APIAmendmentMessageUserIns]
+CREATE PROCEDURE [dbo].[OIC_APIAmendmentMessageUserIns]
 	@TicketID			INT,
 	@UserId			INT,
 	@LicenseeName		VARCHAR(300),
