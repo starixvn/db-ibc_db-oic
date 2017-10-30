@@ -64,8 +64,3 @@ BEGIN
 		,@Duration	= @duration	
 END
 GO
-
-GO
-GRANT EXECUTE ON [dbo].OIC_APIUserMessageIns TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].OIC_APIUserMessageIns TO [vnteam] AS [dbo]

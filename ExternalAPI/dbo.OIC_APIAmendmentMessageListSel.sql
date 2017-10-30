@@ -74,9 +74,3 @@ BEGIN
 	SET @TotalRecords = (SELECT TOP 1 TotalRecords FROM @messageResult)
 END
 GO
-
-GRANT EXECUTE ON [dbo].[OIC_APIAmendmentMessageListSel] TO [bodbAdminNet] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[OIC_APIAmendmentMessageListSel] TO [vnteam] AS [dbo]
-GO

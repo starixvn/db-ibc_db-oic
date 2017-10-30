@@ -66,8 +66,3 @@ BEGIN
 END
 GO
 
-GRANT EXECUTE ON [dbo].[OIC_APIAmendmentMessageUserIns] TO [bodbAdminNet] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[OIC_APIAmendmentMessageUserIns] TO [vnteam] AS [dbo]
-GO
