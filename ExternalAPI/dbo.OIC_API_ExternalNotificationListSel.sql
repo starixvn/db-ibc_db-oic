@@ -67,7 +67,7 @@ BEGIN
 		AND m.MessageTypeId IN (40, 41, 42, 43, 44)
 		AND m.CreateTime BETWEEN @FromDate AND @ToDate
 		AND LOWER(RTRIM(LTRIM(l.LicenseeName))) = LOWER(RTRIM(LTRIM(@LicenseeName)))
-		AND (@IsOnlyUnread = 0 OR um.MessageId IS NULL)
+		AND (@IsOnlyUnread = 0 OR um.IsRead IS NULL OR um.IsRead = 0)
 	)
 	
 	INSERT INTO @messageResult(MessageID, MessageTypeId, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, Date, IsRead, TotalRecords)

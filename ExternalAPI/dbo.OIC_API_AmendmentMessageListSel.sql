@@ -57,7 +57,7 @@ BEGIN
 	LEFT JOIN dbo.AmendmentMessageUser mu ON at.TicketID = mu.TicketID AND mu.UserID = @UserId AND mu.LicenseeName = @LicenseeName
 	WHERE am.Status = @ActiveStatus AND (am.ReceivedDate BETWEEN @FromDate AND @ToDate) AND am.IsTest = 0
 		AND LOWER(RTRIM(LTRIM(at.LicenseeName))) = LOWER(RTRIM(LTRIM(@LicenseeName)))
-		AND (@IsOnlyUnread = 0 OR mu.TicketID IS NULL)
+		AND (@IsOnlyUnread = 0 OR mu.IsRead IS NULL OR mu.IsRead = 0)
 	)
 		
 	INSERT INTO @messageResult(MessageID, TicketID, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, Date, DataFilePath, IsRead, TotalRecords)
