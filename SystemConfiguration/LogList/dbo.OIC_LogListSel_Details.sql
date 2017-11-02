@@ -1642,6 +1642,57 @@ BEGIN
 			(6, N'ContentCh', @ContentCh, @ContentCh_old),
 			(7, N'ContentCs', @ContentCs, @ContentCs_old)			
 	END
+	ELSE IF @LogActionId IN (4009) -- Update Reminder
+	BEGIN
+		DECLARE
+			@ReminderMessageId 		NVARCHAR(300),
+			@Subject 		NVARCHAR(300),
+			
+			@ReminderTypeId INT,
+			@ReminderType 	NVARCHAR(50),
+			@ReminderOption NVARCHAR(MAX),
+			
+			@ReminderTypeId_old INT,
+			@ReminderType_old 	NVARCHAR(50),
+			@ReminderOption_old NVARCHAR(MAX)
+
+		SELECT
+			@ReminderMessageId = d.c.value('@mi', 'NVARCHAR(300)'),
+			
+			@ReminderTypeId = d.c.value('@rti', 'NVARCHAR(50)'),
+			@ReminderOption = d.c.value('@rtv', 'NVARCHAR(MAX)'),
+			
+			@ReminderTypeId_old = od.c.value('@rti', 'NVARCHAR(50)'),
+			@ReminderOption_old = od.c.value('@rtv', 'NVARCHAR(MAX)')
+		FROM (
+			SELECT
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE OldData END AS OldData
+			FROM (
+				SELECT CONVERT(XML, Data).query('/r') AS Data, CONVERT(XML, OldData).query('/r') AS OldData
+				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+				WHERE Id = @ActionID
+			) B
+		) A
+			OUTER APPLY A.Data.nodes('r') d(c)
+			OUTER APPLY A.OldData.nodes('r') od(c)		
+
+		SELECT @Subject = SubjectEn
+		FROM dbo.Message WITH(NOLOCK)
+		WHERE MessageId = @ReminderMessageId
+
+		SELECT @ReminderType = ReminderTypeName
+		FROM dbo.ReminderType WITH(NOLOCK) WHERE ReminderTypeId = @ReminderTypeId
+
+		SELECT @ReminderType_old = ReminderTypeName
+		FROM dbo.ReminderType WITH(NOLOCK) WHERE ReminderTypeId = @ReminderTypeId_old
+			  
+		INSERT INTO @Result (ID, Field, NewValue, OldValue)
+		VALUES
+			(1, N'Subject', @Subject, @Subject),
+			(2, N'Reminder Type', @ReminderType, @ReminderType_old),
+			(3, N'Reminder Options', @ReminderOption, @ReminderOption_old)		
+	END
 	
 	-- return result
 	IF @LogActionId NOT IN (101, 401, 3014) -- Update Contact/Training/Reminder

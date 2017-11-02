@@ -234,7 +234,7 @@ BEGIN
 		END
 		
 		-- Target Notification
-		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (4006)))			
+		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (4006, 4009)))			
 		BEGIN
 			INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy)
 			SELECT DISTINCT A.LogID, A.LogDate, A.[Action], A.[Target], A.DoneBy
@@ -242,7 +242,7 @@ BEGIN
 				SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], 'Notification' AS [Target], ll.DoneBy
 				FROM #LogList ll
 					INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
-				WHERE la.LogActionId IN (4006)
+				WHERE la.LogActionId IN (4006, 4009)
 			) A			
 		END
 	END
