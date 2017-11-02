@@ -1625,6 +1625,13 @@ BEGIN
 			OUTER APPLY A.Data.nodes('r') d(c)
 			OUTER APPLY A.OldData.nodes('r') od(c)		
 
+		SELECT @Status = CASE WHEN @Status = '1' THEN 'Active'
+							  WHEN @Status = '2' THEN 'Inactive'
+							  ELSE 'New' END,
+			   @Status_old = CASE WHEN @Status_old = '1' THEN 'Active'
+							  WHEN @Status_old = '2' THEN 'Inactive'
+							  ELSE 'New' END;	
+			  
 		INSERT INTO @Result (ID, Field, NewValue, OldValue)
 		VALUES
 			(1, N'Status', @Status, @Status_old),
