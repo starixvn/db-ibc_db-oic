@@ -21,7 +21,7 @@ AS
 		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
 
 	Param's Explanation:
-		@@AmendmentStatus: -1: All, 0: New, 1: Active, 2: Inactive, 3: Expired		
+		@@AmendmentStatus: -1: All, 0: New, 1: Active, 2: Inactive		
  */
 BEGIN
 	SET NOCOUNT ON
