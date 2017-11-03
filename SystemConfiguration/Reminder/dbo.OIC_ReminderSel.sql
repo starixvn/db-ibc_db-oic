@@ -79,7 +79,7 @@ BEGIN
 	INSERT INTO #tblMessage (MessageId, MessageTypeId, CreateTime, SenderId, SubjectEn, ContentEn, IsRead, IsDisable, ReminderTypeId, ReminderTypeValue)
 	SELECT  m.MessageId, m.MessageTypeId, m.CreateTime, m.Creator, m.SubjectEn, m.ContentEn, um.IsRead, 0, m.ReminderTypeId, m.ReminderTypeValue
 	FROM	dbo.Message m WITH(NOLOCK)
-		INNER JOIN dbo.UserMessage um WITH(NOLOCK) ON m.MessageId = um.MessageId AND um.LicenseeName IS NULL -- for Internal Notifications
+		INNER JOIN dbo.UserMessage um WITH(NOLOCK) ON m.MessageId = um.MessageId AND um.LicenseeName = '' -- for Internal Notifications
 	WHERE	m.MessageTypeId IN (21, 24)
 			AND m.CreateTime BETWEEN @FromDate AND @ToDate
 			AND (m.Creator IN (SELECT UserId FROM @tblSender) OR @SelectedSender = 'All')

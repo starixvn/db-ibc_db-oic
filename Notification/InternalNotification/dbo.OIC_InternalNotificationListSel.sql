@@ -118,7 +118,7 @@ BEGIN
 			,0 AS IsDisable
 	FROM	dbo.Message m WITH(NOLOCK)
 	INNER JOIN dbo.UserMessage um WITH(NOLOCK)
-		ON	m.MessageId = um.MessageId AND um.LicenseeName IS NULL -- for Internal Notifications
+		ON	m.MessageId = um.MessageId AND um.LicenseeName = '' -- for Internal Notifications
 	WHERE	(m.MessageTypeId = @MessageTypeId 
 				OR @MessageTypeId = 0)
 			AND m.MessageTypeId IN (SELECT MessageTypeId FROM @tblMessageType)
