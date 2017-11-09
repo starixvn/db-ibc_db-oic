@@ -4,7 +4,7 @@ USE [bodb_OIC]
 GO
 
 CREATE PROCEDURE [dbo].[OIC_API_AmendmentMessageUserIns]
-	@TicketID			INT,
+	@MessageID			INT,
 	@UserId			INT,
 	@LicenseeName		VARCHAR(300),
 	@IP				VARCHAR(50)	= NULL,
@@ -32,7 +32,7 @@ BEGIN
 
     SET @startRun = GETDATE()	
 	
-	IF NOT EXISTS (SELECT 1 FROM dbo.AmendmentTicket WHERE TicketID = @TicketID)
+	IF NOT EXISTS (SELECT 1 FROM dbo.AmendmentTicket WHERE MessageID = @MessageID)
 	BEGIN
 		SELECT	@Errcode = 100,
 				@ErrMsg = dbo.f_Get_MsgNamebyMsgID (40004, 'E')
@@ -40,8 +40,8 @@ BEGIN
 	END
 	
 	BEGIN TRY	
-		INSERT INTO dbo.AmendmentMessageUser (TicketID, UserID, LicenseeName, IsRead, UpdatedDate)
-		VALUES (@TicketID, @UserId, @LicenseeName, 1, GETDATE())
+		INSERT INTO dbo.AmendmentMessageUser (MessageID, UserID, LicenseeName, IsRead, UpdatedDate)
+		VALUES (@MessageID, @UserId, @LicenseeName, 1, GETDATE())
 	END TRY
 	BEGIN CATCH	
 		SELECT	@Errcode = 100,
@@ -51,7 +51,7 @@ BEGIN
 	
 	-- write log
 	SET @xml = (
-			 SELECT	@TicketID			AS '@tid',
+			 SELECT	@MessageID			AS '@mid',
 					   @UserId		AS '@uid',
 					   @LicenseeName	AS '@lin'
 			 FOR XML PATH('r'), TYPE)		
