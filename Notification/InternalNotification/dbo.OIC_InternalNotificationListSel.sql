@@ -1,5 +1,3 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-
 USE [bodb_OIC]
 GO
 
@@ -27,7 +25,7 @@ AS
 	Revisions:
 		- 20161216@Percy: Support sort message type [RedmineID: #68774]
 		- 20170302@Percy: Expand length of Content [RedmineID: #70322]
-		- 21701030@Scofield: Update LicenseeName IS NULL -- for Internal Notifications [ReadmineID: #84004]
+
 	
 	Param's Explanation:
 		@ReadStatus: 0: un-read
@@ -118,7 +116,7 @@ BEGIN
 			,0 AS IsDisable
 	FROM	dbo.Message m WITH(NOLOCK)
 	INNER JOIN dbo.UserMessage um WITH(NOLOCK)
-		ON	m.MessageId = um.MessageId AND um.LicenseeName = '' -- for Internal Notifications
+		ON	m.MessageId = um.MessageId
 	WHERE	(m.MessageTypeId = @MessageTypeId 
 				OR @MessageTypeId = 0)
 			AND m.MessageTypeId IN (SELECT MessageTypeId FROM @tblMessageType)
@@ -192,7 +190,7 @@ BEGIN
 		SELECT t.MessageId, STUFF((SELECT ', ' + u.DisplayName
 								FROM	dbo.UserMessage lm WITH(NOLOCK)					
 									INNER JOIN dbo.UserInfo u WITH(NOLOCK)
-										ON u.UserId = lm.UserId AND lm.LicenseeName IS NULL -- for Internal Notifications
+										ON u.UserId = lm.UserId
 								WHERE	lm.MessageId = t.MessageId
 								FOR XML PATH ('')
 						),1,1,'') AS ToList
@@ -242,3 +240,6 @@ BEGIN
 	WHERE RowNumber BETWEEN @RowStart AND @RowEnd
 END
 GO
+GRANT EXECUTE ON [dbo].[OIC_InternalNotificationListSel] TO [bodbAdminNet] AS [dbo]
+GO
+GRANT VIEW DEFINITION ON [dbo].[OIC_InternalNotificationListSel] TO [vnteam] AS [dbo]
