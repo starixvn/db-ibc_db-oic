@@ -3,10 +3,11 @@
 USE [bodb_OIC]
 GO
 
-CREATE PROCEDURE [dbo].[OIC_API_UserMessageIns]
-	@MessageID		INT,
-	@UserId			INT,
-	@LicenseeName		VARCHAR(300),
+CREATE PROCEDURE [dbo].[OIC_API_OIC_API_ExternalMessageUserIns]
+	@MessageID			INT,
+	@MessageType			INT,
+	@UserName			VARCHAR(100),
+	@LicenseeName		VARCHAR(100),
 	@IP				VARCHAR(50)	= NULL,
 	@ErrCode			INT			= 0			OUTPUT,
 	@ErrMsg			VARCHAR(300)	= NULL		OUTPUT
@@ -32,27 +33,21 @@ BEGIN
 
     SET @startRun = GETDATE()	
 	
-	IF NOT EXISTS (SELECT 1 FROM dbo.Message WHERE MessageId = @MessageID)
-	BEGIN
-		SELECT	@Errcode = 100,
-				@ErrMsg = dbo.f_Get_MsgNamebyMsgID (40005, 'E')
-		RETURN
-	END
-	
-	BEGIN TRY		
-		INSERT INTO dbo.UserMessage (MessageId, UserID, LicenseeName, IsRead, LastReadTime)
-		VALUES (@MessageID, @UserId, @LicenseeName, 1, GETDATE())
+	BEGIN TRY	
+		INSERT INTO dbo.ExternalMessageUser (MessageID, MessageType, UserName, LicenseeName, IsRead, UpdatedDate)
+		VALUES (@MessageID, @MessageType, @UserName, @LicenseeName, 1, GETDATE())
 	END TRY
 	BEGIN CATCH	
 		SELECT	@Errcode = 100,
-				@ErrMsg = dbo.f_Get_MsgNamebyMsgID (40005, 'E')
+				@ErrMsg = dbo.f_Get_MsgNamebyMsgID (40004, 'E')
 		RETURN
 	END CATCH
 	
 	-- write log
 	SET @xml = (
 			 SELECT	@MessageID			AS '@mid',
-					   @UserId		AS '@uid',
+					@MessageType		AS '@mty',
+					   @UserName		AS '@una',
 					   @LicenseeName	AS '@lin'
 			 FOR XML PATH('r'), TYPE)		
 		
@@ -68,6 +63,8 @@ BEGIN
 		,@IP			= @IP
 		,@Data		= @logSPData
 		,@OldData		= Null
-		,@Duration	= @duration	
+		,@Duration	= @duration
+	
 END
 GO
+

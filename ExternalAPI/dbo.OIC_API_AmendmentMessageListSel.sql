@@ -6,8 +6,8 @@ GO
 CREATE PROCEDURE [dbo].[OIC_API_AmendmentMessageListSel]
 	@FromDate			DATETIME,
 	@ToDate				DATETIME, 
-	@UserId				INT,
-	@LicenseeName		VARCHAR(300),
+	@UserName			VARCHAR(100),
+	@LicenseeName		VARCHAR(100),
 	@IsOnlyUnread		BIT				= 0,	
 	@PageSize			INT				= 10,
 	@PageIndex			INT				= 0,
@@ -28,7 +28,8 @@ BEGIN
 	
 	DECLARE @RowStart	INT,
 			@RowEnd	INT,
-			@ActiveStatus INT = 1
+			@ActiveStatus INT = 1,
+			@AmendmentMessageType = 2
 	
 	SELECT	@PageIndex   = @PageIndex, 
 			@RowStart	 = @PageSize * @PageIndex + 1,
@@ -53,7 +54,8 @@ BEGIN
 		ISNULL(mu.IsRead, 0) AS IsRead
 	FROM dbo.AmendmentMessage am WITH(NOLOCK)
 	INNER JOIN dbo.AmendmentTicket at WITH(NOLOCK) ON am.MessageID = at.MessageID
-	LEFT JOIN dbo.AmendmentMessageUser mu ON am.MessageID = mu.MessageID AND mu.UserID = @UserId AND mu.LicenseeName = @LicenseeName
+	LEFT JOIN dbo.ExternalMessageUser mu ON am.MessageID = mu.MessageID AND mu.MessageType = @AmendmentMessageType 
+		AND mu.UserName = @UserName AND mu.LicenseeName = @LicenseeName
 	WHERE am.Status = @ActiveStatus AND (am.ReceivedDate BETWEEN @FromDate AND @ToDate) AND am.IsTest = 0
 		AND LOWER(RTRIM(LTRIM(at.LicenseeName))) = LOWER(RTRIM(LTRIM(@LicenseeName)))
 		AND (@IsOnlyUnread = 0 OR mu.IsRead IS NULL OR mu.IsRead = 0)

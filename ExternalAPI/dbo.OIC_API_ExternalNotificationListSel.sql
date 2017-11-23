@@ -7,8 +7,8 @@ CREATE PROCEDURE [dbo].[OIC_API_ExternalNotificationListSel]
 	@MessageTypeId		INT			= 0,
 	@FromDate			DATETIME,
 	@ToDate				DATETIME, 
-	@UserId				INT,
-	@LicenseeName		VARCHAR(300),
+	@UserName			VARCHAR(100),
+	@LicenseeName		VARCHAR(100),
 	@IsOnlyUnread		BIT				= 0,	
 	@PageSize			INT				= 10,
 	@PageIndex			INT				= 0,
@@ -37,7 +37,8 @@ BEGIN
 	
 	DECLARE @RowStart	INT,
 			@RowEnd	INT,
-			@ActiveStatus INT = 2
+			@ActiveStatus INT = 2,
+			@GeneralMessageType = 1
 	
 	SELECT	@PageIndex   = @PageIndex, 
 			@RowStart	 = @PageSize * @PageIndex + 1,
@@ -62,7 +63,8 @@ BEGIN
 	FROM dbo.Message m
 	INNER JOIN dbo.LicenseeMessage lm ON m.MessageId = lm.MessageId
 	INNER JOIN dbo.Licensee l ON lm.LicenseeId = l.LicenseeId
-	LEFT JOIN dbo.UserMessage um ON um.MessageId = m.MessageId AND um.UserId = @UserId AND um.LicenseeName = @LicenseeName
+	LEFT JOIN dbo.ExternalMessageUser um ON um.MessageId = m.MessageId AND um.MessageType = @GeneralMessageType 
+		AND um.UserName = @UserName AND um.LicenseeName = @LicenseeName
 	WHERE (@MessageTypeId = 0 OR m.MessageTypeId =@MessageTypeId)
 		AND m.MessageTypeId IN (40, 41, 42, 43, 44)
 		AND m.CreateTime BETWEEN @FromDate AND @ToDate
