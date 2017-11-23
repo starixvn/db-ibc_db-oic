@@ -3,7 +3,7 @@
 USE [bodb_OIC]
 GO
 
-CREATE PROCEDURE [dbo].[OIC_API_OIC_API_ExternalMessageUserIns]
+CREATE PROCEDURE [dbo].[OIC_API_ExternalMessageUserIns]
 	@MessageID			INT,
 	@MessageType			INT,
 	@UserName			VARCHAR(100),
