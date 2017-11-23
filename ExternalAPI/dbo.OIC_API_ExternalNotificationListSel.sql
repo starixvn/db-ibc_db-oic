@@ -38,7 +38,7 @@ BEGIN
 	DECLARE @RowStart	INT,
 			@RowEnd	INT,
 			@ActiveStatus INT = 2,
-			@GeneralMessageType = 1
+			@GeneralMessageType INT = 1
 	
 	SELECT	@PageIndex   = @PageIndex, 
 			@RowStart	 = @PageSize * @PageIndex + 1,

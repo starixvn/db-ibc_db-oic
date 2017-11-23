@@ -57,7 +57,7 @@ BEGIN
 		,@procName	= OBJECT_NAME(@@procid)
 
 	EXEC dbo.OIC_LogRunSpIns
-		@UserId		= @UserId
+		@UserId		= -1
 		,@SPName		= @procName
 		,@Language	= 'E'
 		,@IP			= @IP

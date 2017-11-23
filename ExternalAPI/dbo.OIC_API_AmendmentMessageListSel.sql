@@ -29,7 +29,7 @@ BEGIN
 	DECLARE @RowStart	INT,
 			@RowEnd	INT,
 			@ActiveStatus INT = 1,
-			@AmendmentMessageType = 2
+			@AmendmentMessageType INT = 2
 	
 	SELECT	@PageIndex   = @PageIndex, 
 			@RowStart	 = @PageSize * @PageIndex + 1,
