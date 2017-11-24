@@ -1635,12 +1635,12 @@ BEGIN
 		INSERT INTO @Result (ID, Field, NewValue, OldValue)
 		VALUES
 			(1, N'Status', @Status, @Status_old),
-			(2, N'SubjectEn', @SubjectEn, @SubjectEn_old),
-			(3, N'SubjectCh', @SubjectCh, @SubjectCh_old),
-			(4, N'SubjectCs', @SubjectCs, @SubjectCs_old),
-			(5, N'ContentEn', @ContentEn, @ContentEn_old),
-			(6, N'ContentCh', @ContentCh, @ContentCh_old),
-			(7, N'ContentCs', @ContentCs, @ContentCs_old)			
+			(2, N'Subject (English)', @SubjectEn, @SubjectEn_old),
+			(3, N'Subject (Trad. Chinese)', @SubjectCh, @SubjectCh_old),
+			(4, N'Subject (Smpl. Chinese)', @SubjectCs, @SubjectCs_old),
+			(5, N'Content (English)', @ContentEn, @ContentEn_old),
+			(6, N'Content (Trad. Chinese)', @ContentCh, @ContentCh_old),
+			(7, N'Content (Smpl. Chinese)', @ContentCs, @ContentCs_old)			
 	END
 	ELSE IF @LogActionId IN (4009) -- Update Reminder
 	BEGIN
