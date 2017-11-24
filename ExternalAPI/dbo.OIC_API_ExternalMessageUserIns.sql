@@ -34,8 +34,18 @@ BEGIN
     SET @startRun = GETDATE()	
 	
 	BEGIN TRY	
-		INSERT INTO dbo.ExternalMessageUser (MessageID, MessageType, UserName, LicenseeName, IsRead, UpdatedDate)
-		VALUES (@MessageID, @MessageType, @UserName, @LicenseeName, 1, GETDATE())
+		IF EXISTS (SELECT TOP 1 1 FROM dbo.ExternalMessageUser WITH(NOLOCK) 
+					WHERE MessageID = @MessageID AND MessageType = @MessageType AND UserName = @UserName AND LicenseeName = @LicenseeName)
+			BEGIN
+				UPDATE dbo.ExternalMessageUser 
+				SET IsRead = 1, UpdatedDate = GETDATE()
+				WHERE MessageID = @MessageID AND MessageType = @MessageType AND UserName = @UserName AND LicenseeName = @LicenseeName			
+			END
+		ELSE	
+			BEGIN
+				INSERT INTO dbo.ExternalMessageUser (MessageID, MessageType, UserName, LicenseeName, IsRead, UpdatedDate)
+				VALUES (@MessageID, @MessageType, @UserName, @LicenseeName, 1, GETDATE())
+			END
 	END TRY
 	BEGIN CATCH	
 		SELECT	@Errcode = 100,
