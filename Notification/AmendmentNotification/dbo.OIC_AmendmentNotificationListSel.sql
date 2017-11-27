@@ -29,6 +29,7 @@ BEGIN
 	
 	DECLARE @RowStart	INT,
 			@RowEnd	INT
+	DECLARE @tblSelectedLicensee TABLE (LicenseeId INT)
 	DECLARE @tblTicketBySites TABLE (TicketID INT, MessageID INT)
 	
 	SELECT	@PageIndex   = @PageIndex, 
@@ -42,17 +43,28 @@ BEGIN
 		Status		INT,
 		ReceivedDate	DateTime,
 		TotalRecords	INT)
-		
+	
 	IF @SelectedSiteIds <> 'All'
-	BEGIN
-		INSERT INTO @tblTicketBySites(TicketID, MessageID)
-		SELECT TicketId, MessageID
-		FROM dbo.AmendmentTicket
-		WHERE LOWER(RTRIM(LTRIM(LicenseeName))) IN (
-			SELECT LOWER(RTRIM(LTRIM(LicenseeName))) 
-			FROM dbo.Licensee 
-			WHERE LicenseeId IN (SELECT	val FROM dbo.strSplit(@SelectedSiteIds, ',')))
-	END		
+		BEGIN
+			INSERT INTO @tblSelectedLicensee(LicenseeId)
+			SELECT	val FROM dbo.strSplit(@SelectedSiteIds, ',')
+		END
+	ELSE
+		BEGIN
+			INSERT INTO @tblSelectedLicensee(LicenseeId)			
+			SELECT LicenseeId
+			FROM dbo.f_LicenseeBelongToLicenseeType (8)
+			WHERE LicenseeId IS NOT NULL
+		END
+		
+	
+	INSERT INTO @tblTicketBySites(TicketID, MessageID)
+	SELECT TicketId, MessageID
+	FROM dbo.AmendmentTicket
+	WHERE LOWER(RTRIM(LTRIM(LicenseeName))) IN (
+		SELECT LOWER(RTRIM(LTRIM(LicenseeName))) 
+		FROM dbo.Licensee 
+		WHERE LicenseeId IN (SELECT	LicenseeId FROM @tblSelectedLicensee))	
 		
 	;WITH tempMessage AS
 	(SELECT ROW_NUMBER() OVER(ORDER BY ReceivedDate DESC) AS RowNumber, MessageId, Status, ReceivedDate,
@@ -68,7 +80,7 @@ BEGIN
 	WHERE (@AmendmentStatus = -1 OR Status = @AmendmentStatus) 
 		AND (ReceivedDate BETWEEN @FromDate AND @ToDate)
 		AND IsTest = 0
-		AND (@SelectedSiteIds = 'All' OR MessageID IN (SELECT DISTINCT MessageID FROM @tblTicketBySites))
+		AND (MessageID IN (SELECT DISTINCT MessageID FROM @tblTicketBySites))
 	)
 	
 	INSERT INTO @messageResult (MessageId, Subject, Content, Status, ReceivedDate, TotalRecords)		
@@ -85,7 +97,7 @@ BEGIN
 	SELECT TicketId, MessageId, LicenseeName AS SiteName, DataFilePath
 	FROM dbo.AmendmentTicket WITH(NOLOCK)
 	WHERE MessageId IN (SELECT MessageId FROM @messageResult)
-		AND (@SelectedSiteIds = 'All' OR TicketId IN (SELECT TicketID FROM @tblTicketBySites))
+		AND (TicketId IN (SELECT TicketID FROM @tblTicketBySites))
 	
 	SET @TotalRecords = (SELECT TOP 1 TotalRecords FROM @messageResult)
 END
