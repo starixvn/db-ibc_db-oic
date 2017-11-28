@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[OIC_AmendmentNotificationListSel]
 	@AmendmentStatus	INT	 			=  -1,
 	@SelectedLanguage	VARCHAR(10)		= 'En',		
 	@SelectedSiteIds	VARCHAR(MAX)	= 'All',
+	@UserId				INT,
 	@PageSize			INT				= 10,
 	@PageIndex			INT				= 0,
 	@TotalRecords		INT				= 0	OUTPUT
@@ -53,7 +54,7 @@ BEGIN
 		BEGIN
 			INSERT INTO @tblSelectedLicensee(LicenseeId)			
 			SELECT LicenseeId
-			FROM dbo.f_LicenseeBelongToLicenseeType (8)
+			FROM dbo.f_LicenseeBelongToLicenseeType (@UserId)
 			WHERE LicenseeId IS NOT NULL
 		END
 		
