@@ -53,7 +53,7 @@ BEGIN
 		ContentEn 		VARCHAR(MAX), 
 		ContentCh 		VARCHAR(MAX), 
 		ContentCs 		VARCHAR(MAX), 
-		Date			DateTime,
+		CreateTime		DateTime,
 		IsRead			BIT,
 		TotalRecords	INT)			
 	
@@ -67,20 +67,20 @@ BEGIN
 		AND um.UserName = @UserName AND um.LicenseeName = @LicenseeName
 	WHERE (@MessageTypeId = 0 OR m.MessageTypeId =@MessageTypeId)
 		AND m.MessageTypeId IN (40, 41, 42, 43, 44)
-		AND m.CreateTime BETWEEN @FromDate AND @ToDate
+		AND CAST(m.CreateTime AS Date) BETWEEN CAST(@FromDate AS Date) AND CAST(@ToDate AS Date)
 		AND LOWER(RTRIM(LTRIM(l.LicenseeName))) = LOWER(RTRIM(LTRIM(@LicenseeName)))
 		AND (@IsOnlyUnread = 0 OR um.IsRead IS NULL OR um.IsRead = 0)
 	)
 	
-	INSERT INTO @messageResult(MessageID, MessageTypeId, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, Date, IsRead, TotalRecords)
-	SELECT tmp.MessageID, tmp.MessageTypeId, tmp.SubjectEn, tmp.SubjectCh, tmp.SubjectCs, tmp.ContentEn, tmp.ContentCh, tmp.ContentCs, tmp.CreateTime AS Date, tmp.IsRead, 
+	INSERT INTO @messageResult(MessageID, MessageTypeId, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, CreateTime, IsRead, TotalRecords)
+	SELECT tmp.MessageID, tmp.MessageTypeId, tmp.SubjectEn, tmp.SubjectCh, tmp.SubjectCs, tmp.ContentEn, tmp.ContentCh, tmp.ContentCs, tmp.CreateTime, tmp.IsRead, 
 		(SELECT MAX(RowNumber) FROM tempMessage) AS TotalRecords
 	FROM tempMessage tmp
 	WHERE tmp.RowNumber BETWEEN @RowStart AND @RowEnd
 	ORDER BY tmp.CreateTime DESC
 	
 	-- Select Results
-	SELECT MessageID, MessageTypeId, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, Date, IsRead
+	SELECT MessageID, MessageTypeId, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, CreateTime AS "Date", IsRead
 	FROM @messageResult
 	
 	SET @TotalRecords = (SELECT TOP 1 TotalRecords FROM @messageResult)
