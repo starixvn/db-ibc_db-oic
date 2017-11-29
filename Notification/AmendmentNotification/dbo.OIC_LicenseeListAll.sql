@@ -12,6 +12,7 @@ AS
 	DB: DBOIC.bodb_OIC
 	
 	Revisions:
+		- 20171130@Scofield: create OIC_LicenseeListAll
 */
 BEGIN
 	SET NOCOUNT ON
