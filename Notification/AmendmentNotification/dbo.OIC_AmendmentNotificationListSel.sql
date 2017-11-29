@@ -30,8 +30,7 @@ BEGIN
 	
 	DECLARE @RowStart	INT,
 			@RowEnd	INT
-	DECLARE @tblSelectedLicensee TABLE (LicenseeId INT)
-	DECLARE @tblTicketBySites TABLE (TicketID INT, MessageID INT)
+	DECLARE @tblTicketBySites TABLE (MessageID INT)
 	
 	SELECT	@PageIndex   = @PageIndex, 
 			@RowStart	 = @PageSize * @PageIndex + 1,
@@ -43,29 +42,18 @@ BEGIN
 		Content 		VARCHAR(MAX), 
 		Status		INT,
 		ReceivedDate	DateTime,
-		TotalRecords	INT)
+		TotalRecords	INT)	
 	
 	IF @SelectedSiteIds <> 'All'
-		BEGIN
-			INSERT INTO @tblSelectedLicensee(LicenseeId)
-			SELECT	val FROM dbo.strSplit(@SelectedSiteIds, ',')
-		END
-	ELSE
-		BEGIN
-			INSERT INTO @tblSelectedLicensee(LicenseeId)			
-			SELECT LicenseeId
-			FROM dbo.f_LicenseeBelongToLicenseeType (@UserId)
-			WHERE LicenseeId IS NOT NULL
-		END
-		
-	
-	INSERT INTO @tblTicketBySites(TicketID, MessageID)
-	SELECT TicketId, MessageID
-	FROM dbo.AmendmentTicket
-	WHERE LOWER(RTRIM(LTRIM(LicenseeName))) IN (
-		SELECT LOWER(RTRIM(LTRIM(LicenseeName))) 
-		FROM dbo.Licensee 
-		WHERE LicenseeId IN (SELECT	LicenseeId FROM @tblSelectedLicensee))	
+	BEGIN
+		INSERT INTO @tblTicketBySites(MessageID)
+		SELECT DISTINCT MessageID
+		FROM dbo.AmendmentTicket
+		WHERE LOWER(RTRIM(LTRIM(LicenseeName))) IN (
+			SELECT LOWER(RTRIM(LTRIM(LicenseeName))) 
+			FROM dbo.Licensee 
+			WHERE LicenseeId IN (SELECT	val FROM dbo.strSplit(@SelectedSiteIds, ',')))	
+	END
 		
 	;WITH tempMessage AS
 	(SELECT ROW_NUMBER() OVER(ORDER BY ReceivedDate DESC) AS RowNumber, MessageId, Status, ReceivedDate,
@@ -81,7 +69,7 @@ BEGIN
 	WHERE (@AmendmentStatus = -1 OR Status = @AmendmentStatus) 
 		AND (ReceivedDate BETWEEN @FromDate AND @ToDate)
 		AND IsTest = 0
-		AND (MessageID IN (SELECT DISTINCT MessageID FROM @tblTicketBySites))
+		AND (@SelectedSiteIds = 'All' OR (MessageID IN (SELECT MessageID FROM @tblTicketBySites)))
 	)
 	
 	INSERT INTO @messageResult (MessageId, Subject, Content, Status, ReceivedDate, TotalRecords)		
@@ -97,8 +85,7 @@ BEGIN
 	
 	SELECT TicketId, MessageId, LicenseeName AS SiteName, DataFilePath
 	FROM dbo.AmendmentTicket WITH(NOLOCK)
-	WHERE MessageId IN (SELECT MessageId FROM @messageResult)
-		AND (TicketId IN (SELECT TicketID FROM @tblTicketBySites))
+	WHERE MessageId IN (SELECT MessageId FROM @messageResult)		
 	
 	SET @TotalRecords = (SELECT TOP 1 TotalRecords FROM @messageResult)
 END
