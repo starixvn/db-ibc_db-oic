@@ -43,6 +43,7 @@ BEGIN
 	SELECT	@PageIndex   = @PageIndex, 
 			@RowStart	 = @PageSize * @PageIndex + 1,
 			@RowEnd	     = @RowStart + @PageSize - 1
+	SELECT @ToDate = DATEADD(dd, DATEDIFF(dd, 0, @ToDate), 0) + CAST('23:59:59.999' AS Time)
 			
 	DECLARE @messageResult TABLE (
 		MessageId 		INT, 
@@ -67,7 +68,7 @@ BEGIN
 		AND um.UserName = @UserName AND um.LicenseeName = @LicenseeName
 	WHERE (@MessageTypeId = 0 OR m.MessageTypeId =@MessageTypeId)
 		AND m.MessageTypeId IN (40, 41, 42, 43, 44)
-		AND CAST(m.CreateTime AS Date) BETWEEN CAST(@FromDate AS Date) AND CAST(@ToDate AS Date)
+		AND m.CreateTime BETWEEN @FromDate AND @ToDate
 		AND LOWER(RTRIM(LTRIM(l.LicenseeName))) = LOWER(RTRIM(LTRIM(@LicenseeName)))
 		AND (@IsOnlyUnread = 0 OR um.IsRead IS NULL OR um.IsRead = 0)
 	)

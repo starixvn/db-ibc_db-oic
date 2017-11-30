@@ -34,6 +34,7 @@ BEGIN
 	SELECT	@PageIndex   = @PageIndex, 
 			@RowStart	 = @PageSize * @PageIndex + 1,
 			@RowEnd	     = @RowStart + @PageSize - 1
+	SELECT @ToDate = DATEADD(dd, DATEDIFF(dd, 0, @ToDate), 0) + CAST('23:59:59.999' AS Time)
 			
 	DECLARE @messageResult TABLE (
 		MessageId 		INT, 
@@ -56,7 +57,7 @@ BEGIN
 	INNER JOIN dbo.AmendmentTicket at WITH(NOLOCK) ON am.MessageID = at.MessageID
 	LEFT JOIN dbo.ExternalMessageUser mu ON am.MessageID = mu.MessageID AND mu.MessageType = @AmendmentMessageType 
 		AND mu.UserName = @UserName AND mu.LicenseeName = @LicenseeName
-	WHERE am.Status = @ActiveStatus AND (CAST(am.ReceivedDate AS Date) BETWEEN CAST(@FromDate AS Date) AND CAST(@ToDate AS Date)) AND am.IsTest = 0
+	WHERE am.Status = @ActiveStatus AND (am.ReceivedDate BETWEEN @FromDate AND @ToDate) AND am.IsTest = 0
 		AND LOWER(RTRIM(LTRIM(at.LicenseeName))) = LOWER(RTRIM(LTRIM(@LicenseeName)))
 		AND (@IsOnlyUnread = 0 OR mu.IsRead IS NULL OR mu.IsRead = 0)
 	)
