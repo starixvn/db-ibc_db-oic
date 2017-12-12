@@ -69,7 +69,7 @@ BEGIN
 	WHERE (@MessageTypeId = 0 OR m.MessageTypeId =@MessageTypeId)
 		AND m.MessageTypeId IN (40, 41, 42, 43, 44)
 		AND m.CreateTime BETWEEN @FromDate AND @ToDate
-		AND LOWER(RTRIM(LTRIM(l.LicenseeName))) = LOWER(RTRIM(LTRIM(@LicenseeName)))
+		AND l.LicenseeName = @LicenseeName
 		AND (@IsOnlyUnread = 0 OR um.IsRead IS NULL OR um.IsRead = 0)
 	)
 	

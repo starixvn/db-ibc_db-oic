@@ -18,7 +18,7 @@ BEGIN
 	SET NOCOUNT ON
 	
 	SELECT lt.LicenseeTypeId, lt.LicenseeTypeName, l.LicenseeId, l.LicenseeName
-	FROM dbo.Licensee l
-	INNER JOIN dbo.LicenseeType lt ON l.LicenseeTypeId = lt.LicenseeTypeId
+	FROM dbo.Licensee l WITH(NOLOCK)
+	INNER JOIN dbo.LicenseeType lt WITH(NOLOCK) ON l.LicenseeTypeId = lt.LicenseeTypeId
 END
 GO
