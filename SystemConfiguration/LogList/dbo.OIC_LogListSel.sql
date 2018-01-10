@@ -23,6 +23,7 @@ AS
 
 	Revisions:
 		- 20170328@Percy: Add new function: Client List [RemineID: #70323]
+		- 20171019@Scofield: Update log for update Amendment Notification [#84004]
 
 	Param's Explanation:
 		- @ActionID: '1,2' -- List of LogActionID
@@ -72,7 +73,7 @@ BEGIN
 				SELECT TOP 1 1
 				FROM dbo.LogActionType lt WITH(NOLOCK)
 					INNER JOIN dbo.LogAction l WITH(NOLOCK) ON lt.LogActionTypeId = l.LogActionTypeId
-				WHERE lt.LogActionTypeId <> 4  AND l.[Enable] = 1 AND ul.LogActionId  = l.LogActionId
+				WHERE l.[Enable] = 1 AND ul.LogActionId  = l.LogActionId
 			) 
 
 		-- Target: Client
@@ -230,6 +231,19 @@ BEGIN
 				CROSS APPLY A.[Target].nodes('r') d(c)
 				INNER JOIN dbo.UserInfo u WITH(NOLOCK) ON d.c.value('@ui','VARCHAR(100)') = u.UserId
 			WHERE u.DisplayName LIKE @Target
+		END
+		
+		-- Target Notification
+		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (4006, 4009)))			
+		BEGIN
+			INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy)
+			SELECT DISTINCT A.LogID, A.LogDate, A.[Action], A.[Target], A.DoneBy
+			FROM (
+				SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], 'Notification' AS [Target], ll.DoneBy
+				FROM #LogList ll
+					INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
+				WHERE la.LogActionId IN (4006, 4009)
+			) A			
 		END
 	END
 
