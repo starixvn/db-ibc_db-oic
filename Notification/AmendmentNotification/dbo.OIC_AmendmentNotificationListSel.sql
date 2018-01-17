@@ -38,8 +38,8 @@ BEGIN
 			
 	DECLARE @messageResult TABLE (
 		MessageId 	INT, 
-		Subject 		VARCHAR(MAX), 
-		Content 		VARCHAR(MAX), 
+		Subject 		NVARCHAR(MAX), 
+		Content 		NVARCHAR(MAX), 
 		Status		INT,
 		ReceivedDate	DateTime,
 		TotalRecords	INT)	

@@ -6,8 +6,8 @@ GO
 CREATE PROCEDURE [dbo].[OIC_API_ExternalMessageUserIns]
 	@MessageID			INT,
 	@MessageType			INT,
-	@UserName			VARCHAR(100),
-	@LicenseeName		VARCHAR(100),
+	@UserName			NVARCHAR(100),
+	@LicenseeName		NVARCHAR(100),
 	@IP				VARCHAR(50)	= NULL,
 	@ErrCode			INT			= 0			OUTPUT,
 	@ErrMsg			VARCHAR(300)	= NULL		OUTPUT

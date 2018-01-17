@@ -38,12 +38,12 @@ BEGIN
 			
 	DECLARE @messageResult TABLE (
 		MessageId 		INT, 
-		SubjectEn 		VARCHAR(300), 
-		SubjectCh 		VARCHAR(300), 
-		SubjectCs 		VARCHAR(300), 
-		ContentEn 		VARCHAR(MAX), 
-		ContentCh 		VARCHAR(MAX), 
-		ContentCs 		VARCHAR(MAX), 
+		SubjectEn 		NVARCHAR(300), 
+		SubjectCh 		NVARCHAR(300), 
+		SubjectCs 		NVARCHAR(300), 
+		ContentEn 		NVARCHAR(MAX), 
+		ContentCh 		NVARCHAR(MAX), 
+		ContentCs 		NVARCHAR(MAX), 
 		ReceivedDate	DateTime,
 		IsRead			BIT,
 		DataFilePath	VARCHAR(MAX),
