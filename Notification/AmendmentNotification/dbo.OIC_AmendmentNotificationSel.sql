@@ -17,7 +17,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 		
-	SELECT MessageId, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, Status, CAST(EventDate AS Date) EventDate
+	SELECT MessageId, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, Status, EventDate
 	FROM dbo.AmendmentMessage WITH(NOLOCK)
 	WHERE MessageID = @MessageId
 			

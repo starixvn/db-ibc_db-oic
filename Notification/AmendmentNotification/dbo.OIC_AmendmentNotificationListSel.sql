@@ -80,7 +80,7 @@ BEGIN
 	ORDER BY tmp.EventDate DESC
 	
 	-- Select Results
-	SELECT MessageId, Subject, Content, Status, CAST(EventDate AS Date) EventDate
+	SELECT MessageId, Subject, Content, Status, EventDate
 	FROM @messageResult
 	
 	SELECT TicketId, MessageId, LicenseeName AS SiteName, DataFilePath
