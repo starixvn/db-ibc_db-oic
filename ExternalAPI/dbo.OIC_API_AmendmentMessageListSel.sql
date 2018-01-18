@@ -3,7 +3,7 @@
 USE [bodb_OIC]
 GO
 
-CREATE PROCEDURE [dbo].[OIC_API_AmendmentMessageListSel]
+ALTER PROCEDURE [dbo].[OIC_API_AmendmentMessageListSel]
 	@FromDate			DATETIME, -- EventDate
 	@ToDate				DATETIME, -- EventDate
 	@UserName			NVARCHAR(50),

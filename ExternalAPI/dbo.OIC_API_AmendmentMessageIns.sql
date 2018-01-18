@@ -3,7 +3,7 @@
 USE [bodb_OIC]
 GO
 
-CREATE PROCEDURE [dbo].[OIC_API_AmendmentMessageIns]
+ALTER PROCEDURE [dbo].[OIC_API_AmendmentMessageIns]
 	 @Title			NVARCHAR(300)
 	,@ReceivedDate	DATETIME
 	,@EventDate		DATETIME -- Match Event Date
