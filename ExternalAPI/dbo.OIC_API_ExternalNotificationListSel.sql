@@ -3,12 +3,12 @@
 USE [bodb_OIC]
 GO
 
-CREATE PROCEDURE [dbo].[OIC_API_ExternalNotificationListSel]
+ALTER PROCEDURE [dbo].[OIC_API_ExternalNotificationListSel]
 	@MessageTypeId		INT			= 0,
 	@FromDate			DATETIME,
 	@ToDate				DATETIME, 
-	@UserName			NVARCHAR(100),
-	@LicenseeName		NVARCHAR(100),
+	@UserName			NVARCHAR(50),
+	@LicenseeName		NVARCHAR(50),
 	@IsOnlyUnread		BIT				= 0,	
 	@PageSize			INT				= 10,
 	@PageIndex			INT				= 0,

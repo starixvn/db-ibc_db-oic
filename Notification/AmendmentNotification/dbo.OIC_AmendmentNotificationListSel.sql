@@ -41,7 +41,7 @@ BEGIN
 		Subject 		NVARCHAR(MAX), 
 		Content 		NVARCHAR(MAX), 
 		Status		INT,
-		ReceivedDate	DateTime,
+		EventDate	DateTime,
 		TotalRecords	INT)	
 	
 	IF @SelectedSiteIds <> 'All'
@@ -56,7 +56,7 @@ BEGIN
 	END
 		
 	;WITH tempMessage AS
-	(SELECT ROW_NUMBER() OVER(ORDER BY ReceivedDate DESC) AS RowNumber, MessageId, Status, ReceivedDate,
+	(SELECT ROW_NUMBER() OVER(ORDER BY EventDate DESC) AS RowNumber, MessageId, Status, EventDate,
 		CASE WHEN @SelectedLanguage = 'Ch' AND ISNULL(SubjectCh, '') <> '' THEN SubjectCh
 				WHEN @SelectedLanguage = 'Cs' AND ISNULL(SubjectCs, '') <> '' THEN SubjectCs
 				ELSE SubjectEn 
@@ -67,20 +67,20 @@ BEGIN
 			END AS Content	
 	FROM dbo.AmendmentMessage WITH(NOLOCK)
 	WHERE (@AmendmentStatus = -1 OR Status = @AmendmentStatus) 
-		AND (ReceivedDate BETWEEN @FromDate AND @ToDate)
+		AND (EventDate BETWEEN @FromDate AND @ToDate)
 		AND IsTest = 0
 		AND (@SelectedSiteIds = 'All' OR (MessageID IN (SELECT MessageID FROM @tblTicketBySites)))
 	)
 	
-	INSERT INTO @messageResult (MessageId, Subject, Content, Status, ReceivedDate, TotalRecords)		
-	SELECT tmp.MessageId, tmp.Subject, tmp.Content, tmp.Status, tmp.ReceivedDate,
+	INSERT INTO @messageResult (MessageId, Subject, Content, Status, EventDate, TotalRecords)		
+	SELECT tmp.MessageId, tmp.Subject, tmp.Content, tmp.Status, tmp.EventDate,
 		(SELECT MAX(RowNumber) FROM tempMessage) AS TotalRecords
 	FROM tempMessage tmp		
 	WHERE tmp.RowNumber BETWEEN @RowStart AND @RowEnd
-	ORDER BY tmp.ReceivedDate DESC
+	ORDER BY tmp.EventDate DESC
 	
 	-- Select Results
-	SELECT MessageId, Subject, Content, Status, ReceivedDate
+	SELECT MessageId, Subject, Content, Status, EventDate
 	FROM @messageResult
 	
 	SELECT TicketId, MessageId, LicenseeName AS SiteName, DataFilePath

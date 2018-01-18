@@ -3,11 +3,11 @@
 USE [bodb_OIC]
 GO
 
-CREATE PROCEDURE [dbo].[OIC_API_AmendmentMessageListSel]
-	@FromDate			DATETIME,
-	@ToDate				DATETIME, 
-	@UserName			NVARCHAR(100),
-	@LicenseeName		NVARCHAR(100),
+ALTER PROCEDURE [dbo].[OIC_API_AmendmentMessageListSel]
+	@FromDate			DATETIME, -- EventDate
+	@ToDate				DATETIME, -- EventDate
+	@UserName			NVARCHAR(50),
+	@LicenseeName		NVARCHAR(50),
 	@IsOnlyUnread		BIT				= 0,	
 	@PageSize			INT				= 10,
 	@PageIndex			INT				= 0,
@@ -19,7 +19,8 @@ AS
 	DB: DBOIC.bodb_OIC
 	
 	Revisions:	
-		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
+		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee back-end
+		- 20170118@Alex    : #89670 - Support to query data by event date
 
 	Param's Explanation:		
  */
@@ -44,33 +45,33 @@ BEGIN
 		ContentEn 		NVARCHAR(MAX), 
 		ContentCh 		NVARCHAR(MAX), 
 		ContentCs 		NVARCHAR(MAX), 
-		ReceivedDate	DateTime,
+		EventDate		DateTime,
 		IsRead			BIT,
 		DataFilePath	VARCHAR(MAX),
 		TotalRecords	INT)	
 	 
 	;WITH tempMessage AS
-	(SELECT ROW_NUMBER() OVER(ORDER BY am.ReceivedDate DESC) AS RowNumber,
-		am.MessageID, am.SubjectEn, am.SubjectCh, am.SubjectCs, am.ContentEn, am.ContentCh, am.ContentCs, am.ReceivedDate, at.DataFilePath, 
+	(SELECT ROW_NUMBER() OVER(ORDER BY am.EventDate DESC) AS RowNumber,
+		am.MessageID, am.SubjectEn, am.SubjectCh, am.SubjectCs, am.ContentEn, am.ContentCh, am.ContentCs, am.EventDate, at.DataFilePath, 
 		ISNULL(mu.IsRead, 0) AS IsRead
 	FROM dbo.AmendmentMessage am WITH(NOLOCK)
 	INNER JOIN dbo.AmendmentTicket at WITH(NOLOCK) ON am.MessageID = at.MessageID
 	LEFT JOIN dbo.ExternalMessageUser mu ON am.MessageID = mu.MessageID AND mu.MessageType = @AmendmentMessageType 
 		AND mu.UserName = @UserName AND mu.LicenseeName = @LicenseeName
-	WHERE am.Status = @ActiveStatus AND (am.ReceivedDate BETWEEN @FromDate AND @ToDate) AND am.IsTest = 0
+	WHERE am.Status = @ActiveStatus AND (am.EventDate BETWEEN @FromDate AND @ToDate) AND am.IsTest = 0
 		AND at.LicenseeName = @LicenseeName
 		AND (@IsOnlyUnread = 0 OR mu.IsRead IS NULL OR mu.IsRead = 0)
 	)
 		
-	INSERT INTO @messageResult(MessageID, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, ReceivedDate, DataFilePath, IsRead, TotalRecords)
-	SELECT tmp.MessageID, tmp.SubjectEn, tmp.SubjectCh, tmp.SubjectCs, tmp.ContentEn, tmp.ContentCh, tmp.ContentCs, tmp.ReceivedDate, tmp.DataFilePath, tmp.IsRead,
+	INSERT INTO @messageResult(MessageID, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, EventDate, DataFilePath, IsRead, TotalRecords)
+	SELECT tmp.MessageID, tmp.SubjectEn, tmp.SubjectCh, tmp.SubjectCs, tmp.ContentEn, tmp.ContentCh, tmp.ContentCs, tmp.EventDate, tmp.DataFilePath, tmp.IsRead,
 		(SELECT MAX(RowNumber) FROM tempMessage) AS TotalRecords
 	FROM tempMessage tmp
 	WHERE tmp.RowNumber BETWEEN @RowStart AND @RowEnd
-	ORDER BY tmp.ReceivedDate DESC
+	ORDER BY tmp.EventDate DESC
 	
 	-- Select Results
-	SELECT MessageID, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, ReceivedDate AS "Date", DataFilePath, IsRead
+	SELECT MessageID, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, EventDate, DataFilePath, IsRead
 	FROM @messageResult
 	
 	SET @TotalRecords = (SELECT TOP 1 TotalRecords FROM @messageResult)

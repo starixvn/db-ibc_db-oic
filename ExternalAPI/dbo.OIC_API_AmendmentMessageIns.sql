@@ -3,9 +3,10 @@
 USE [bodb_OIC]
 GO
 
-CREATE PROCEDURE [dbo].[OIC_API_AmendmentMessageIns]
+ALTER PROCEDURE [dbo].[OIC_API_AmendmentMessageIns]
 	 @Title			NVARCHAR(300)
 	,@ReceivedDate	DATETIME
+	,@EventDate		DATETIME -- Match Event Date
 	,@Tickets		XML
 	,@SiteId		SMALLINT
 	,@IsTest		BIT				= 0
@@ -21,7 +22,7 @@ AS
 	
 	Revisions:	
 		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
-
+		- 20180118@Alex	   : #89670 - Insert Event Date
 	Param's Explanation:
 		@SiteId: 0 - Special delete
 				 -1 - LRF
@@ -39,8 +40,8 @@ BEGIN
 	SELECT @Errcode = 0, @ErrMsg = ''
 	
 	BEGIN TRY		
-		INSERT INTO dbo.AmendmentMessage(SubjectEn, [Status], ReceivedDate, IsTest)
-		SELECT	@Title, 0, @ReceivedDate, @IsTest
+		INSERT INTO dbo.AmendmentMessage(SubjectEn, [Status], ReceivedDate, IsTest,EventDate)
+		SELECT	@Title, 0, @ReceivedDate, @IsTest,@EventDate
 		
 		DECLARE @MessageId INT = SCOPE_IDENTITY()
 		
@@ -59,8 +60,9 @@ BEGIN
 	DECLARE @xml XML = (
 		SELECT	CONVERT(NVARCHAR(MAX),@Tickets) AS '@t'
 			,@ReceivedDate			AS '@rcd'
-			,0				AS '@st'
-			,@Title					AS '@tt'
+			,0						AS '@st'
+			,@Title					AS '@tt',
+			@EventDate				AS '@evd'
 			
 		FOR XML PATH('r'), TYPE
 	)		
