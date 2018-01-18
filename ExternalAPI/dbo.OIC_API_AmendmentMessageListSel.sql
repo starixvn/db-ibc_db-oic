@@ -6,8 +6,8 @@ GO
 CREATE PROCEDURE [dbo].[OIC_API_AmendmentMessageListSel]
 	@FromDate			DATETIME, -- EventDate
 	@ToDate				DATETIME, -- EventDate
-	@UserName			NVARCHAR(100),
-	@LicenseeName		NVARCHAR(100),
+	@UserName			NVARCHAR(50),
+	@LicenseeName		NVARCHAR(50),
 	@IsOnlyUnread		BIT				= 0,	
 	@PageSize			INT				= 10,
 	@PageIndex			INT				= 0,
