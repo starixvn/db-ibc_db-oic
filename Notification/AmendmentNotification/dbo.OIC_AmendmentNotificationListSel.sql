@@ -8,7 +8,7 @@ ALTER PROCEDURE [dbo].[OIC_AmendmentNotificationListSel]
 	@ToDate				DATETIME, 
 	@AmendmentStatus	INT	 			=  -1,
 	@SelectedLanguage	VARCHAR(10)		= 'En',		
-	@SelectedSiteIds	VARCHAR(MAX)	= 'All',
+	@SelectedSiteNames	VARCHAR(MAX)	= 'All',
 	@UserId				INT,
 	@PageSize			INT				= 10,
 	@PageIndex			INT				= 0,
@@ -21,7 +21,7 @@ AS
 	
 	Revisions:	
 		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
-		- 20180123@Scofield: #89901 - Enhance Result Notification function : sorting records
+		- 20180123@Scofield: #89901 - Enhance Result Notification function : sorting records, update @SelectedSiteNames
 
 	Param's Explanation:
 		@@AmendmentStatus: -1: All, 0: New, 1: Active, 2: Inactive		
@@ -45,15 +45,12 @@ BEGIN
 		EventDate	DateTime,
 		TotalRecords	INT)	
 	
-	IF @SelectedSiteIds <> 'All'
+	IF @SelectedSiteNames <> 'All'
 	BEGIN
 		INSERT INTO @tblTicketBySites(MessageID)
 		SELECT DISTINCT MessageID
 		FROM dbo.AmendmentTicket
-		WHERE LOWER(RTRIM(LTRIM(LicenseeName))) IN (
-			SELECT LOWER(RTRIM(LTRIM(LicenseeName))) 
-			FROM dbo.Licensee 
-			WHERE LicenseeId IN (SELECT	val FROM dbo.strSplit(@SelectedSiteIds, ',')))	
+		WHERE LicenseeName IN (SELECT val FROM dbo.strSplit(@SelectedSiteNames, ','))			
 	END
 		
 	;WITH tempMessage AS
@@ -70,7 +67,7 @@ BEGIN
 	WHERE (@AmendmentStatus = -1 OR Status = @AmendmentStatus) 
 		AND (EventDate BETWEEN @FromDate AND @ToDate)
 		AND IsTest = 0
-		AND (@SelectedSiteIds = 'All' OR (MessageID IN (SELECT MessageID FROM @tblTicketBySites)))
+		AND (@SelectedSiteNames = 'All' OR (MessageID IN (SELECT MessageID FROM @tblTicketBySites)))
 	)
 	
 	INSERT INTO @messageResult (MessageId, Subject, Content, Status, EventDate, TotalRecords)		
