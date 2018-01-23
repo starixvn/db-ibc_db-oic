@@ -21,6 +21,7 @@ AS
 	Revisions:	
 		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee back-end
 		- 20170118@Alex    : #89670 - Support to query data by event date
+		- 20180123@Scofield: #89901 - Enhance Result Notification function : sorting records
 
 	Param's Explanation:		
  */
@@ -51,7 +52,7 @@ BEGIN
 		TotalRecords	INT)	
 	 
 	;WITH tempMessage AS
-	(SELECT ROW_NUMBER() OVER(ORDER BY am.EventDate DESC) AS RowNumber,
+	(SELECT ROW_NUMBER() OVER(ORDER BY am.EventDate DESC, am.MessageID DESC) AS RowNumber,
 		am.MessageID, am.SubjectEn, am.SubjectCh, am.SubjectCs, am.ContentEn, am.ContentCh, am.ContentCs, am.EventDate, at.DataFilePath, 
 		ISNULL(mu.IsRead, 0) AS IsRead
 	FROM dbo.AmendmentMessage am WITH(NOLOCK)

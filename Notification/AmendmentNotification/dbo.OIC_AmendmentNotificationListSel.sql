@@ -21,6 +21,7 @@ AS
 	
 	Revisions:	
 		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
+		- 20180123@Scofield: #89901 - Enhance Result Notification function : sorting records
 
 	Param's Explanation:
 		@@AmendmentStatus: -1: All, 0: New, 1: Active, 2: Inactive		
@@ -56,7 +57,7 @@ BEGIN
 	END
 		
 	;WITH tempMessage AS
-	(SELECT ROW_NUMBER() OVER(ORDER BY EventDate DESC) AS RowNumber, MessageId, Status, EventDate,
+	(SELECT ROW_NUMBER() OVER(ORDER BY EventDate DESC, MessageID DESC) AS RowNumber, MessageId, Status, EventDate,
 		CASE WHEN @SelectedLanguage = 'Ch' AND ISNULL(SubjectCh, '') <> '' THEN SubjectCh
 				WHEN @SelectedLanguage = 'Cs' AND ISNULL(SubjectCs, '') <> '' THEN SubjectCs
 				ELSE SubjectEn 
