@@ -17,7 +17,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 		
-	SELECT MessageId, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, Status, EventDate
+	SELECT MessageId, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, Status, EventDate, PublishedDate
 	FROM dbo.AmendmentMessage WITH(NOLOCK)
 	WHERE MessageID = @MessageId
 			
