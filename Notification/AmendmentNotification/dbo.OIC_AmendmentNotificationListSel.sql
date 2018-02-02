@@ -22,6 +22,7 @@ AS
 	Revisions:	
 		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
 		- 20180123@Scofield: #89901 - Enhance Result Notification function : sorting records, update @SelectedSiteNames
+		- 20180202@Scofield: #90464 - Add PublishedDate
 
 	Param's Explanation:
 		@@AmendmentStatus: -1: All, 0: New, 1: Active, 2: Inactive		

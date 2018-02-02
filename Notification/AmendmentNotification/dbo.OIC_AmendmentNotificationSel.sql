@@ -13,6 +13,7 @@ AS
 	
 	Revisions:	
 		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
+		- 20180202@Scofield: #90464 - Add PublishedDate
  */
 BEGIN
 	SET NOCOUNT ON
