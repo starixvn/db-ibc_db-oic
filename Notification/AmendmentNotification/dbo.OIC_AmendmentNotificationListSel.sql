@@ -22,6 +22,7 @@ AS
 	Revisions:	
 		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
 		- 20180123@Scofield: #89901 - Enhance Result Notification function : sorting records, update @SelectedSiteNames
+		- 20180202@Scofield: #90464 - Add PublishedDate
 
 	Param's Explanation:
 		@@AmendmentStatus: -1: All, 0: New, 1: Active, 2: Inactive		
@@ -43,6 +44,7 @@ BEGIN
 		Content 		NVARCHAR(MAX), 
 		Status		INT,
 		EventDate	DateTime,
+		PublishedDate	DateTime,
 		TotalRecords	INT)	
 	
 	IF @SelectedSiteNames <> 'All'
@@ -54,7 +56,7 @@ BEGIN
 	END
 		
 	;WITH tempMessage AS
-	(SELECT ROW_NUMBER() OVER(ORDER BY EventDate DESC, MessageID DESC) AS RowNumber, MessageId, Status, EventDate,
+	(SELECT ROW_NUMBER() OVER(ORDER BY EventDate DESC, MessageID DESC) AS RowNumber, MessageId, Status, EventDate, PublishedDate,
 		CASE WHEN @SelectedLanguage = 'Ch' AND ISNULL(SubjectCh, '') <> '' THEN SubjectCh
 				WHEN @SelectedLanguage = 'Cs' AND ISNULL(SubjectCs, '') <> '' THEN SubjectCs
 				ELSE SubjectEn 
@@ -70,15 +72,15 @@ BEGIN
 		AND (@SelectedSiteNames = 'All' OR (MessageID IN (SELECT MessageID FROM @tblTicketBySites)))
 	)
 	
-	INSERT INTO @messageResult (MessageId, Subject, Content, Status, EventDate, TotalRecords)		
-	SELECT tmp.MessageId, tmp.Subject, tmp.Content, tmp.Status, tmp.EventDate,
+	INSERT INTO @messageResult (MessageId, Subject, Content, Status, EventDate, PublishedDate, TotalRecords)		
+	SELECT tmp.MessageId, tmp.Subject, tmp.Content, tmp.Status, tmp.EventDate, tmp.PublishedDate,
 		(SELECT MAX(RowNumber) FROM tempMessage) AS TotalRecords
 	FROM tempMessage tmp		
 	WHERE tmp.RowNumber BETWEEN @RowStart AND @RowEnd
 	ORDER BY tmp.EventDate DESC
 	
 	-- Select Results
-	SELECT MessageId, Subject, Content, Status, EventDate
+	SELECT MessageId, Subject, Content, Status, EventDate, PublishedDate
 	FROM @messageResult
 	
 	SELECT TicketId, MessageId, LicenseeName AS SiteName, DataFilePath
