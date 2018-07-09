@@ -617,7 +617,7 @@ BEGIN
 			(2, N'Site name', @Sitename, @Sitename_old),
 			(3, N'Company name', @CompanyName, @CompanyName_old),
 			(4, N'Client Status', @ClientStatus, @ClientStatus_old),
-			(5, N'Chinese Market Only', @IsChineseMarketOnly, @IsChineseMarketOnly_old),
+			(5, N'China Market Only', @IsChineseMarketOnly, @IsChineseMarketOnly_old),
 			(6, N'Reseller', @Reseller, @Reseller_old),
 			(7, N'Soft Launch', @SoftLaunch, @SoftLaunch_old),
 			(8, N'Full Launch', @FullLaunch, @FullLaunch_old),
