@@ -14,7 +14,7 @@ AS
 		- 20160201@Kathy: Change ExchangeId to CurrencyId
 		- 20160506@Percy: Exclude currency: SGD [Redmine: #56935]
 		- 20160823@Percy: Sort by Code [RedmineID: #62883]
-		- 20180717@Scofield: Get all Currencies        
+		- 20180717@Scofield: Get all Currencies [#96489]
  */
 
 BEGIN
