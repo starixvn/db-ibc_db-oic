@@ -31,6 +31,7 @@ BEGIN
 		DECLARE
 			@TypeOfLicensee NVARCHAR(30),
 			@Sitename NVARCHAR(100),
+			@RegisteredSitename NVARCHAR(100),
 			@CompanyName NVARCHAR(100),
 			@ClientStatus NVARCHAR(30),
 			@SoftLaunch NVARCHAR(10), -- datetime format: mm/dd/yyyy
@@ -85,6 +86,7 @@ BEGIN
 
 			@TypeOfLicensee_old NVARCHAR(30),
 			@Sitename_old NVARCHAR(100),
+			@RegisteredSitename_old NVARCHAR(100),
 			@CompanyName_old NVARCHAR(100),
 			@ClientStatus_old NVARCHAR(30),
 			@SoftLaunch_old NVARCHAR(10), -- datetime format: mm/dd/yyyy
@@ -141,6 +143,7 @@ BEGIN
 		SELECT
 			@TypeOfLicensee = d.c.value('@tn', 'NVARCHAR(30)'), -- type of licensee
 			@Sitename = d.c.value('@ln', 'NVARCHAR(100)'), -- site name
+			@RegisteredSitename = d.c.value('@rln', 'NVARCHAR(100)'), -- registered site name
 			@CompanyName = d.c.value('@cn', 'NVARCHAR(100)'), -- company name
 			@ClientStatus = d.c.value('@sn', 'NVARCHAR(30)'), -- client status
 			@SoftLaunch = d.c.value('@sl', 'DATE'), -- soft launch
@@ -158,6 +161,7 @@ BEGIN
 
 			@TypeOfLicensee_old = od.c.value('@tn', 'NVARCHAR(30)'), -- type of licensee
 			@Sitename_old = od.c.value('@ln', 'NVARCHAR(100)'), -- site name
+			@RegisteredSitename_old = od.c.value('@rln', 'NVARCHAR(100)'), -- registered site name
 			@CompanyName_old = od.c.value('@cn', 'NVARCHAR(100)'), -- company name
 			@ClientStatus_old = od.c.value('@sn', 'NVARCHAR(30)'), -- client status
 			@SoftLaunch_old = od.c.value('@sl', 'DATE'), -- soft launch
@@ -614,6 +618,7 @@ BEGIN
 		INSERT INTO @Result(ID, Field, NewValue, OldValue)
 		VALUES
 			(1, N'Type of licensee', @TypeOfLicensee, @TypeOfLicensee_old),
+			(2, N'Registered Site name', @RegisteredSitename, @RegisteredSitename_old),
 			(2, N'Site name', @Sitename, @Sitename_old),
 			(3, N'Company name', @CompanyName, @CompanyName_old),
 			(4, N'Client Status', @ClientStatus, @ClientStatus_old),

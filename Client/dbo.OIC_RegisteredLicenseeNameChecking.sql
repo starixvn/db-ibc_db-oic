@@ -1,0 +1,64 @@
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="1"></info>*/
+USE [bodb_OIC]
+GO
+
+CREATE PROCEDURE [dbo].[OIC_RegisteredLicenseeNameChecking]
+	@RegisteredSiteName	NVARCHAR(50)
+	,@LicenseeId INT			= 0
+	,@Language	VARCHAR(10)		= 'E'
+	,@ErrCode	INT				= 0			OUTPUT
+	,@ErrMsg	VARCHAR(300)	= NULL		OUTPUT
+AS
+/*
+	Created by: Scofield
+	Date: 2018-08-07
+	Task: [Redmine:#99180]
+	DB: DBOIC.bodb_OIC
+	
+	Revisions:
+	- 20180810@Scofield: Add Registered site name for Clients [#99180]
+	
+	Param's Explanation:
+	* @ErrCode:
+		= 0: 
+		> 0: Specific Error.
+  
+	* @ErrMsg: Error description.	
+ */
+BEGIN
+	SET NOCOUNT ON
+	
+	-- New Licensee
+	IF @LicenseeId = 0 
+	BEGIN
+		IF EXISTS(SELECT TOP 1 1 FROM dbo.Licensee WITH(NOLOCK) WHERE RegisteredLicenseeName = @RegisteredSiteName)
+		BEGIN
+			SELECT @ErrCode = 99
+				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](11,@Language) 
+			RETURN
+		END
+	END
+	-- Existing Licensee
+	ELSE
+	BEGIN
+		IF EXISTS(SELECT TOP 1 1 FROM dbo.Licensee WITH(NOLOCK) WHERE RegisteredLicenseeName = @RegisteredSiteName AND LicenseeId <> @LicenseeId)
+		BEGIN
+			SELECT @ErrCode = 99
+				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](11,@Language)
+			RETURN
+		END
+	END
+END
+GO
+
+
+
+
+
+
+
+
+
+
+GO
+GRANT EXECUTE ON [dbo].[OIC_LicenseeNameChecking] TO [bodbAdminNet] AS [dbo]
