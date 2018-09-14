@@ -1,3 +1,5 @@
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+
 USE [bodb_OIC]
 GO
 
@@ -5,9 +7,9 @@ ALTER PROCEDURE [dbo].[OIC_EmailNotificationIns]
 	@CategoryId				TINYINT
 	,@SelectedLicensee		VARCHAR(MAX)	= 'All'
 	,@SubjectEn				NVARCHAR(300)
-	,@ContentEn				NVARCHAR(MAX)
+	,@ContentEn				NVARCHAR(MAX)	= ''
 	,@ContentCh				NVARCHAR(MAX)	= ''
-	,@ContentCs				NVARCHAR(MAX)	= ''
+	,@ContentCs				NVARCHAR(MAX)
 	,@MailCCList			XML				= NULL
 	
 	,@UserId				INT
@@ -25,6 +27,7 @@ AS
 	Revisions:
 		- 20160229@Percy: Change write log when editing email cc list [Redmine: #52857]
 		- 20170302@Percy: Expand length of Content [RedmineID: #70322]
+		- 20180914@Scofield: Change content display orders of the languages [#100984]
 	
 	Param's Explanation:
 		@MailCCList format:
@@ -143,8 +146,4 @@ BEGIN
 		,@OldData		= NULL
 		,@Duration		= @Duration
 END
-GO
-GRANT EXECUTE ON [dbo].[OIC_EmailNotificationIns] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_EmailNotificationIns] TO [vnteam] AS [dbo]
 GO
