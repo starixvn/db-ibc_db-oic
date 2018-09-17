@@ -1,15 +1,17 @@
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+
 USE [bodb_OIC]
 GO
 
 ALTER PROCEDURE [dbo].[OIC_ExternalNotificationIns] 
 	@MessageTypeId			TINYINT
 	,@SelectedLicensee		VARCHAR(MAX)	= 'All'
-	,@SubjectEn				NVARCHAR(300)	
+	,@SubjectEn				NVARCHAR(300)	= ''
 	,@SubjectCh				NVARCHAR(300)	= ''
-	,@SubjectCs				NVARCHAR(300)	= ''
-	,@ContentEn				NVARCHAR(MAX)  
+	,@SubjectCs				NVARCHAR(300)	
+	,@ContentEn				NVARCHAR(MAX)  = ''
 	,@ContentCh				NVARCHAR(MAX)  = ''	
-	,@ContentCs				NVARCHAR(MAX)  = ''
+	,@ContentCs				NVARCHAR(MAX)  
 	
 	,@UserId				INT
 	,@Language				VARCHAR(10)		= 'E'
@@ -25,6 +27,7 @@ AS
 	
 	Revisions:
 		- 20170302@Percy: Expand length of Content [RedmineID: #70322]
+		- 20180914@Scofield: Change content display orders of the languages [#100984]
 	
 	Param's Explanation:
 		@MessageTypeId: 40: public
@@ -153,8 +156,4 @@ BEGIN
 		,@OldData		= NULL
 		,@Duration		= @Duration	
 END
-GO
-GRANT EXECUTE ON [dbo].[OIC_ExternalNotificationIns] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_ExternalNotificationIns] TO [vnteam] AS [dbo]
 GO
