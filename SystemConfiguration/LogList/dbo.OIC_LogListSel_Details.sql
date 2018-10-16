@@ -17,6 +17,7 @@ AS
 		- 20170802@Percy: Support Url testing account [RedmineID: #80712]
 		- 20170828@Scofield: Add Reseller [#82144]
 		- 20171019@Scofield: Update log for update Amendment Notification [#84004]
+		- 201811016@Scofield: Update Result Amendment Language Order [#102847]
 */
 BEGIN
 	SET NOCOUNT ON
