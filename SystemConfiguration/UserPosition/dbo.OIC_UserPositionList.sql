@@ -1,16 +1,9 @@
-USE [bodb_OIC]
-GO
-/****** Object:  StoredProcedure [dbo].[OIC_UserPositionList]    Script Date: 10/15/2015 15:50:54 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[OIC_UserPositionList] 
 	@DisplayName		NVARCHAR(50)	= '%'
 	,@SelectedPosition	VARCHAR(100)	= 'All'
 	,@SiteId			INT 
 AS
-
 /*
 	Created by: Kathy
 	Date: 20151002
@@ -18,18 +11,19 @@ AS
 	DB: DBOIC.bodb_OIC
 	
 	Revisions:
+		- 20180925@Helen: DB052.bodb_NAP Migration to DBCust - [Redmine:100493]
+	
+	Parameters:	
 		@PositionId: All - ALL position
 		@SiteId: siteid on NAP Home
  */
-
 BEGIN
 	SET NOCOUNT ON;
-	
 	
 	SELECT	ci.custid AS UserId
 			,CASE WHEN ISNULL(ui.DisplayName,'') = '' THEN ci.username ELSE ui.DisplayName END AS DisplayName
 			,p.PositionId
-	FROM bodb_NAP.dbo.UserSite u WITH(NOLOCK)
+	FROM DBPOL.NAP_UserControl.dbo.NAP_UserSite u WITH(NOLOCK)
 		INNER JOIN bodb02.dbo.custInfo ci WITH(NOLOCK)
 			ON	ci.custid = u.UserId
 		LEFT JOIN dbo.UserInfo ui WITH(NOLOCK)
@@ -46,7 +40,7 @@ BEGIN
 			
 	
 END
-
+GO
 
 
 
