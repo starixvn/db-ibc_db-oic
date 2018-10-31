@@ -1,3 +1,5 @@
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+
 USE [bodb_OIC]
 GO
 
@@ -15,6 +17,7 @@ AS
 	
 	Revisions:
 		- 20161221@Percy: Implement Important - Reminder [RedmineID: #68774]
+		- 20181031@Scofield: Improve Performance for Notifications [#103766]
 	
 	Param's Explanation:
 		@Mode:	0 - News
@@ -36,7 +39,7 @@ BEGIN
 
 	IF @Mode = 4 -- Reminder
 	BEGIN
-		SELECT m.MessageId
+		SELECT TOP (@Top) m.MessageId
 			,(SELECT MessageTypeName FROM dbo.MessageType WITH(NOLOCK) WHERE MessageTypeId = m.MessageTypeId) AS MessageTypeName
 			,CASE WHEN m.Creator <> 0 THEN (SELECT DisplayName FROM dbo.UserInfo WITH(NOLOCK) WHERE UserId = m.Creator) ELSE 'System' END AS Sender
 			,m.SubjectEn
@@ -113,6 +116,3 @@ BEGIN
 	END
 END
 GO
-GRANT EXECUTE ON [dbo].[OIC_InternalNotificationNewestList] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_InternalNotificationNewestList] TO [vnteam] AS [dbo]
