@@ -17,6 +17,7 @@ AS
 		- 20170802@Percy: Support Url testing account [RedmineID: #80712]
 		- 20170828@Scofield: Add Reseller [#82144]
 		- 20171019@Scofield: Update log for update Amendment Notification [#84004]
+		- 201811016@Scofield: Update Result Amendment Language Order [#102847]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -1640,12 +1641,12 @@ BEGIN
 		INSERT INTO @Result (ID, Field, NewValue, OldValue)
 		VALUES
 			(1, N'Status', @Status, @Status_old),
-			(2, N'Subject (English)', @SubjectEn, @SubjectEn_old),
+			(2, N'Subject (Smpl. Chinese)', @SubjectCs, @SubjectCs_old),			
 			(3, N'Subject (Trad. Chinese)', @SubjectCh, @SubjectCh_old),
-			(4, N'Subject (Smpl. Chinese)', @SubjectCs, @SubjectCs_old),
-			(5, N'Content (English)', @ContentEn, @ContentEn_old),
+			(4, N'Subject (English)', @SubjectEn, @SubjectEn_old),
+			(5, N'Content (Smpl. Chinese)', @ContentCs, @ContentCs_old),
 			(6, N'Content (Trad. Chinese)', @ContentCh, @ContentCh_old),
-			(7, N'Content (Smpl. Chinese)', @ContentCs, @ContentCs_old)			
+			(7, N'Content (English)', @ContentEn, @ContentEn_old)			
 	END
 	ELSE IF @LogActionId IN (4009) -- Update Reminder
 	BEGIN
