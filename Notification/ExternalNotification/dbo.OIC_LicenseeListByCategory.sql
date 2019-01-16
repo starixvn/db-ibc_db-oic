@@ -6,7 +6,7 @@ GO
 ALTER PROCEDURE [dbo].[OIC_LicenseeListByCategory] 
     @CategoryId				TINYINT
     ,@UserId				INT
-	,@IsChineseMarketOnly	BIT		= 0
+	,@MarketType	INT		= -1 -- All
    
 AS
 
@@ -19,6 +19,7 @@ AS
     Revisions:
 		- 20160225@Percy: change sitename dropdown [Redmine: #52858]
 		- 20170517@Percy: Add Chinese Market Only [RedmineID: #74330]
+		- 20190116@Scofield: Uppercase Licensee Name in Title of Emails and add Non-China Market checkbox [RedmineID: #107662]
     
     Param's Explanation:
 		
@@ -38,8 +39,8 @@ BEGIN
 		ult.UserId = @UserId
 		AND lca.CategoryId = @CategoryId
 		AND (
-			@IsChineseMarketOnly = 0
-			OR l.IsChineseMarketOnly = @IsChineseMarketOnly
+			@MarketType = -1
+			OR l.IsChineseMarketOnly = @MarketType
 		)
 		AND l.LicenseeStatusId = 3 -- Active
 	GROUP BY l.LicenseeId, l.LicenseeName, l.LicenseeTypeId, lt.LicenseeTypeName              
