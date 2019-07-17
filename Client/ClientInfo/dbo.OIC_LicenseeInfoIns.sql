@@ -29,6 +29,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns]
 	,@LicTargetMarket		VARCHAR(1000)	= NULL
 	,@LicLanguage			XML				= NULL
 	,@LicLanguageSB			XML				= NULL
+	,@LicOddsType			VARCHAR(100)    = NULL
 	,@LicService			XML				= NULL
 	,@LicRestrictCountry	VARCHAR(1000)	= NULL
 	,@RestrictCountryRemark	NVARCHAR(2000)	= NULL		
@@ -59,6 +60,7 @@ AS
 		- 20170802@Percy: Add Url testing account - add element into @LicAccount [RedmineID: #80712]
 		- 20170809@Percy: Extend Url length [RedmineID: #81392]
 		- 20170828@Scofield: Add Reseller [#82144]
+		- 20190715@Howard: Add OddsType [RedmindId: #115460]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -123,6 +125,7 @@ BEGIN
 		,@log_restrictedLocation	XML
 		,@log_language				XML
 		,@log_languageSB			XML
+		,@log_oddsType				XML
 		,@log_service				XML
 		-- log step 2
 		,@log_product				XML
@@ -185,6 +188,7 @@ BEGIN
 		,@LicTargetMarket			= @LicTargetMarket
 		,@LicLanguage				= @LicLanguage
 		,@LicLanguageSB				= @LicLanguageSB
+		,@LicOddsType				= @LicOddsType
 		,@LicService				= @LicService
 		,@LicRestrictCountry		= @LicRestrictCountry
 		,@RestrictCountryRemark		= @RestrictCountryRemark		
@@ -217,6 +221,9 @@ BEGIN
 		WHERE LicenseeId = @LicenseeId
 		
 		DELETE FROM dbo.LicenseeLanguage  WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		
+		DELETE FROM dbo.LicenseeOddsType WITH(ROWLOCK, UPDLOCK)
 		WHERE LicenseeId = @LicenseeId
 		
 		DELETE FROM dbo.LicenseeProperty  WITH(ROWLOCK, UPDLOCK)
@@ -264,6 +271,9 @@ BEGIN
 			WHERE LicenseeId = @LicenseeId
 			
 			DELETE FROM dbo.LicenseeLanguage  WITH(ROWLOCK, UPDLOCK)
+			WHERE LicenseeId = @LicenseeId
+			
+			DELETE FROM dbo.LicenseeOddsType WITH(ROWLOCK, UPDLOCK)
 			WHERE LicenseeId = @LicenseeId
 			
 			DELETE FROM dbo.Licensee  WITH(ROWLOCK, UPDLOCK)
@@ -319,6 +329,9 @@ BEGIN
 		WHERE LicenseeId = @LicenseeId
 		
 		DELETE FROM dbo.LicenseeLanguage  WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		
+		DELETE FROM dbo.LicenseeOddsType WITH(ROWLOCK, UPDLOCK)
 		WHERE LicenseeId = @LicenseeId
 		
 		DELETE FROM dbo.LicenseeProperty  WITH(ROWLOCK, UPDLOCK)
@@ -419,6 +432,16 @@ BEGIN
 							WHERE	ll.LicenseeId = @LicenseeId
 							FOR XML PATH('row'), ROOT('llsb')	
 						)
+						
+	SET @log_oddsType = (
+							SELECT ot.OddsTypeId AS '@lotid'
+								   ,ot.OddsTypeName AS '@lotn'
+							FROM dbo.LicenseeOddsType AS lot WITH(NOLOCK)
+								INNER JOIN dbo.OddsType AS ot WITH(NOLOCK)
+									ON lot.OddsTypeId = ot.OddsTypeId
+							WHERE lot.LicenseeId = @LicenseeId
+							FOR XML PATH('row'), ROOT('lot')
+						)
 
 	SET @log_service = (	SELECT	s.ServiceId				AS '@lsid'
 									,s.ServiceName				AS '@lsn'
@@ -501,6 +524,7 @@ BEGIN
 				,@log_currency
 				,@log_Language
 				,@log_LanguageSB
+				,@log_oddsType
 				,@log_restrictedLocation
 				,@log_targetedMarket
 				,@log_service
