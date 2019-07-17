@@ -15,7 +15,9 @@ CREATE FUNCTION [dbo].[f_GetOddsTypesNameByLicenseeId](@LicenseeId int)
     DECLARE  @oddsTypes varchar(100) = NULL;
     
 	SELECT @oddsTypes = COALESCE(@oddsTypes + ', ' + ot.OddsTypeName, ot.OddsTypeName) 
-	FROM LicenseeOddsType AS lot INNER JOIN OddsType as ot  on lot.OddsTypeId = ot.OddsTypeId 
+	FROM LicenseeOddsType AS lot WITH(NOLOCK)
+		INNER JOIN OddsType as ot WITH(NOLOCK)
+			ON lot.OddsTypeId = ot.OddsTypeId 
 	WHERE lot.LicenseeId = @LicenseeId
 	
 	RETURN @oddsTypes
