@@ -9,6 +9,7 @@ GO
 	Task: Select all of odds type [RedmineID: #115460]
 	
 	Revisions:
+		- 20190717@Howard: Created [RedmineID: #115460] 
 */
 
 CREATE PROCEDURE [dbo].[OIC_OddsTypeSel]

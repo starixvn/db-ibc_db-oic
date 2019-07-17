@@ -9,6 +9,7 @@ GO
 	Task: get all of odds type name of licensee [RedmineID: #115460]
 	
 	Revisions:
+		- 20190717@Howard: Created [RedmineID: #115460]
 */
 
 CREATE FUNCTION [dbo].[f_GetOddsTypesNameByLicenseeId](@LicenseeId int)
