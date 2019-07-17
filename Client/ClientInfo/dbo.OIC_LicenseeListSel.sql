@@ -270,6 +270,7 @@ BEGIN
 				WHERE tr.RowNumber BETWEEN @RowStart AND @RowEnd
 		   ) t
 			OUTER APPLY (SELECT dbo.f_GetOddsTypesNameByLicenseeId(t.LicenseeId)) OddsType(value)
+	ORDER BY RowNumber
 
 	DROP TABLE #tblResult
 END
