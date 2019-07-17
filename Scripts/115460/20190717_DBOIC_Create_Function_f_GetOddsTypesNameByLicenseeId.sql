@@ -7,6 +7,8 @@ GO
 	Created: 20190717@Howard
 	DB: DBOIC.bodb_OIC
 	Task: get all of odds type name of licensee [RedmineID: #115460]
+	
+	Revisions:
 */
 
 CREATE FUNCTION [dbo].[f_GetOddsTypesNameByLicenseeId](@LicenseeId int)
