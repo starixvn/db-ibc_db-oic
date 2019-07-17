@@ -9,15 +9,14 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeListSel]
 	,@LicenseeStatusIds	VARCHAR(50)	= 'All'
 	,@SelectedProduct	VARCHAR(500)	= 'All'
 	,@SelectedCurrency  VARCHAR(100)	= 'All'
+	,@SelectedOddsType  VARCHAR(50)		= 'All'
 	,@AMUserId			INT				= 0			--All
 	,@PMUserId			INT				= 0			--All
 	,@ResellerType	INT 			= -1		--All
 	,@MarketType	INT 			= -1		--All
-	
 	,@PageSize			INT = 10
 	,@PageIndex			INT	= 0 
 	,@TotalRecords		INT = 0 OUTPUT
-	
 AS
 
 /*
@@ -33,11 +32,13 @@ AS
 		- 20161214@Percy: Change dropdown TOL filter multiple choices [RedmineID: #68774]
 		- 20170828@Scofield: Add Reseller, Update LicenseeStatusIds [#82144]
 		- 20180717@Scofield: Get all Currencies [#96489]
+		- 20190716@Howard: Add Odds Types[RedmineID: #115460 ]
 
 	Param's Explanation:
 		
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
 	* @SelectedCurrency: multiple selection dropdown(select 'All' or (1 or many currency))(Currency offered to the client)
+	* @SelectedOddsType: multiple selection dropdown(select 'All' or (1 or many odds type))
 	* @LicenseeTypeIds: dropdown (select 0(All) or 1 licenseeTypeId)
 	* @LicenseeStatusId: dropdown (select 0(All) or 1 licenseeStatusId)
 	* @AMUser: dropdown(select 0(All) or 1 AMUser)
@@ -62,6 +63,8 @@ BEGIN
 	DECLARE @tblLicenseeType	TABLE (LicenseeTypeId TINYINT)
 	DECLARE @tblLicenseeProduct TABLE (LicenseeId INT)
 	DECLARE @tblLicenseeCurrency TABLE (LicenseeId INT, currency VARCHAR(1000))
+	DECLARE @tblLicenseeOddsType TABLE (LicenseeId INT)
+	
 	CREATE TABLE #tblResult	(
 			RowNumber				INT
 			,LicenseeId				INT
@@ -77,6 +80,7 @@ BEGIN
 			,MainContactId			INT
 			,MainContactName		NVARCHAR(50)
 			,currency				VARCHAR(400)
+			,OddsType				VARCHAR(100)
 			,IsReseller				BIT
 			,IsChineseMarketOnly 	BIT
 	)				
@@ -87,6 +91,13 @@ BEGIN
 	WHERE	(@SelectedProduct = 'All' 
 				OR p.ProductId IN (SELECT val FROM dbo.strSplit(@SelectedProduct,',')) 
 			)
+			
+	INSERT INTO @tblLicenseeOddsType
+	SELECT  DISTINCT l.LicenseeId
+	FROM dbo.Licensee l WITH(NOLOCK)
+			LEFT JOIN dbo.LicenseeOddsType lot WITH(NOLOCK)
+				ON l.LicenseeId = lot.LicenseeId 
+	WHERE @SelectedOddsType = 'All' OR lot.OddsTypeId IN (SELECT val FROM dbo.strSplit(@SelectedOddsType,',')) 
 	
 	IF @SelectedLicenseeType = 'All'
 	BEGIN
@@ -157,7 +168,7 @@ BEGIN
 			,AccountManager
 			,MainContactId
 			,MainContactName
-			,currency		
+			,currency	
 			,IsReseller
 			,IsChineseMarketOnly
 	)	
@@ -171,7 +182,7 @@ BEGIN
 			,lt.LicenseeTypeName
 			,l.SoftLaunch
 			,l.FullLaunch
-			,u.DisplayName as AccountManager
+			,u.DisplayName AS AccountManager
 			,c.ContactID
 			,c.ContactName
 			,lc.currency
@@ -198,6 +209,9 @@ BEGIN
 			ON	u.LicenseeId = l.LicenseeId
 		INNER JOIN @tblLicenseeCurrency lc
 			ON l.LicenseeId = lc.LicenseeId
+		INNER JOIN @tblLicenseeOddsType lot
+			ON l.LicenseeId = lot.LicenseeId
+		
 	WHERE	l.LicenseeName LIKE ISNULL(@LicenseeName,'%') + '%'
 			AND l.LicenseeTypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
 			AND (@LicenseeStatusIds = 'All' OR ls.LicenseeStatusId IN (SELECT val FROM dbo.strSplit(@LicenseeStatusIds,','))) 				
@@ -247,11 +261,17 @@ BEGIN
 			,t.MainContactId
 			,t.MainContactName
 			,t.currency
+			,OddsType.value AS OddsType
 			,t.IsReseller
 			,t.IsChineseMarketOnly
-	FROM #tblResult t
-	WHERE t.RowNumber BETWEEN @RowStart AND @RowEnd
+	 FROM (
+				SELECT *
+				FROM #tblResult tr
+				WHERE tr.RowNumber BETWEEN @RowStart AND @RowEnd
+		   ) t
+			OUTER APPLY (SELECT dbo.f_GetOddsTypesNameByLicenseeId(t.LicenseeId)) OddsType(value)
 
 	DROP TABLE #tblResult
 END
+
 GO
