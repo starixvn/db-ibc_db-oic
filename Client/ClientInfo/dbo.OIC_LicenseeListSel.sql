@@ -33,6 +33,7 @@ AS
 		- 20170828@Scofield: Add Reseller, Update LicenseeStatusIds [#82144]
 		- 20180717@Scofield: Get all Currencies [#96489]
 		- 20190716@Howard: Add Odds Types[RedmineID: #115460 ]
+		- 20190717@Howard: Sort list by name[RedmineID: #115460]
 
 	Param's Explanation:
 		
