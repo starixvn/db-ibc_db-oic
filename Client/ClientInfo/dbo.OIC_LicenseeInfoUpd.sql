@@ -30,6 +30,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd]
 	,@LicTargetMarket		VARCHAR(1000)	= NULL
 	,@LicLanguage			XML				= NULL
 	,@LicLanguageSB			XML				= NULL
+	,@LicOddsType			VARCHAR(100)	= NULL
 	,@LicService			XML				= NULL
 	,@LicRestrictCountry	VARCHAR(1000)	= NULL
 	,@RestrictCountryRemark	NVARCHAR(500)	= NULL		
@@ -65,7 +66,8 @@ AS
 		- 20170802@Percy: Add Url testing account - add element into @LicAccount [RedmineID: #80712]
 		- 20170809@Percy: Extend Url length [RedmineID: #81392]
 		- 20170828@Scofield: Add Reseller [#82144]
-	
+		- 20190715@Howard: Add Odds Type [RedmineID: #115460]
+		
 	Param's Explanation:
 	* @LicBackupLink
 		<root>
@@ -157,6 +159,7 @@ BEGIN
 		,@log_restrictedLocation	XML
 		,@log_language				XML
 		,@log_languageSB			XML
+		,@log_oddsType				XML
 		,@log_service				XML
 		-- log step 2
 		,@log_product				XML
@@ -241,6 +244,15 @@ BEGIN
 										ON la.LanguageId = ll.LanguageId
 								WHERE	ll.LicenseeId = @LicenseeId
 								FOR XML PATH('row'), ROOT('llsb')	
+							)
+		SET @log_oddsType = (
+								SELECT ot.OddsTypeId AS '@lotid'
+									   ,ot.OddsTypeName AS '@lotn'
+								FROM dbo.LicenseeOddsType AS lot WITH(NOLOCK)
+									INNER JOIN dbo.OddsType AS ot WITH(NOLOCK)
+										ON lot.OddsTypeId = ot.OddsTypeId
+								WHERE lot.LicenseeId = @LicenseeId
+								FOR XML PATH('row'), ROOT('lot')
 							)
 	
 		SET @log_service = (	SELECT	s.ServiceId				AS '@lsid'
@@ -330,6 +342,7 @@ BEGIN
 							,@log_currency
 							,@log_Language
 							,@log_languageSB
+							,@log_oddsType
 							,@log_restrictedLocation
 							,@log_targetedMarket
 							,@log_service
@@ -377,6 +390,7 @@ BEGIN
 			,@LicTargetMarket			= @LicTargetMarket
 			,@LicLanguage				= @LicLanguage
 			,@LicLanguageSB				= @LicLanguageSB
+			,@LicOddsType				= @LicOddsType
 			,@LicService				= @LicService
 			,@LicRestrictCountry		= @LicRestrictCountry
 			,@RestrictCountryRemark		= @RestrictCountryRemark		
@@ -463,6 +477,16 @@ BEGIN
 											ON la.LanguageId = ll.LanguageId
 									WHERE	ll.LicenseeId = @LicenseeId
 									FOR XML PATH('row'), ROOT('llsb')	
+								)
+								
+			SET @log_oddsType = (
+									SELECT ot.OddsTypeId AS '@lotid'
+										   ,ot.OddsTypeName AS '@lotn'
+									FROM dbo.LicenseeOddsType AS lot WITH(NOLOCK)
+										INNER JOIN dbo.OddsType AS ot WITH(NOLOCK)
+											ON lot.OddsTypeId = ot.OddsTypeId
+									WHERE lot.LicenseeId = @LicenseeId
+									FOR XML PATH('row'), ROOT('lot')
 								)
 	
 			SET @log_service = (	SELECT	s.ServiceId				AS '@lsid'
@@ -608,6 +632,7 @@ BEGIN
 								,@log_currency
 								,@log_Language
 								,@log_LanguageSB
+								,@log_oddsType
 								,@log_restrictedLocation
 								,@log_targetedMarket
 								,@log_service

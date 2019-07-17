@@ -28,6 +28,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd_Step1]
 	,@LicTargetMarket		VARCHAR(1000)	= NULL
 	,@LicLanguage			XML				= NULL
 	,@LicLanguageSB			XML				= NULL
+	,@LicOddsType			VARCHAR(100)	= NULL
 	,@LicService			XML				= NULL
 	,@LicRestrictCountry	VARCHAR(1000)	= NULL
 	,@RestrictCountryRemark	NVARCHAR(500)	= NULL		
@@ -53,6 +54,7 @@ AS
 		- 20170517@Percy: Add Chinese Market Only [RedmineID: #74330]
 		- 20170809@Percy: Extend Url length [RedmineID: #81392]
 		- 20170828@Scofield: Add Reseller [#82144]
+		- 20190715@Howard: Add Odds Type [RedmineId: #115460]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -304,6 +306,21 @@ BEGIN
 		RETURN
 	END CATCH
 	
+	-- Update odds type
+	IF @LicOddsType IS NOT NULL
+	BEGIN TRY 
+		MERGE dbo.LicenseeOddsType lot 
+		USING (SELECT CONVERT(INT, val) AS OddsTypeId FROM dbo.strSplit(@LicOddsType, ',')) t
+			ON lot.OddsTypeId = t.OddsTypeId
+			AND lot.LicenseeId = @LicenseeId
+		WHEN NOT MATCHED BY TARGET THEN INSERT (LicenseeId, OddsTypeId) VALUES (@LicenseeId, t.OddsTypeId)
+		WHEN NOT MATCHED BY SOURCE AND lot.LicenseeId = @LicenseeId THEN DELETE;
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrCode = 110
+		RETURN
+	END CATCH
+		
 	SELECT @ErrCode = 0
 END
 GO
