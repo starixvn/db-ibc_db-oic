@@ -20,7 +20,6 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeListSel]
 AS
 
 /*
-
 	Created by: Kathy
 	Date: 20150424
 	Task: Client list [Redmine:#29609]
@@ -36,7 +35,6 @@ AS
 		- 20190717@Howard: Sort list by name[RedmineID: #115460]
 
 	Param's Explanation:
-		
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
 	* @SelectedCurrency: multiple selection dropdown(select 'All' or (1 or many currency))(Currency offered to the client)
 	* @SelectedOddsType: multiple selection dropdown(select 'All' or (1 or many odds type))
@@ -45,7 +43,6 @@ AS
 	* @AMUser: dropdown(select 0(All) or 1 AMUser)
 	* @PMUser: dropdown(select 0(All) or 1 PMUser)
 	* @PageIndex: 0 - the first page
-
 */
 
 BEGIN
@@ -93,7 +90,7 @@ BEGIN
 				OR p.ProductId IN (SELECT val FROM dbo.strSplit(@SelectedProduct,',')) 
 			)
 			
-	INSERT INTO @tblLicenseeOddsType
+	INSERT INTO @tblLicenseeOddsType(LicenseeId)
 	SELECT  DISTINCT l.LicenseeId
 	FROM dbo.Licensee l WITH(NOLOCK)
 			LEFT JOIN dbo.LicenseeOddsType lot WITH(NOLOCK)
@@ -148,7 +145,7 @@ BEGIN
 			@SelectedCurrency = 'All'
 			OR e.exchangeid IS NOT NULL
 	)
-	INSERT INTO @tblLicenseeCurrency
+	INSERT INTO @tblLicenseeCurrency(LicenseeId, currency)
 	SELECT
 		LicenseeId,
 		(SELECT STUFF((SELECT ', ' + currency FROM CTE_LicenseeCurrency WHERE LicenseeId = lc.LicenseeId FOR XML PATH('')), 1, 1, ''))
@@ -210,8 +207,6 @@ BEGIN
 			ON	u.LicenseeId = l.LicenseeId
 		INNER JOIN @tblLicenseeCurrency lc
 			ON l.LicenseeId = lc.LicenseeId
-		INNER JOIN @tblLicenseeOddsType lot
-			ON l.LicenseeId = lot.LicenseeId
 		
 	WHERE	l.LicenseeName LIKE ISNULL(@LicenseeName,'%') + '%'
 			AND l.LicenseeTypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
@@ -223,7 +218,6 @@ BEGIN
 					) 
 					OR (@SelectedProduct = 'All')
 				)
-			
 	
 			AND EXISTS (SELECT	LicenseeId 
 						FROM	dbo.UserLicensee ulp WITH(NOLOCK)
@@ -234,6 +228,7 @@ BEGIN
 								AND l.LicenseeId = LicenseeID)
 			AND (@ResellerType = -1 OR l.IsReseller = @ResellerType)
 			AND (@MarketType = -1 OR @MarketType = l.IsChineseMarketOnly)
+			AND l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeOddsType)
 	
 	UPDATE	t 
 		SET ProjectManager = ui.DisplayName
