@@ -57,11 +57,12 @@ BEGIN
 			@RowStart	= @PageSize * @PageIndex + 1
 			,@RowEnd	= @RowStart + @PageSize - 1	
 	
-	DECLARE @tblProduct			TABLE (ProductId INT)
 	DECLARE @tblLicenseeType	TABLE (LicenseeTypeId TINYINT)
 	DECLARE @tblLicenseeProduct TABLE (LicenseeId INT)
-	DECLARE @tblLicenseeCurrency TABLE (LicenseeId INT, currency VARCHAR(1000))
+	DECLARE @tblLicenseeCurrency TABLE (LicenseeId INT)
 	DECLARE @tblLicenseeOddsType TABLE (LicenseeId INT)
+	DECLARE @tblLicenseeAM TABLE (LicenseeId INT, UserId INT, DisplayName NVARCHAR(50))
+	DECLARE @tblLicenseePM TABLE (LicenseeId INT,  UserId INT, DisplayName NVARCHAR(50))
 	
 	CREATE TABLE #tblResult	(
 			RowNumber				INT
@@ -82,20 +83,22 @@ BEGIN
 			,IsReseller				BIT
 			,IsChineseMarketOnly 	BIT
 	)				
-							
-	INSERT INTO @tblProduct(ProductId)
-	SELECT  p.ProductId
-	FROM	dbo.Product p WITH(NOLOCK)
-	WHERE	(@SelectedProduct = 'All' 
-				OR p.ProductId IN (SELECT val FROM dbo.strSplit(@SelectedProduct,',')) 
-			)
-			
-	INSERT INTO @tblLicenseeOddsType(LicenseeId)
-	SELECT  DISTINCT l.LicenseeId
-	FROM dbo.Licensee l WITH(NOLOCK)
-			LEFT JOIN dbo.LicenseeOddsType lot WITH(NOLOCK)
-				ON l.LicenseeId = lot.LicenseeId 
-	WHERE @SelectedOddsType = 'All' OR lot.OddsTypeId IN (SELECT val FROM dbo.strSplit(@SelectedOddsType,',')) 
+
+	IF @SelectedProduct <> 'All'	
+	BEGIN
+		INSERT INTO @tblLicenseeProduct(LicenseeId)
+		SELECT DISTINCT lp.LicenseeId
+		FROM dbo.LicenseeProduct lp WITH(NOLOCK)
+		WHERE lp.ProductId IN (SELECT val FROM dbo.strSplit(@SelectedProduct,',')) 
+	END
+		
+	IF @SelectedOddsType <> 'All'
+	BEGIN
+			INSERT INTO @tblLicenseeOddsType(LicenseeId)
+			SELECT DISTINCT lot.LicenseeId
+			FROM dbo.LicenseeOddsType lot WITH(NOLOCK)
+			WHERE lot.OddsTypeId IN (SELECT val FROM dbo.strSplit(@SelectedOddsType,',')) 
+	END
 	
 	IF @SelectedLicenseeType = 'All'
 	BEGIN
@@ -114,44 +117,32 @@ BEGIN
 			LEFT JOIN dbo.UserLicenseeType ult WITH(NOLOCK) ON lt.LicenseeTypeId = ult.LicenseeTypeId AND ult.UserId = @UserId
 		WHERE ult.LicenseeTypeId IS NULL
 	END
-				
-	INSERT INTO @tblLicenseeProduct(LicenseeId)
-	SELECT	lp.LicenseeId
-	FROM	@tblProduct p 
-		INNER JOIN dbo.LicenseeProduct lp WITH(NOLOCK) 
-			ON	p.ProductId = lp.ProductId
-		INNER JOIN dbo.Licensee l WITH (NOLOCK) 
-			ON	l.LicenseeId = lp.LicenseeId
-	GROUP BY  lp.LicenseeId
-	HAVING COUNT(DISTINCT lp.ProductId) = CASE WHEN @SelectedProduct = 'All' THEN COUNT(DISTINCT lp.ProductId)
-											   ELSE (SELECT COUNT(1) FROM @tblProduct)
-										  END					
-	;WITH CTE_Licensee (LicenseeId) AS
-	(
-		SELECT DISTINCT LicenseeId
-		FROM dbo.LicenseeCurrency WITH(NOLOCK)
-		WHERE
-			@SelectedCurrency = 'All'
-			OR CurrencyId IN (SELECT CONVERT(INT, val) FROM dbo.strSplit(@SelectedCurrency, ','))
-	)
-	,CTE_LicenseeCurrency (LicenseeId, currency) AS
-	(
-		SELECT DISTINCT lc.LicenseeId, e.code
-		FROM
-			dbo.LicenseeCurrency lc WITH(NOLOCK)
-			INNER JOIN CTE_Licensee l ON lc.LicenseeId = l.LicenseeId
-			LEFT JOIN bodb02.dbo.Exchange e WITH(NOLOCK) ON lc.CurrencyId = e.exchangeid
-		WHERE
-			@SelectedCurrency = 'All'
-			OR e.exchangeid IS NOT NULL
-	)
-	INSERT INTO @tblLicenseeCurrency(LicenseeId, currency)
-	SELECT
-		LicenseeId,
-		(SELECT STUFF((SELECT ', ' + currency FROM CTE_LicenseeCurrency WHERE LicenseeId = lc.LicenseeId FOR XML PATH('')), 1, 1, ''))
-	FROM CTE_LicenseeCurrency lc
-	GROUP BY LicenseeId
-				
+	
+	IF @SelectedCurrency <> 'All'
+	BEGIN
+		INSERT INTO @tblLicenseeCurrency(LicenseeId)
+		SELECT DISTINCT lc.LicenseeId
+		FROM dbo.LicenseeCurrency lc WITH(NOLOCK)
+		WHERE lc.CurrencyId IN (SELECT val FROM dbo.strSplit(@SelectedCurrency,','))  
+	END
+	
+	INSERT INTO @tblLicenseePM (LicenseeId, UserId, DisplayName)
+	SELECT LicenseeId, uip.UserId, uip.DisplayName
+	FROM dbo.UserLicensee ulp WITH(NOLOCK)
+	INNER JOIN dbo.UserInfo uip WITH(NOLOCK)
+		ON	ulp.UserId = uip.UserId
+			AND uip.PositionId = 5 -- PM
+	WHERE (@PMUserId = 0 OR uip.UserId = @PMUserId)
+	
+	INSERT INTO @tblLicenseeAM (LicenseeId, UserId, DisplayName)
+	SELECT LicenseeId, uip.UserId, uip.DisplayName
+	FROM dbo.UserLicensee ulp WITH(NOLOCK)
+	INNER JOIN dbo.UserInfo uip WITH(NOLOCK)
+		ON	ulp.UserId = uip.UserId
+			AND uip.PositionId = 6 -- AM
+	WHERE (@AMUserId = 0 OR uip.UserId = @AMUserId)
+	
+							
 	INSERT INTO #tblResult
 	(
 			RowNumber
@@ -160,13 +151,10 @@ BEGIN
 			,LicenseeStatusId
 			,LicenseeStatusName
 			,LicenseeTypeId
-			,LicenseeTypeName
 			,SoftLaunch
 			,FullLaunch
-			,AccountManager
 			,MainContactId
 			,MainContactName
-			,currency	
 			,IsReseller
 			,IsChineseMarketOnly
 	)	
@@ -176,59 +164,30 @@ BEGIN
 			,l.LicenseeName
 			,ls.LicenseeStatusId
 			,ls.LicenseeStatusName
-			,lt.LicenseeTypeId
-			,lt.LicenseeTypeName
+			,l.LicenseeTypeId
 			,l.SoftLaunch
 			,l.FullLaunch
-			,u.DisplayName AS AccountManager
 			,c.ContactID
 			,c.ContactName
-			,lc.currency
 			,l.IsReseller
 			,l.IsChineseMarketOnly
 	FROM	dbo.Licensee l WITH(NOLOCK)
-		INNER JOIN dbo.LicenseeType lt WITH(NOLOCK)
-			ON	lt.LicenseeTypeId = l.LicenseeTypeId
 		INNER JOIN dbo.LicenseeStatus ls WITH(NOLOCK)
 			ON	ls.LicenseeStatusId = l.LicenseeStatusId
 		LEFT JOIN dbo.Contact c WITH(NOLOCK) 
 			ON	c.LicenseeID = l.LicenseeId 
 				AND c.IsMain = 1
-		INNER JOIN (
-			SELECT	ui.UserId
-					,ui.DisplayName
-					,ul.LicenseeId 
-			FROM dbo.UserInfo ui WITH(NOLOCK)
-				INNER JOIN UserLicensee ul WITH(NOLOCK)
-					ON	ui.UserId = ul.UserId 
-						AND ui.PositionId = 6 --AM 
-						AND (@AMUserId = 0 OR ui.UserId = @AMUserId)
-		) u 
-			ON	u.LicenseeId = l.LicenseeId
-		INNER JOIN @tblLicenseeCurrency lc
-			ON l.LicenseeId = lc.LicenseeId
-		
+			
 	WHERE	l.LicenseeName LIKE ISNULL(@LicenseeName,'%') + '%'
 			AND l.LicenseeTypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
 			AND (@LicenseeStatusIds = 'All' OR ls.LicenseeStatusId IN (SELECT val FROM dbo.strSplit(@LicenseeStatusIds,','))) 				
-			AND (
-					(@SelectedProduct <> 'All' 
-						AND EXISTS (SELECT t.LicenseeId FROM @tblLicenseeProduct t
-										WHERE t.LicenseeId = l.LicenseeId)
-					) 
-					OR (@SelectedProduct = 'All')
-				)
-	
-			AND EXISTS (SELECT	LicenseeId 
-						FROM	dbo.UserLicensee ulp WITH(NOLOCK)
-							INNER JOIN dbo.UserInfo uip WITH(NOLOCK)
-								ON	ulp.UserId = uip.UserId
-									AND uip.PositionId = 5 -- AM
-						WHERE	(uip.UserId = @PMUserId OR @PMUserId = 0) 
-								AND l.LicenseeId = LicenseeID)
+			AND (@SelectedProduct = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeProduct))
+			AND l.LicenseeId IN (SELECT LicenseeId FROM  @tblLicenseePM)
+			AND l.LicenseeId IN (SELECT LicenseeId FROM  @tblLicenseeAM)
 			AND (@ResellerType = -1 OR l.IsReseller = @ResellerType)
 			AND (@MarketType = -1 OR @MarketType = l.IsChineseMarketOnly)
-			AND l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeOddsType)
+			AND (@SelectedOddsType = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeOddsType))
+			AND (@SelectedCurrency = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeCurrency)) 
 	
 	UPDATE	t 
 		SET ProjectManager = ui.DisplayName
@@ -249,14 +208,14 @@ BEGIN
 			,t.LicenseeName
 			,t.LicenseeStatusName
 			,t.LicenseeTypeId
-			,t.LicenseeTypeName
+			,LicenseeType.value AS LicenseeTypeName
 			,t.FullLaunch
 			,t.SoftLaunch
-			,t.AccountManager
-			,t.ProjectManager
+			,AM.value AS AccountManager
+			,PM.value AS ProjectManager
 			,t.MainContactId
 			,t.MainContactName
-			,t.currency
+			,Currency.value AS currency 
 			,OddsType.value AS OddsType
 			,t.IsReseller
 			,t.IsChineseMarketOnly
@@ -266,6 +225,13 @@ BEGIN
 				WHERE tr.RowNumber BETWEEN @RowStart AND @RowEnd
 		   ) t
 			OUTER APPLY (SELECT dbo.f_GetOddsTypesNameByLicenseeId(t.LicenseeId)) OddsType(value)
+			OUTER APPLY (SELECT lt.LicenseeTypeName 
+						 FROM dbo.LicenseeType lt WITH(NOLOCK) 
+						 WHERE lt.LicenseeTypeId = t.LicenseeTypeId) LicenseeType(value)
+			OUTER APPLY (SELECT dbo.f_GetCurrencyCodeByLicenseeId(t.LicenseeId)) Currency(value)
+			OUTER APPLY (SELECT lam.DisplayName FROM @tblLicenseeAM lam WHERE lam.LicenseeId = t.LicenseeId) AM(value)
+			OUTER APPLY (SELECT lpm.DisplayName FROM @tblLicenseePM lpm WHERE lpm.LicenseeId = t.LicenseeId) PM(value)
+			
 	ORDER BY RowNumber
 
 	DROP TABLE #tblResult
