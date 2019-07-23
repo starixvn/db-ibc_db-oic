@@ -188,16 +188,7 @@ BEGIN
 			AND (@MarketType = -1 OR @MarketType = l.IsChineseMarketOnly)
 			AND (@SelectedOddsType = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeOddsType))
 			AND (@SelectedCurrency = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeCurrency)) 
-	
-	UPDATE	t 
-		SET ProjectManager = ui.DisplayName
-	FROM	#tblResult t 
-		INNER JOIN UserLicensee ul WITH(NOLOCK)
-			ON	ul.LicenseeId = t.LicenseeId
-		INNER JOIN dbo.UserInfo ui WITH(NOLOCK)
-			ON	ui.UserId = ul.UserId 
-				AND ui.PositionId = 5 -- PM								
-
+								
 	IF @TotalRecords = 0
 	BEGIN
 		SELECT @TotalRecords = COUNT(1)
