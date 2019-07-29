@@ -9,11 +9,10 @@ GO
 INSERT INTO [bodb_OIC].[dbo].[OddsType]
            ([OddsTypeName])
      VALUES
-			('A'),
-			('B'),
-			('C'),
-			('D'),
-			('E'),
-			('F')
+			('Dec'),
+			('HK'),
+			('Indo'),
+			('MY'),
+			('US')
 GO
 
