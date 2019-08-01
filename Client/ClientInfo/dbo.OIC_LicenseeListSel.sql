@@ -215,11 +215,25 @@ BEGIN
 				FROM #tblResult tr
 				WHERE tr.RowNumber BETWEEN @RowStart AND @RowEnd
 		   ) t
-			OUTER APPLY (SELECT dbo.f_GetOddsTypesNameByLicenseeId(t.LicenseeId)) OddsType(value)
+			OUTER APPLY (
+							SELECT STUFF((SELECT ', ' + ot.OddsTypeName
+										 FROM LicenseeOddsType AS lot WITH(NOLOCK)
+											INNER JOIN OddsType as ot WITH(NOLOCK)
+												ON lot.OddsTypeId = ot.OddsTypeId 
+										 WHERE LicenseeId = t.LicenseeId 
+										 FOR XML PATH('')), 1, 1, '')
+						) OddsType(value)
 			OUTER APPLY (SELECT lt.LicenseeTypeName 
 						 FROM dbo.LicenseeType lt WITH(NOLOCK) 
 						 WHERE lt.LicenseeTypeId = t.LicenseeTypeId) LicenseeType(value)
-			OUTER APPLY (SELECT dbo.f_GetCurrencyCodeByLicenseeId(t.LicenseeId)) Currency(value)
+			OUTER APPLY (
+							SELECT STUFF((SELECT ', ' + e.Code
+										FROM dbo.LicenseeCurrency lc WITH(NOLOCK)
+											INNER JOIN bodb02.dbo.Exchange e WITH(NOLOCK) 
+												ON lc.CurrencyId = e.exchangeid
+										WHERE lc.LicenseeId = t.LicenseeId AND e.Code IS NOT NULL 
+										FOR XML PATH('')), 1, 1, '')
+						) Currency(value)
 			OUTER APPLY (SELECT lam.DisplayName FROM @tblLicenseeAM lam WHERE lam.LicenseeId = t.LicenseeId) AM(value)
 			OUTER APPLY (SELECT lpm.DisplayName FROM @tblLicenseePM lpm WHERE lpm.LicenseeId = t.LicenseeId) PM(value)
 			
