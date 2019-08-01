@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_OIC]
 GO
 
@@ -18,6 +18,7 @@ AS
 		- 20170828@Scofield: Add Reseller [#82144]
 		- 20171019@Scofield: Update log for update Amendment Notification [#84004]
 		- 201811016@Scofield: Update Result Amendment Language Order [#102847]
+		- 20190717@Howard: Add Odds Type [#115460]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -52,6 +53,7 @@ BEGIN
 			@ClientLocation NVARCHAR(50),
 			@ClientTargetMarket NVARCHAR(MAX), -- list of target markets
 			@CommunicationLanguages NVARCHAR(MAX), -- list of communication languagues
+			@OddsTypes NVARCHAR(300), -- list of odds types
 			@UnasService NVARCHAR(100),
 			@UnasService_Username NVARCHAR(100),
 			@UnasService_Password NVARCHAR(100),
@@ -107,6 +109,7 @@ BEGIN
 			@ClientLocation_old NVARCHAR(50),
 			@ClientTargetMarket_old NVARCHAR(MAX), -- list of target markets
 			@CommunicationLanguages_old NVARCHAR(MAX), -- list of communication languagues
+			@OddsTypes_old NVARCHAR(300), -- list of odds types
 			@UnasService_old NVARCHAR(100),
 			@UnasService_Username_old NVARCHAR(100),
 			@UnasService_Password_old NVARCHAR(100),
@@ -360,6 +363,28 @@ BEGIN
 		)
 		SELECT	@CommunicationLanguages = (SELECT STUFF((SELECT DISTINCT ', ' + [Language] FROM CTE_Languages FOR XML PATH('')), 1, 1, '')),
 				@CommunicationLanguages_old = (SELECT STUFF((SELECT DISTINCT ', ' + Language_old FROM CTE_Languages FOR XML PATH('')), 1, 1, ''))
+		
+		-- Odds Types
+		;WITH CTE_OddsTypes AS (
+			SELECT
+				d.c.value('@lotn', 'NVARCHAR(50)') AS OddsTypeName, --  odds type name (new)
+				od.c.value('@lotn', 'NVARCHAR(50)') AS OddsTypeName_old -- odds type name (old)
+			FROM (
+				SELECT
+					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE Data END AS Data,
+					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE OldData END AS OldData
+				FROM (
+					SELECT CONVERT(XML, Data).query('/r/lot/row') AS Data, CONVERT(XML, OldData).query('/r/lot/row') AS OldData
+					FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+					WHERE Id = @ActionID
+				) B
+			) A
+				OUTER APPLY A.Data.nodes('row') d(c)
+				OUTER APPLY A.OldData.nodes('row') od(c)
+			
+		)
+		SELECT	@OddsTypes = (SELECT STUFF((SELECT DISTINCT ', ' + OddsTypeName FROM CTE_OddsTypes FOR XML PATH('')), 1, 1, '')),
+				@OddsTypes_old = (SELECT STUFF((SELECT DISTINCT ', ' + OddsTypeName_old FROM CTE_OddsTypes FOR XML PATH('')), 1, 1, ''))
 		
 		-- Services
 		;WITH CTE_Service AS (
@@ -642,36 +667,37 @@ BEGIN
 			(21, N'Client Location', @ClientLocation, @ClientLocation_old),
 			(22, N'Client targeted market', @ClientTargetMarket, @ClientTargetMarket_old),
 			(23, N'Preferred communication language', @CommunicationLanguages, @CommunicationLanguages_old),
-			(24, N'Unas service', @UnasService, @UnasService_old),
-			(25, N'Unas service - Username', @UnasService_Username, @UnasService_Username_old),
-			(26, N'Unas service - Password', @UnasService_Password, @UnasService_Password_old),
-			(27, N'Mobile betting service', @MobileService, @MobileService_old),
-			(28, N'Mobile betting service - WAP site URL', @MobileService_WAP, @MobileService_WAP_old),
-			(29, N'Mobile betting service - Smartphone site URL', @MobileService_Smartphone, @MobileService_Smartphone_old),
-			(30, N'BA Agreement', @BAAgreement, @BAAgreement_old),
-			(31, N'BA Agreement - Group', @BAAgreement_Group, @BAAgreement_Group_old),
-			(32, N'BA Agreement - BA Joined date', @BAAgreement_JoinDate, @BAAgreement_JoinDate_old),
-			(33, N'Affiliate Agreement', @Affiliate, @Affiliate_old),
-			(34, N'Client country restrict list', @RestrictedCountry, @RestrictedCountry_old),
-			(35, N'Add exception for client country restrict list', @RestrictedCountry_Exception, @RestrictedCountry_Exception_old),
-			(36, N'Remark', @Remark, @Remark_old),
-			(37, N'Products - Launch - Termination', @Products, @Products_old),
-			(38, N'Features - Launch - Termination', @Features, @Features_old),
-			(39, N'Client Account Manager', @AM, @AM_old),
-			(40, N'Client Project Manager', @PM, @PM_old),
-			(41, N'Account 1''s URL', @AccUrl1, @AccUrl1_old),
-			(42, N'Account 1 (username - password)', @Acc1, @Acc1_old),
-			(43, N'Account 2''s URL', @AccUrl2, @AccUrl2_old),
-			(44, N'Account 2 (username - password)', @Acc2, @Acc2_old),
-			(45, N'Account 3''s URL', @AccUrl3, @AccUrl3_old),
-			(46, N'Account 3 (username - password)', @Acc3, @Acc3_old),
-			(47, N'Account 4''s URL', @AccUrl4, @AccUrl4_old),
-			(48, N'Account 4 (username - password)', @Acc4, @Acc4_old),
-			(49, N'Account 5''s URL', @AccUrl5, @AccUrl5_old),
-			(50, N'Account 5 (username - password)', @Acc5, @Acc5_old),
-			(51, N'Internal backend URL', @InternalURL, @InternalURL_old),
-			(52, N'OneonOne CS (username - password)', @CS, @CS_old),
-			(53, N'Training Account (username - password)', @TA, @TA_old)			
+			(24, N'Odds Type', @OddsTypes, @OddsTypes_old),
+			(25, N'Unas service', @UnasService, @UnasService_old),
+			(26, N'Unas service - Username', @UnasService_Username, @UnasService_Username_old),
+			(27, N'Unas service - Password', @UnasService_Password, @UnasService_Password_old),
+			(28, N'Mobile betting service', @MobileService, @MobileService_old),
+			(29, N'Mobile betting service - WAP site URL', @MobileService_WAP, @MobileService_WAP_old),
+			(30, N'Mobile betting service - Smartphone site URL', @MobileService_Smartphone, @MobileService_Smartphone_old),
+			(31, N'BA Agreement', @BAAgreement, @BAAgreement_old),
+			(32, N'BA Agreement - Group', @BAAgreement_Group, @BAAgreement_Group_old),
+			(33, N'BA Agreement - BA Joined date', @BAAgreement_JoinDate, @BAAgreement_JoinDate_old),
+			(34, N'Affiliate Agreement', @Affiliate, @Affiliate_old),
+			(35, N'Client country restrict list', @RestrictedCountry, @RestrictedCountry_old),
+			(36, N'Add exception for client country restrict list', @RestrictedCountry_Exception, @RestrictedCountry_Exception_old),
+			(37, N'Remark', @Remark, @Remark_old),
+			(38, N'Products - Launch - Termination', @Products, @Products_old),
+			(39, N'Features - Launch - Termination', @Features, @Features_old),
+			(40, N'Client Account Manager', @AM, @AM_old),
+			(41, N'Client Project Manager', @PM, @PM_old),
+			(42, N'Account 1''s URL', @AccUrl1, @AccUrl1_old),
+			(43, N'Account 1 (username - password)', @Acc1, @Acc1_old),
+			(44, N'Account 2''s URL', @AccUrl2, @AccUrl2_old),
+			(45, N'Account 2 (username - password)', @Acc2, @Acc2_old),
+			(46, N'Account 3''s URL', @AccUrl3, @AccUrl3_old),
+			(47, N'Account 3 (username - password)', @Acc3, @Acc3_old),
+			(48, N'Account 4''s URL', @AccUrl4, @AccUrl4_old),
+			(49, N'Account 4 (username - password)', @Acc4, @Acc4_old),
+			(50, N'Account 5''s URL', @AccUrl5, @AccUrl5_old),
+			(51, N'Account 5 (username - password)', @Acc5, @Acc5_old),
+			(52, N'Internal backend URL', @InternalURL, @InternalURL_old),
+			(53, N'OneonOne CS (username - password)', @CS, @CS_old),
+			(54, N'Training Account (username - password)', @TA, @TA_old)			
 	END
 	ELSE IF @LogActionId IN (100,101,102) -- Insert/Update/Delete Contact
 	BEGIN
@@ -1718,4 +1744,5 @@ BEGIN
 	FROM CTE_Result
 	ORDER BY rownum 
 END
+
 GO

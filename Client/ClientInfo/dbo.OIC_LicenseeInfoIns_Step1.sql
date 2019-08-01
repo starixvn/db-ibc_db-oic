@@ -29,6 +29,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns_Step1]
 	,@LicTargetMarket		VARCHAR(1000)	= NULL
 	,@LicLanguage			XML				= NULL
 	,@LicLanguageSB			XML				= NULL
+	,@LicOddsType			VARCHAR(100)    = NULL
 	,@LicService			XML				= NULL
 	,@LicRestrictCountry	VARCHAR(1000)	= NULL
 	,@RestrictCountryRemark	NVARCHAR(2000)	= NULL		
@@ -53,6 +54,7 @@ AS
 		- 20170517@Percy: Add Chinese Market Only [RedmineID: #74330]
 		- 20170809@Percy: Extend Url length [RedmineID: #81392]
 		- 20170828@Scofield: Add Reseller [#82144]
+		- 20190715@Howard: Add Odds Type [RedmineId: #115460]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -279,7 +281,25 @@ BEGIN
 			RETURN
 		END
 	END
+	
+	-- Insert odds type
+	IF @LicOddsType IS NOT NULL AND @LicOddsType <> ''
+	BEGIN
+		INSERT INTO dbo.LicenseeOddsType(
+			LicenseeId,
+			OddsTypeId
+		)
+		SELECT @LicenseeId, CONVERT(INT, s.val)
+		FROM dbo.strSplit(@LicOddsType, ',') AS s
+		
+		IF @@ERROR <> 0
+		BEGIN
+			SELECT @ErrCode = 109
+			RETURN
+		END
+	END
 
 	SELECT @ErrCode = 0
 END
+
 GO

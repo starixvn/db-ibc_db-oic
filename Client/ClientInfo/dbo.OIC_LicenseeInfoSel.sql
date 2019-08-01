@@ -19,6 +19,7 @@ AS
 		- 20170517@Percy: Return Chinese Market Only and Internal Backend URL [RedmineID: #74330]
 		- 20170802@Percy: Return Url testing account [RedmineID: #80712]
 		- 20170828@Scofield: Add Reseller [#82144]
+		- 20190715@Howard: Add Odds Type [RedmineID: 115460]
 	
 	Param's Explanation:
 		@Step: 1,2,3
@@ -32,6 +33,7 @@ BEGIN
 			,@LicTargetMarket		VARCHAR(1000)
 			,@LicLanguage			XML
 			,@LicLanguageSB			XML
+			,@LicOddsType			VARCHAR(100)
 			,@LicService			XML
 			,@LicRestrictCountry	VARCHAR(1000)
 			,@PMUserId				INT
@@ -60,6 +62,10 @@ BEGIN
 		FROM	dbo.LicenseeLocationLimit WITH(NOLOCK)
 		WHERE	LicenseeId = @LicenseeId
 				AND LicenseeLocationType = 2
+				
+		SELECT @LicOddsType = COALESCE(@LicOddsType + ',' + CONVERT(VARCHAR(10), OddsTypeId), CONVERT(VARCHAR(10), OddsTypeId))
+		FROM dbo.LicenseeOddsType WITH(NOLOCK)
+		WHERE LicenseeId = @LicenseeId
 				
 		SET @LicLanguage = (
 								SELECT	ll.LanguageId	AS '@id'
@@ -109,6 +115,7 @@ BEGIN
 				,@LicTargetMarket			AS TargetedMarket
 				,@LicLanguage				AS PreferredLanguage
 				,@LicLanguageSB				AS SBOfferedLanguage
+				,@LicOddsType				AS OddsType
 				,@LicService				AS ServiceIncluded
 				,@LicRestrictCountry		AS RestrictCountry
 				,l.RestrictedLocationRemark
@@ -179,4 +186,5 @@ BEGIN
 		WHERE LicenseeId = @LicenseeId
 	END
 END
+
 GO
