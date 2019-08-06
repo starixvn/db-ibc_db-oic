@@ -24,11 +24,18 @@ BEGIN
 	FROM dbo.Licensee l WITH(NOLOCK)
 		INNER JOIN dbo.LicenseeType lt  WITH(NOLOCK)
 			ON l.LicenseeTypeId = lt.LicenseeTypeId
+		INNER JOIN dbo.LicenseeStatus ls WITH(NOLOCK)
+			ON l.LicenseeStatusId = ls.LicenseeStatusId
 	WHERE lt.LicenseeTypeName IN ('ONEWorks API',
 								  'Zelianta Athena',
 								  'Zelianta API',
 								  'Boping Athena',
 								  'Boping API')
+			AND ls.LicenseeStatusName IN ('Upcoming',
+										'Soft Launch',
+										'Active',
+										'Cancelled',
+										'Suspended')
 								  
 	DECLARE @BusinessCursor AS CURSOR
 	SET @BusinessCursor = CURSOR FOR
@@ -63,8 +70,7 @@ BEGIN
 									
 									SELECT @ContactId = c.ContactId 
 									FROM Contact c
-									WHERE c.LicenseeId = @LicenseeId AND c.ContactName = @ContactName
-											AND c.ContactEmail = @ContactEmail
+									WHERE c.LicenseeId = @LicenseeId AND c.ContactEmail = @ContactEmail
 											
 									IF @ContactId <> 0 -- contact existed
 									   BEGIN
@@ -76,11 +82,33 @@ BEGIN
 												BEGIN
 													PRINT 'UPDATE'
 													-- update old contact to mailcc
-													DECLARE @SelectedCc VARCHAR(10) = CONVERT(VARCHAR(10), @ContactId)
+													
+													DECLARE @SelectedTo VARCHAR(500) = ''
+													DECLARE @SelectedCc VARCHAR(500) = ''
+													
+													SELECT @SelectedTo = ISNULL(STUFF((SELECT ',' + CAST(cc.ContactId AS VARCHAR(10))
+																						FROM dbo.CategoryContact cc WITH(NOLOCK)
+																						WHERE cc.ContactId <> @ContactId AND cc.ContactId 
+																										IN (SELECT c.ContactId
+																											FROM Contact c WITH(NOLOCK)
+																											WHERE c.LicenseeId = @LicenseeId)
+																							 AND cc.CategoryId = @CategoryId AND  cc.RecipientType = 0
+																						FOR XML PATH('')), 1, 1, ''), '')
+																						
+													SELECT @SelectedCc = STUFF((SELECT ',' + CAST(cc.ContactId AS VARCHAR(10))
+																				FROM dbo.CategoryContact cc WITH(NOLOCK)
+																				WHERE cc.ContactId IN (SELECT c.ContactId
+																										FROM Contact c WITH(NOLOCK)
+																										WHERE c.LicenseeId = @LicenseeId)
+																						AND cc.CategoryId = @CategoryId AND  cc.RecipientType = 1
+																				FOR XML PATH('')), 1, 1, '')
+																				
+													SET @SelectedCc = ISNULl(@SelectedCc + ',', '') + CAST(@ContactId AS VARCHAR(10))
 													
 													EXEC dbo.OIC_LicenseeCategoryUpd 
 															@LicenseeId = @LicenseeId,
 															@CategoryId = @CategoryId,
+															@SelectedTo = @SelectedTo,
 															@SelectedCc = @SelectedCc,
 															@UserId = -1
 												END
@@ -116,3 +144,4 @@ BEGIN
 	BEGIN
 		PRINT 'Category doesn not exist'
 	END
+					
