@@ -1728,7 +1728,7 @@ BEGIN
 	END
 	
 	-- return result
-	IF @LogActionId NOT IN (101, 401, 3014) -- Update Contact/Training/Reminder
+	IF @LogActionId NOT IN (101, 401, 3014, 202, 502) -- Update Contact/Training/Reminder
 	BEGIN
 		DELETE @Result
 		WHERE ISNULL(OldValue, N'') = ISNULL(NewValue, N'')
