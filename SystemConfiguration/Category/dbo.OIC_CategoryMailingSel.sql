@@ -1,7 +1,9 @@
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+
 USE [bodb_OIC]
 GO
 
-ALTER PROCEDURE [dbo].[OIC_CategoryMailingSel]
+CREATE PROCEDURE [dbo].[OIC_CategoryMailingSel]
 	@LicenseeId	INT = 0 
 	,@SelectedLicensee VARCHAR(1000) = ''
 AS
@@ -61,6 +63,3 @@ BEGIN
 	END
 END
 GO
-GRANT EXECUTE ON [dbo].[OIC_CategoryMailingSel] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_CategoryMailingSel] TO [vnteam] AS [dbo]
