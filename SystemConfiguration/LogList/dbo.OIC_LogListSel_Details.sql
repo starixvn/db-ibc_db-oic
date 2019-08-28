@@ -19,6 +19,7 @@ AS
 		- 20171019@Scofield: Update log for update Amendment Notification [#84004]
 		- 201811016@Scofield: Update Result Amendment Language Order [#102847]
 		- 20190717@Howard: Add Odds Type [#115460]
+		- 20190815@Howard: Batch update features and products [#115462]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -969,7 +970,7 @@ BEGIN
 		VALUES
 			(1, N'Client - Launch - Termination', @Product_Clients, @Product_Clients_old)
 	END
-	ELSE IF @LogActionId IN (201) -- Update Products for a Client
+	ELSE IF @LogActionId IN (201, 202) -- Update Products for a Client
 	BEGIN
 		DECLARE
 			@Client NVARCHAR(100),
@@ -1081,7 +1082,7 @@ BEGIN
 		VALUES
 			(1, N'Client - Launch - Termination', @Feature_Clients, @Feature_Clients_old)
 	END
-	ELSE IF @LogActionId IN (501) -- Update Features for a Client
+	ELSE IF @LogActionId IN (501, 502) -- Update Features for a Client
 	BEGIN
 		DECLARE
 			@Clients NVARCHAR(100),
@@ -1727,7 +1728,7 @@ BEGIN
 	END
 	
 	-- return result
-	IF @LogActionId NOT IN (101, 401, 3014) -- Update Contact/Training/Reminder
+	IF @LogActionId NOT IN (101, 401, 3014, 202, 502) -- Update Contact/Training/Reminder
 	BEGIN
 		DELETE @Result
 		WHERE ISNULL(OldValue, N'') = ISNULL(NewValue, N'')
