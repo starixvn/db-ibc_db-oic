@@ -2,7 +2,7 @@ USE [bodb_OIC]
 GO
 
 /*
-	Created: 20200212Hogan
+	Created: 20200212@Hogan
 	DB: DBOIC.bodb_OIC
 	Task: Extend length of column CC in MailRecordSiteName table to 1000: #128373]
 */
