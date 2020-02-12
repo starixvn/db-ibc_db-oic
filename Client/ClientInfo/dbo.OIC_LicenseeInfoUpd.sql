@@ -10,6 +10,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd]
 	,@RegisteredSiteName	NVARCHAR(50)
 	,@CompanyName			NVARCHAR(50)	= NULL
 	,@LicenseeStatusId		TINYINT			= NULL
+	,@LicenseeGroupId		INT				= NULL
 	,@IsReseller			BIT				= 0
 	,@IsChineseMarketOnly	BIT				= 0
 	,@SoftLaunch			DATETIME		= NULL
@@ -67,6 +68,7 @@ AS
 		- 20170809@Percy: Extend Url length [RedmineID: #81392]
 		- 20170828@Scofield: Add Reseller [#82144]
 		- 20190715@Howard: Add Odds Type [RedmineID: #115460]
+		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
 		
 	Param's Explanation:
 	* @LicBackupLink
@@ -325,6 +327,7 @@ BEGIN
 							,l.RegisteredLicenseeName 	AS '@rln'
 							,l.LicenseeCompanyName		AS '@cn'
 							,s.LicenseeStatusName		AS '@sn'
+							,g.Name						AS '@gn'
 							,l.SoftLaunch				AS '@sl'
 							,l.FullLaunch				AS '@fl'
 							,l.MainUrl					AS '@mu'
@@ -354,6 +357,8 @@ BEGIN
 							ON	l.LicenseeStatusId = s.LicenseeStatusId
 						INNER JOIN dbo.LicenseeType AS t WITH(NOLOCK) 
 							ON	l.LicenseeTypeId = t.LicenseeTypeId
+						INNER JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) 
+								ON	l.LicenseeGroupId = g.Id
 					WHERE	l.LicenseeId = @LicenseeId
 					FOR XML PATH('r'), TYPE
 				)
@@ -370,6 +375,7 @@ BEGIN
 			,@RegisteredSiteName		= @RegisteredSiteName
 			,@CompanyName				= @CompanyName
 			,@LicenseeStatusId			= @LicenseeStatusId
+			,@LicenseeGroupId			= @LicenseeGroupId
 			,@IsReseller				= @IsReseller
 			,@IsChineseMarketOnly		= @IsChineseMarketOnly
 			,@SoftLaunch				= @SoftLaunch
@@ -615,6 +621,7 @@ BEGIN
 								,l.RegisteredLicenseeName 		AS '@rln'
 								,l.LicenseeCompanyName		AS '@cn'
 								,s.LicenseeStatusName		AS '@sn'
+								,g.Name						AS '@gn'
 								,l.SoftLaunch				AS '@sl'
 								,l.FullLaunch				AS '@fl'
 								,l.MainUrl					AS '@mu'
@@ -644,6 +651,8 @@ BEGIN
 								ON	l.LicenseeStatusId = s.LicenseeStatusId
 							INNER JOIN dbo.LicenseeType AS t WITH(NOLOCK) 
 								ON	l.LicenseeTypeId = t.LicenseeTypeId
+							INNER JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) 
+								ON	l.LicenseeGroupId = g.Id
 						WHERE	l.LicenseeId = @LicenseeId
 						FOR XML PATH('r'), TYPE
 				)

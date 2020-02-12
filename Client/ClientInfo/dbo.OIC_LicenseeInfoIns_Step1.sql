@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns_Step1]
 	,@RegisteredSiteName	NVARCHAR(50)
 	,@CompanyName			NVARCHAR(50)	= NULL
 	,@LicenseeStatusId		TINYINT
+	,@LicenseeGroupId		INT
 	,@IsReseller			BIT				= 0
 	,@IsChineseMarketOnly	BIT				= 0
 	,@SoftLaunch			DATETIME		= NULL
@@ -55,6 +56,7 @@ AS
 		- 20170809@Percy: Extend Url length [RedmineID: #81392]
 		- 20170828@Scofield: Add Reseller [#82144]
 		- 20190715@Howard: Add Odds Type [RedmineId: #115460]
+		- 20200110@Hogan: Add Group into Client functions [RedmindId: #126855]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -95,6 +97,7 @@ BEGIN
 			,LicenseeTypeId
 			,LicenseeCompanyName
 			,LicenseeStatusId
+			,LicenseeGroupId
 			,SoftLaunch
 			,FullLaunch
 			,MainUrl
@@ -111,6 +114,7 @@ BEGIN
 			,@LicenseeTypeId
 			,@CompanyName
 			,@LicenseeStatusId
+			,@LicenseeGroupId
 			,@SoftLaunch
 			,@FullLaunch
 			,@MainUrl

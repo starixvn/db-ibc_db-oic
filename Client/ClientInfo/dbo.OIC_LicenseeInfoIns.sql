@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns]
 	,@RegisteredSiteName	NVARCHAR(50)
 	,@CompanyName			NVARCHAR(50)	= NULL
 	,@LicenseeStatusId		TINYINT
+	,@LicenseeGroupId		INT
 	,@IsReseller			BIT				= 0
 	,@IsChineseMarketOnly	BIT				= 0
 	,@SoftLaunch			DATETIME		= NULL
@@ -61,6 +62,7 @@ AS
 		- 20170809@Percy: Extend Url length [RedmineID: #81392]
 		- 20170828@Scofield: Add Reseller [#82144]
 		- 20190715@Howard: Add OddsType [RedmindId: #115460]
+		- 20200110@Hogan: Add Group into Client functions [RedmindId: #126855]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -168,6 +170,7 @@ BEGIN
 		,@RegisteredSiteName		= @RegisteredSiteName
 		,@CompanyName				= @CompanyName
 		,@LicenseeStatusId			= @LicenseeStatusId
+		,@LicenseeGroupId			= @LicenseeGroupId
 		,@IsReseller				= @IsReseller
 		,@IsChineseMarketOnly		= @IsChineseMarketOnly
 		,@SoftLaunch				= @SoftLaunch
@@ -507,6 +510,7 @@ BEGIN
 				,l.RegisteredLicenseeName	AS '@rln'
 				,l.LicenseeCompanyName		AS '@cn'
 				,s.LicenseeStatusName		AS '@sn'
+				,g.Name						AS '@gn'
 				,l.SoftLaunch				AS '@sl'
 				,l.FullLaunch				AS '@fl'
 				,l.MainUrl					AS '@mu'
@@ -534,6 +538,7 @@ BEGIN
 		FROM dbo.Licensee AS l WITH (NOLOCK)
 			INNER JOIN dbo.LicenseeStatus AS s WITH(NOLOCK) ON l.LicenseeStatusId = s.LicenseeStatusId
 			INNER JOIN dbo.LicenseeType AS t WITH(NOLOCK) ON l.LicenseeTypeId = t.LicenseeTypeId
+			INNER JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) ON l.LicenseeGroupId = g.Id
 		WHERE l.LicenseeId = @LicenseeId
 		FOR XML PATH('r'), TYPE)		
 		
