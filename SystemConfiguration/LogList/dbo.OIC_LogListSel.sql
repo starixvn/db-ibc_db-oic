@@ -24,6 +24,7 @@ AS
 	Revisions:
 		- 20170328@Percy: Add new function: Client List [RemineID: #70323]
 		- 20171019@Scofield: Update log for update Amendment Notification [#84004]
+		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
 
 	Param's Explanation:
 		- @ActionID: '1,2' -- List of LogActionID
@@ -103,7 +104,22 @@ BEGIN
 				INNER JOIN dbo.Licensee l WITH(NOLOCK) ON l.LicenseeId = d.c.value('@lid','INT')
 			WHERE l.LicenseeName LIKE @Target
 		END
-
+		
+		-- Target: Client Group
+		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (600, 601, 602)))
+		BEGIN
+			INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy)
+			SELECT DISTINCT A.LogID, A.LogDate, A.[Action], d.c.value('@lgn','VARCHAR(100)'), A.DoneBy
+			FROM (
+				SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], CONVERT(XML, ISNULL(ISNULL(ll.NewAction, ll.OldAction), N'<r></r>')) AS [Target], ll.DoneBy
+				FROM #LogList ll
+					INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
+				WHERE la.LogActionId IN (600, 601, 602)
+			) A
+				CROSS APPLY A.[Target].nodes('r') d(c)
+			WHERE d.c.value('@lgn','VARCHAR(100)') LIKE @Target
+		END
+		
 		-- Target: Product Name
 		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (3003, 3004, 3005, 200)))
 		BEGIN
