@@ -38,6 +38,7 @@ BEGIN
 			@RegisteredSitename NVARCHAR(100),
 			@CompanyName NVARCHAR(100),
 			@ClientStatus NVARCHAR(30),
+			@ClientGroup NVARCHAR(100),
 			@SoftLaunch NVARCHAR(10), -- datetime format: mm/dd/yyyy
 			@FullLaunch NVARCHAR(10), -- datetime format: mm/dd/yyyy
 			@MainUrl NVARCHAR(MAX),
