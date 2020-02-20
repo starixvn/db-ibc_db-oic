@@ -9,7 +9,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns]
 	,@RegisteredSiteName	NVARCHAR(50)
 	,@CompanyName			NVARCHAR(50)	= NULL
 	,@LicenseeStatusId		TINYINT
-	,@LicenseeGroupId		INT
+	,@LicenseeGroupId		INT				= NULL
 	,@IsReseller			BIT				= 0
 	,@IsChineseMarketOnly	BIT				= 0
 	,@SoftLaunch			DATETIME		= NULL
