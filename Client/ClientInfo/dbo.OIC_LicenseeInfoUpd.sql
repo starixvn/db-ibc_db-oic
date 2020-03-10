@@ -431,7 +431,7 @@ BEGIN
 											,c.ContactPhoneNumber	AS '@cpn'
 											,c.IsMain			AS '@cim'
 											,c.Remark			AS '@crm'
-									FROM	dbo.Contact c
+									FROM	dbo.Contact AS c WITH (NOLOCK)
 									WHERE	licenseeid = @LicenseeId AND c.IsMain = 1
 									FOR XML PATH('row'), ROOT('lc')	
 								)
@@ -497,12 +497,12 @@ BEGIN
 	
 			SET @log_service = (	SELECT	s.ServiceId				AS '@lsid'
 											,s.ServiceName				AS '@lsn'
-											,lp.PropertyId				as '@lspid'
-											,lp.PropertyValue as '@lspv'
-									FROM dbo.LicenseeProperty lp
-										INNER JOIN dbo.Property p
+											,lp.PropertyId				AS '@lspid'
+											,lp.PropertyValue AS '@lspv'
+									FROM dbo.LicenseeProperty AS lp WITH (NOLOCK)
+										INNER JOIN dbo.Property AS p WITH (NOLOCK)
 											ON	p.PropertyId = lp.PropertyId
-										INNER JOIN dbo.Service s 
+										INNER JOIN dbo.Service AS s WITH (NOLOCK) 
 											ON	s.ServiceId = p.ServiceId
 									WHERE	licenseeid = @LicenseeId
 									FOR XML PATH('row'), ROOT('ls')	
