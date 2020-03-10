@@ -7,7 +7,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[OIC_LicenseeGroupSel]
+ALTER PROCEDURE [dbo].[OIC_LicenseeGroupSel]
 AS
 
 /*

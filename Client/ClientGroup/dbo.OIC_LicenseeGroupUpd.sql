@@ -7,7 +7,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[OIC_LicenseeGroupUpd] 
+ALTER PROCEDURE [dbo].[OIC_LicenseeGroupUpd] 
 	@Id						TINYINT
 	,@Name					VARCHAR(30)
 	,@UserId				INT
