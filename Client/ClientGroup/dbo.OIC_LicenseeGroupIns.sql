@@ -3,7 +3,7 @@ USE [bodb_OIC]
 GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeGroupIns] 
-	@Name					VARCHAR(100)
+	@Name					NVARCHAR(100)
 	,@UserId				INT
 	,@Language				VARCHAR(10)		= 'E'
 	,@IP					VARCHAR(50)		= NULL
