@@ -8,7 +8,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeGroupUpd] 
-	@Id						TINYINT
+	@Id						INT
 	,@Name					VARCHAR(30)
 	,@UserId				INT
 	,@Language				VARCHAR(10)		= 'E'
