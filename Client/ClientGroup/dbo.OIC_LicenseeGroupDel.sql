@@ -32,7 +32,7 @@ BEGIN
 		,@xml			XML
 		,@procName		VARCHAR(200)
 	
-	DECLARE @Name VARCHAR(30)
+	DECLARE @Name VARCHAR(100)
 
 	SET @startRun = GETDATE()
 
