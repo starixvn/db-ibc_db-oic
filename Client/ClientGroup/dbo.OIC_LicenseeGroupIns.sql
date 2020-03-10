@@ -1,11 +1,6 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_LicenseeGroupIns]    Script Date: 2/12/2020 1:36:36 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeGroupIns] 
 	@Name		VARCHAR(30)
