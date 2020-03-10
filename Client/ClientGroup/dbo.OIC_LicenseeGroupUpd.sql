@@ -4,7 +4,7 @@ GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeGroupUpd] 
 	@Id						INT
-	,@Name					VARCHAR(30)
+	,@Name					VARCHAR(100)
 	,@UserId				INT
 	,@Language				VARCHAR(10)		= 'E'
 	,@IP					VARCHAR(50)		= NULL
