@@ -1,0 +1,17 @@
+USE [bodb_OIC]
+GO
+
+/*
+	Created: 20200211@Hogan
+	DB: DBOIC.bodb_OIC
+	Task: Add Group into Client functions [RedmineID: #126855]
+*/
+
+CREATE TABLE [dbo].[LicenseeGroup](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [nvarchar](100) NOT NULL,
+ CONSTRAINT [Pk_LicenseeGroup] PRIMARY KEY CLUSTERED ([Id] ASC)
+)
+
+GO
+

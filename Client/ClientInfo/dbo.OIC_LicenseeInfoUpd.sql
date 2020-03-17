@@ -10,6 +10,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd]
 	,@RegisteredSiteName	NVARCHAR(50)
 	,@CompanyName			NVARCHAR(50)	= NULL
 	,@LicenseeStatusId		TINYINT			= NULL
+	,@LicenseeGroupId		INT				= NULL
 	,@IsReseller			BIT				= 0
 	,@IsChineseMarketOnly	BIT				= 0
 	,@SoftLaunch			DATETIME		= NULL
@@ -67,6 +68,7 @@ AS
 		- 20170809@Percy: Extend Url length [RedmineID: #81392]
 		- 20170828@Scofield: Add Reseller [#82144]
 		- 20190715@Howard: Add Odds Type [RedmineID: #115460]
+		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
 		
 	Param's Explanation:
 	* @LicBackupLink
@@ -325,6 +327,7 @@ BEGIN
 							,l.RegisteredLicenseeName 	AS '@rln'
 							,l.LicenseeCompanyName		AS '@cn'
 							,s.LicenseeStatusName		AS '@sn'
+							,g.Name						AS '@gn'
 							,l.SoftLaunch				AS '@sl'
 							,l.FullLaunch				AS '@fl'
 							,l.MainUrl					AS '@mu'
@@ -354,6 +357,8 @@ BEGIN
 							ON	l.LicenseeStatusId = s.LicenseeStatusId
 						INNER JOIN dbo.LicenseeType AS t WITH(NOLOCK) 
 							ON	l.LicenseeTypeId = t.LicenseeTypeId
+						INNER JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) 
+								ON	l.LicenseeGroupId = g.Id
 					WHERE	l.LicenseeId = @LicenseeId
 					FOR XML PATH('r'), TYPE
 				)
@@ -370,6 +375,7 @@ BEGIN
 			,@RegisteredSiteName		= @RegisteredSiteName
 			,@CompanyName				= @CompanyName
 			,@LicenseeStatusId			= @LicenseeStatusId
+			,@LicenseeGroupId			= @LicenseeGroupId
 			,@IsReseller				= @IsReseller
 			,@IsChineseMarketOnly		= @IsChineseMarketOnly
 			,@SoftLaunch				= @SoftLaunch
@@ -425,7 +431,7 @@ BEGIN
 											,c.ContactPhoneNumber	AS '@cpn'
 											,c.IsMain			AS '@cim'
 											,c.Remark			AS '@crm'
-									FROM	dbo.Contact c
+									FROM	dbo.Contact AS c WITH (NOLOCK)
 									WHERE	licenseeid = @LicenseeId AND c.IsMain = 1
 									FOR XML PATH('row'), ROOT('lc')	
 								)
@@ -491,12 +497,12 @@ BEGIN
 	
 			SET @log_service = (	SELECT	s.ServiceId				AS '@lsid'
 											,s.ServiceName				AS '@lsn'
-											,lp.PropertyId				as '@lspid'
-											,lp.PropertyValue as '@lspv'
-									FROM dbo.LicenseeProperty lp
-										INNER JOIN dbo.Property p
+											,lp.PropertyId				AS '@lspid'
+											,lp.PropertyValue AS '@lspv'
+									FROM dbo.LicenseeProperty AS lp WITH (NOLOCK)
+										INNER JOIN dbo.Property AS p WITH (NOLOCK)
 											ON	p.PropertyId = lp.PropertyId
-										INNER JOIN dbo.Service s 
+										INNER JOIN dbo.Service AS s WITH (NOLOCK) 
 											ON	s.ServiceId = p.ServiceId
 									WHERE	licenseeid = @LicenseeId
 									FOR XML PATH('row'), ROOT('ls')	
@@ -615,6 +621,7 @@ BEGIN
 								,l.RegisteredLicenseeName 		AS '@rln'
 								,l.LicenseeCompanyName		AS '@cn'
 								,s.LicenseeStatusName		AS '@sn'
+								,g.Name						AS '@gn'
 								,l.SoftLaunch				AS '@sl'
 								,l.FullLaunch				AS '@fl'
 								,l.MainUrl					AS '@mu'
@@ -644,6 +651,8 @@ BEGIN
 								ON	l.LicenseeStatusId = s.LicenseeStatusId
 							INNER JOIN dbo.LicenseeType AS t WITH(NOLOCK) 
 								ON	l.LicenseeTypeId = t.LicenseeTypeId
+							INNER JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) 
+								ON	l.LicenseeGroupId = g.Id
 						WHERE	l.LicenseeId = @LicenseeId
 						FOR XML PATH('r'), TYPE
 				)

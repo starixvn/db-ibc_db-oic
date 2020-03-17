@@ -20,6 +20,7 @@ AS
 		- 201811016@Scofield: Update Result Amendment Language Order [#102847]
 		- 20190717@Howard: Add Odds Type [#115460]
 		- 20190815@Howard: Batch update features and products [#115462]
+		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -37,6 +38,7 @@ BEGIN
 			@RegisteredSitename NVARCHAR(100),
 			@CompanyName NVARCHAR(100),
 			@ClientStatus NVARCHAR(30),
+			@ClientGroup NVARCHAR(100),
 			@SoftLaunch NVARCHAR(10), -- datetime format: mm/dd/yyyy
 			@FullLaunch NVARCHAR(10), -- datetime format: mm/dd/yyyy
 			@MainUrl NVARCHAR(MAX),
@@ -93,6 +95,7 @@ BEGIN
 			@RegisteredSitename_old NVARCHAR(100),
 			@CompanyName_old NVARCHAR(100),
 			@ClientStatus_old NVARCHAR(30),
+			@ClientGroup_old NVARCHAR(100),
 			@SoftLaunch_old NVARCHAR(10), -- datetime format: mm/dd/yyyy
 			@FullLaunch_old NVARCHAR(10), -- datetime format: mm/dd/yyyy
 			@MainUrl_old NVARCHAR(MAX),
@@ -151,6 +154,7 @@ BEGIN
 			@RegisteredSitename = d.c.value('@rln', 'NVARCHAR(100)'), -- registered site name
 			@CompanyName = d.c.value('@cn', 'NVARCHAR(100)'), -- company name
 			@ClientStatus = d.c.value('@sn', 'NVARCHAR(30)'), -- client status
+			@ClientGroup = d.c.value('@gn', 'NVARCHAR(100)'), -- client group
 			@SoftLaunch = d.c.value('@sl', 'DATE'), -- soft launch
 			@FullLaunch = d.c.value('@fl', 'DATE'), -- full launch
 			@MainUrl = d.c.value('@mu', 'NVARCHAR(MAX)'), -- main domain url
@@ -169,6 +173,7 @@ BEGIN
 			@RegisteredSitename_old = od.c.value('@rln', 'NVARCHAR(100)'), -- registered site name
 			@CompanyName_old = od.c.value('@cn', 'NVARCHAR(100)'), -- company name
 			@ClientStatus_old = od.c.value('@sn', 'NVARCHAR(30)'), -- client status
+			@ClientGroup_old = od.c.value('@gn', 'NVARCHAR(100)'), -- client group
 			@SoftLaunch_old = od.c.value('@sl', 'DATE'), -- soft launch
 			@FullLaunch_old = od.c.value('@fl', 'DATE'), -- full launch
 			@MainUrl_old = od.c.value('@mu', 'NVARCHAR(MAX)'), -- main domain url
@@ -698,7 +703,38 @@ BEGIN
 			(51, N'Account 5 (username - password)', @Acc5, @Acc5_old),
 			(52, N'Internal backend URL', @InternalURL, @InternalURL_old),
 			(53, N'OneonOne CS (username - password)', @CS, @CS_old),
-			(54, N'Training Account (username - password)', @TA, @TA_old)			
+			(54, N'Training Account (username - password)', @TA, @TA_old),
+			(55, N'Client Group', @ClientGroup, @ClientGroup_old)	
+	END
+	ELSE IF @LogActionId IN (600, 601, 602) -- Insert/Update Client Group
+	BEGIN
+		DECLARE
+			@LicenseeGroupId INT,
+			@LicenseeGroupName NVARCHAR(100),
+
+			@LicenseeGroupId_old INT,
+			@LicenseeGroupName_old NVARCHAR(100)
+
+		SELECT
+			@LicenseeGroupName = d.c.value('@lgn', 'NVARCHAR(100)'), -- Client Group
+
+			@LicenseeGroupName_old = od.c.value('@lgn', 'NVARCHAR(100)') -- Client Group
+		FROM (
+			SELECT
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE OldData END AS OldData
+			FROM (
+				SELECT CONVERT(XML, Data).query('/r') AS Data, CONVERT(XML, OldData).query('/r') AS OldData
+				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+				WHERE Id = @ActionID
+			) B
+		) A
+			OUTER APPLY A.Data.nodes('r') d(c)
+			OUTER APPLY A.OldData.nodes('r') od(c)
+
+		INSERT INTO @Result (ID, Field, NewValue, OldValue)
+		VALUES
+			(1, N'Group name', @LicenseeGroupName, @LicenseeGroupName_old)
 	END
 	ELSE IF @LogActionId IN (100,101,102) -- Insert/Update/Delete Contact
 	BEGIN

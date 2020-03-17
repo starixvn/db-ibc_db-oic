@@ -20,6 +20,7 @@ AS
 		- 20170802@Percy: Return Url testing account [RedmineID: #80712]
 		- 20170828@Scofield: Add Reseller [#82144]
 		- 20190715@Howard: Add Odds Type [RedmineID: 115460]
+		- 20200203@Hogan: Return licenseeGroupId [RedmineID: #126855]
 	
 	Param's Explanation:
 		@Step: 1,2,3
@@ -97,6 +98,7 @@ BEGIN
 				,l.RegisteredLicenseeName
 				,l.LicenseeCompanyName
 				,l.LicenseeStatusId
+				,l.LicenseeGroupId
 				,l.SoftLaunch
 				,l.FullLaunch
 				,l.MainUrl

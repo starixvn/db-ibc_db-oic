@@ -3,20 +3,21 @@ USE [bodb_OIC]
 GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeListSel] 
-	@UserId				INT				
-	,@SelectedLicenseeType VARCHAR(50)	= 'All'
-	,@LicenseeName		NVARCHAR(50)	= '%'
-	,@LicenseeStatusIds	VARCHAR(50)	= 'All'
-	,@SelectedProduct	VARCHAR(500)	= 'All'
-	,@SelectedCurrency  VARCHAR(100)	= 'All'
-	,@SelectedOddsType  VARCHAR(50)		= 'All'
-	,@AMUserId			INT				= 0			--All
-	,@PMUserId			INT				= 0			--All
-	,@ResellerType	INT 			= -1		--All
-	,@MarketType	INT 			= -1		--All
-	,@PageSize			INT = 10
-	,@PageIndex			INT	= 0 
-	,@TotalRecords		INT = 0 OUTPUT
+	@UserId					INT				
+	,@SelectedLicenseeType	VARCHAR(50)		= 'All'
+	,@LicenseeName			NVARCHAR(50)	= '%'
+	,@LicenseeStatusIds		VARCHAR(50)		= 'All'
+	,@LicenseeGroupIds		VARCHAR(50)		= 'All'
+	,@SelectedProduct		VARCHAR(500)	= 'All'
+	,@SelectedCurrency		VARCHAR(100)	= 'All'
+	,@SelectedOddsType		VARCHAR(50)		= 'All'
+	,@AMUserId				INT				= 0			--All
+	,@PMUserId				INT				= 0			--All
+	,@ResellerType			INT				= -1		--All
+	,@MarketType			INT				= -1		--All
+	,@PageSize				INT 			= 10
+	,@PageIndex				INT				= 0 
+	,@TotalRecords			INT 			= 0 OUTPUT
 AS
 
 /*
@@ -33,6 +34,7 @@ AS
 		- 20180717@Scofield: Get all Currencies [#96489]
 		- 20190716@Howard: Add Odds Types[RedmineID: #115460 ]
 		- 20190717@Howard: Sort list by name[RedmineID: #115460]
+		- 20200113@Hogan: Add Group into Client functions [RedmindId: #126855]
 
 	Param's Explanation:
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
@@ -40,6 +42,7 @@ AS
 	* @SelectedOddsType: multiple selection dropdown(select 'All' or (1 or many odds type))
 	* @LicenseeTypeIds: dropdown (select 0(All) or 1 licenseeTypeId)
 	* @LicenseeStatusId: dropdown (select 0(All) or 1 licenseeStatusId)
+	* @LicenseeGroupIds: dropdown (select 0(All) or 1 licenseeGroupIds)
 	* @AMUser: dropdown(select 0(All) or 1 AMUser)
 	* @PMUser: dropdown(select 0(All) or 1 PMUser)
 	* @PageIndex: 0 - the first page
@@ -188,6 +191,7 @@ BEGIN
 			AND (@MarketType = -1 OR @MarketType = l.IsChineseMarketOnly)
 			AND (@SelectedOddsType = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeOddsType))
 			AND (@SelectedCurrency = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeCurrency)) 
+			AND (@LicenseeGroupIds = 'All' OR l.LicenseeGroupId IN (SELECT val FROM dbo.strSplit(@LicenseeGroupIds,',')))
 								
 	IF @TotalRecords = 0
 	BEGIN
