@@ -1,1 +1,1 @@
-Logs\dbo.OIC_LogRunSpIns.sql
+Notification/ExternalNotification/dbo.OIC_EmailNotificationRecipientSel.sql
