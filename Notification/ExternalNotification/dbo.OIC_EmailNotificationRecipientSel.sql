@@ -1,3 +1,5 @@
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[OIC_EmailNotificationRecipientSel] 
 	@CategoryId				TINYINT
 	,@SelectedLicensee		VARCHAR(MAX)
@@ -12,6 +14,7 @@ AS
 	
 	Revisions:
 		- 20160226@Percy: Add field AddCC [Redmine: #52857]
+		- 20200518@hogan: Support sending mail for upcoming licensees [RedmineID: #133714]
 	
 	Param's Explanation:
 	
@@ -85,10 +88,4 @@ END
 
 
 
-GO
-
-GRANT EXECUTE ON [dbo].[OIC_EmailNotificationRecipientSel] TO [bodbAdminNet] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[OIC_EmailNotificationRecipientSel] TO [vnteam] AS [dbo]
 GO
