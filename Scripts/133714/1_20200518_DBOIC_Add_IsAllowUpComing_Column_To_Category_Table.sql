@@ -6,8 +6,7 @@ GO
 	DB: DBOIC.bodb_OIC
 	Task: Support sending mail for upcoming licensees [RedmineID: #133714]
 */
-UPDATE dbo.Category WITH(ROWLOCK, UPDLOCK)
-	SET IsAllowUpComming = 1
-WHERE UPPER(CategoryName) LIKE 'SERVER MAINTENANCE NOTIFICATION%'
+ALTER TABLE dbo.Category
+ADD IsAllowUpComing BIT NOT NULL DEFAULT 0
 
 GO
