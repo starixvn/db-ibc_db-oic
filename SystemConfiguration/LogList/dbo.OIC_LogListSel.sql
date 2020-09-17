@@ -1,8 +1,5 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
-USE [bodb_OIC]
-GO
-
 ALTER PROCEDURE [dbo].[OIC_LogListSel]
 	@UserId			INT,
 	@FromDate		DATETIME,
@@ -25,11 +22,14 @@ AS
 		- 20170328@Percy: Add new function: Client List [RemineID: #70323]
 		- 20171019@Scofield: Update log for update Amendment Notification [#84004]
 		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
+		- 20200914@Howard: Use linked server DBNAP [RedmineID: #141531]
 
 	Param's Explanation:
 		- @ActionID: '1,2' -- List of LogActionID
 */
 BEGIN
+	SET NOCOUNT ON
+
 	DECLARE @FDate DATETIME, @TDate DATETIME -- prevent bad parameter sniffing
 	SELECT  @FDate = @FromDate, @TDate = @ToDate
 
@@ -231,8 +231,8 @@ BEGIN
 			-- get log update user password from NAP Admin --
 			INSERT INTO #LogList (LogID, LogDate, ActionID, OldAction, NewAction, DoneBy)
 			SELECT n.Id, n.LogDate, 2002, nd.Data, nd.OldData, m.Name
-			FROM bodb_NAPLOG.dbo.NAPLog_RUNSP n WITH(NOLOCK)
-				INNER JOIN bodb_NAPLOG.dbo.NAPLOG_RUNSP_Detail nd WITH(NOLOCK) ON n.Id = nd.ID
+			FROM DBNAP.bodb_NAPLOG.dbo.NAPLog_RUNSP n WITH(NOLOCK)
+				INNER JOIN DBNAP.bodb_NAPLOG.dbo.NAPLOG_RUNSP_Detail nd WITH(NOLOCK) ON n.Id = nd.ID
 				INNER JOIN @ModifyUser m ON n.UserId = m.ID
 			WHERE n.ActionId = 3 AND n.siteID = 24 -- OIC /*89: local, 24: UAT, PRO*/
 
