@@ -69,6 +69,7 @@ AS
 		- 20170828@Scofield: Add Reseller [#82144]
 		- 20190715@Howard: Add Odds Type [RedmineID: #115460]
 		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
+		- 20200917@Howard: Use table Currency instead of table Exchange [RedmindId: #141670]
 		
 	Param's Explanation:
 	* @LicBackupLink
@@ -199,11 +200,11 @@ BEGIN
 								FOR XML PATH('row'), ROOT('lc')	
 							)
 		SET @log_currency = (
-								SELECT	e.exchangeid AS '@cid'
-										,e.Code AS '@cur'
+								SELECT	c.ExchangeId AS '@cid'
+										,c.Code AS '@cur'
 								FROM dbo.LicenseeCurrency AS lc WITH (NOLOCK)
-									INNER JOIN bodb02.dbo.Exchange AS e WITH(NOLOCK) 
-										ON e.exchangeid = lc.CurrencyId
+									INNER JOIN dbo.Currency AS c WITH(NOLOCK) 
+										ON c.ExchangeId = lc.CurrencyId
 								WHERE	lc.LicenseeId = @LicenseeId
 								FOR XML PATH('row'), ROOT('cr')	
 							)
@@ -436,11 +437,11 @@ BEGIN
 									FOR XML PATH('row'), ROOT('lc')	
 								)
 			SET @log_currency = (
-									SELECT	e.exchangeid AS '@cid'
-											,e.Code AS '@cur'
+									SELECT	c.ExchangeId AS '@cid'
+											,c.Code AS '@cur'
 									FROM dbo.LicenseeCurrency AS lc WITH (NOLOCK)
-										INNER JOIN bodb02.dbo.Exchange AS e WITH(NOLOCK) 
-											ON e.exchangeid = lc.CurrencyId
+										INNER JOIN dbo.Currency AS c WITH(NOLOCK) 
+											ON c.ExchangeId = lc.CurrencyId
 									WHERE	lc.LicenseeId = @LicenseeId
 									FOR XML PATH('row'), ROOT('cr')	
 								)

@@ -35,6 +35,7 @@ AS
 		- 20190716@Howard: Add Odds Types[RedmineID: #115460 ]
 		- 20190717@Howard: Sort list by name[RedmineID: #115460]
 		- 20200113@Hogan: Add Group into Client functions [RedmindId: #126855]
+		- 20200917@Howard: Use table Currency instead of table Exchange [RedmindId: #141670]
 
 	Param's Explanation:
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
@@ -231,11 +232,11 @@ BEGIN
 						 FROM dbo.LicenseeType lt WITH(NOLOCK) 
 						 WHERE lt.LicenseeTypeId = t.LicenseeTypeId) LicenseeType(value)
 			OUTER APPLY (
-							SELECT STUFF((SELECT ', ' + e.Code
+							SELECT STUFF((SELECT ', ' + c.Code
 										FROM dbo.LicenseeCurrency lc WITH(NOLOCK)
-											INNER JOIN bodb02.dbo.Exchange e WITH(NOLOCK) 
-												ON lc.CurrencyId = e.exchangeid
-										WHERE lc.LicenseeId = t.LicenseeId AND e.Code IS NOT NULL 
+											INNER JOIN dbo.Currency c WITH(NOLOCK) 
+												ON lc.CurrencyId = c.ExchangeId
+										WHERE lc.LicenseeId = t.LicenseeId AND c.Code IS NOT NULL 
 										FOR XML PATH('')), 1, 1, '')
 						) Currency(value)
 			OUTER APPLY (SELECT lam.DisplayName FROM @tblLicenseeAM lam WHERE lam.LicenseeId = t.LicenseeId) AM(value)
