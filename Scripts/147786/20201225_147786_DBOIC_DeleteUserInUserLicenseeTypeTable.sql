@@ -9,4 +9,4 @@ GO
 */
 
 DELETE FROM dbo.UserLicenseeType
-WHERE LicenseeTypeId = 12
+WHERE LicenseeTypeId IN (12, 2)
