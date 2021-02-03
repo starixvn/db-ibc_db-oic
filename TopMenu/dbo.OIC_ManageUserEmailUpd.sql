@@ -1,5 +1,4 @@
-USE [bodb_OIC]
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_ManageUserEmailUpd]
 	@UserID					INT
@@ -17,13 +16,14 @@ AS
 	Task: Manage User Mail - Update
 
 	Revisions:
+		- 20201022@hogan: Remove email starixsoft from Param's Explanation [RedmineID: #143607]
 
 	Param's Explanation:
 		* @LicenseeTypeId_Email:
 			<root>
-				<row lti="1" em="percy.nguyen@starixsoft.com" />
-				<row lti="2" em="muller.nguyen@starixsoft.com" />
-				<row lti="3" em="anna.nguyen@starixsoft.com" />
+				<row lti="1" em="abc@xzy.com" />
+				<row lti="2" em="abc2@xzy.com" />
+				<row lti="3" em="abc3@xzy.com" />
 			</root>
 */
 
@@ -121,8 +121,4 @@ BEGIN
 		,@OldData		= @logSPOldData
 		,@Duration		= @Duration
 END
-GO
-GRANT EXECUTE ON [dbo].[OIC_ManageUserEmailUpd] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_ManageUserEmailUpd] TO [vnteam] AS [dbo]
 GO
