@@ -1,6 +1,4 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_OIC]
-GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeListSel] 
 	@UserId					INT				
@@ -36,6 +34,7 @@ AS
 		- 20190717@Howard: Sort list by name[RedmineID: #115460]
 		- 20200113@Hogan: Add Group into Client functions [RedmindId: #126855]
 		- 20200917@Howard: Use table Currency instead of table Exchange [RedmindId: #141670]
+		- 20210301@Mark: Add Registered Site name for Clients [RedmindId: #150728]
 
 	Param's Explanation:
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
@@ -72,6 +71,7 @@ BEGIN
 			RowNumber				INT
 			,LicenseeId				INT
 			,LicenseeName			NVARCHAR(50)
+			,RegisteredLicenseeName NVARCHAR(50)
 			,LicenseeStatusId		INT
 			,LicenseeStatusName		VARCHAR(30)
 			,LicenseeTypeId			TINYINT
@@ -152,6 +152,7 @@ BEGIN
 			RowNumber
 			,LicenseeId
 			,LicenseeName
+			,RegisteredLicenseeName
 			,LicenseeStatusId
 			,LicenseeStatusName
 			,LicenseeTypeId
@@ -166,6 +167,7 @@ BEGIN
 	SELECT	ROW_NUMBER() OVER(ORDER BY LicenseeName) AS RowNumber
 			,l.LicenseeId
 			,l.LicenseeName
+			,l.RegisteredLicenseeName
 			,ls.LicenseeStatusId
 			,ls.LicenseeStatusName
 			,l.LicenseeTypeId
@@ -202,6 +204,7 @@ BEGIN
 
 	SELECT	t.LicenseeId
 			,t.LicenseeName
+			,t.RegisteredLicenseeName
 			,t.LicenseeStatusName
 			,t.LicenseeTypeId
 			,LicenseeType.value AS LicenseeTypeName
