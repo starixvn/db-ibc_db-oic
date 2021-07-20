@@ -70,6 +70,7 @@ AS
 		- 20190715@Howard: Add Odds Type [RedmineID: #115460]
 		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
 		- 20200917@Howard: Use table Currency instead of table Exchange [RedmindId: #141670]
+		- 20210706@Mark: Don't write log if a client edited without having Group info [RedmindId: #157501]
 		
 	Param's Explanation:
 	* @LicBackupLink
@@ -358,7 +359,7 @@ BEGIN
 							ON	l.LicenseeStatusId = s.LicenseeStatusId
 						INNER JOIN dbo.LicenseeType AS t WITH(NOLOCK) 
 							ON	l.LicenseeTypeId = t.LicenseeTypeId
-						INNER JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) 
+						LEFT JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) 
 								ON	l.LicenseeGroupId = g.Id
 					WHERE	l.LicenseeId = @LicenseeId
 					FOR XML PATH('r'), TYPE
@@ -652,7 +653,7 @@ BEGIN
 								ON	l.LicenseeStatusId = s.LicenseeStatusId
 							INNER JOIN dbo.LicenseeType AS t WITH(NOLOCK) 
 								ON	l.LicenseeTypeId = t.LicenseeTypeId
-							INNER JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) 
+							LEFT JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) 
 								ON	l.LicenseeGroupId = g.Id
 						WHERE	l.LicenseeId = @LicenseeId
 						FOR XML PATH('r'), TYPE

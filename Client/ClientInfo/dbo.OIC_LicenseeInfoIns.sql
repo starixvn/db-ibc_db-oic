@@ -64,6 +64,7 @@ AS
 		- 20190715@Howard: Add OddsType [RedmindId: #115460]
 		- 20200110@Hogan: Add Group into Client functions [RedmindId: #126855]
 		- 20200917@Howard: Use table Currency instead of table Exchange [RedmindId: #141670]
+		- 20210706@Mark: Don't write log if a client created without having Group info [RedmindId: #157501]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -539,7 +540,7 @@ BEGIN
 		FROM dbo.Licensee AS l WITH (NOLOCK)
 			INNER JOIN dbo.LicenseeStatus AS s WITH(NOLOCK) ON l.LicenseeStatusId = s.LicenseeStatusId
 			INNER JOIN dbo.LicenseeType AS t WITH(NOLOCK) ON l.LicenseeTypeId = t.LicenseeTypeId
-			INNER JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) ON l.LicenseeGroupId = g.Id
+			LEFT JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) ON l.LicenseeGroupId = g.Id 
 		WHERE l.LicenseeId = @LicenseeId
 		FOR XML PATH('r'), TYPE)		
 		
