@@ -4,10 +4,11 @@ USE [bodb_OIC]
 GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeListByCategory] 
-    @CategoryId				TINYINT
-    ,@UserId				INT
-	,@MarketType			INT		= -1 -- All
-	,@ProductId				TINYINT		= 0 -- All
+	@CategoryId						TINYINT
+	,@UserId						INT
+	,@MarketType					INT		= -1 -- All
+	,@ProductId						TINYINT	= 0 -- All
+	,@ExcludeTerminationProduct		BIT		= 0
    
 AS
 
@@ -23,6 +24,7 @@ AS
 		- 20190116@Scofield: Uppercase Licensee Name in Title of Emails and add Non-China Market checkbox [RedmineID: #107662]
 		- 20200518@hogan: Support sending mail for upcoming licensees [RedmineID: #133714]
 		- 20210203@Mark: Add more Product option for Email Notification [RedmineID: #148733]
+		- 20210729@Hogan: Enhance Site Name in Send mail notification function [Redmine: #159206]
     
     Param's Explanation:
 		
@@ -49,7 +51,11 @@ BEGIN
 		)
 		AND (
 			@ProductId = 0
-			OR EXISTS (SELECT 1 FROM dbo.LicenseeProduct AS lp WITH(NOLOCK) WHERE lp.ProductId = @ProductId AND lp.LicenseeId = l.LicenseeId)
+			OR EXISTS (SELECT 1
+						FROM dbo.licenseeproduct AS lp WITH(nolock)
+						WHERE lp.productid = @ProductId
+							AND lp.licenseeid = l.licenseeid
+							AND (@ExcludeTerminationProduct = 0 OR (lp.TerminationDate IS NULL OR lp.TerminationDate > GETDATE())))
 		)
 		AND (
 			l.LicenseeStatusId = 3 -- Active
