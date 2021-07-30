@@ -55,7 +55,7 @@ BEGIN
 						FROM dbo.licenseeproduct AS lp WITH(nolock)
 						WHERE lp.productid = @ProductId
 							AND lp.licenseeid = l.licenseeid
-							AND (@ExcludeTerminationProduct = 0 OR (lp.TerminationDate IS NULL OR lp.TerminationDate > GETDATE())))
+							AND (@ExcludeTerminationProduct = 0 OR (lp.TerminationDate IS NULL OR lp.TerminationDate > CAST(GETDATE() AS DATE))))
 		)
 		AND (
 			l.LicenseeStatusId = 3 -- Active

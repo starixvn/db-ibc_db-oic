@@ -41,7 +41,7 @@ BEGIN
 		INNER JOIN dbo.f_LicenseeTypeBelongToUser(@UserId) f
 			ON f.LicenseeTypeId = l.LicenseeTypeId
 	WHERE	lp.ProductId = @ProductId
-		AND (@ExcludeTerminationProduct = 0 OR (lp.TerminationDate IS NULL OR lp.TerminationDate > GETDATE()))
+		AND (@ExcludeTerminationProduct = 0 OR (lp.TerminationDate IS NULL OR lp.TerminationDate > CAST(GETDATE() AS DATE)))
 	
 	RETURN
 END
