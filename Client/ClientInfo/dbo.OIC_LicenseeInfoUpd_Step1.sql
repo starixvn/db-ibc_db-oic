@@ -32,8 +32,10 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd_Step1]
 	,@LicOddsType			VARCHAR(100)	= NULL
 	,@LicService			XML				= NULL
 	,@LicRestrictCountry	VARCHAR(1000)	= NULL
-	,@RestrictCountryRemark	NVARCHAR(500)	= NULL		
+	,@RestrictCountryRemark	NVARCHAR(500)	= NULL
 	,@Remark				NVARCHAR(300)	= NULL
+	,@InvoiceBaseCurrency	VARCHAR(4)
+	,@InvoiceLanguage		NVARCHAR(50)
 	
 	,@UserId				INT
 	,@Language				VARCHAR(10)		= 'E'
@@ -57,6 +59,7 @@ AS
 		- 20170828@Scofield: Add Reseller [#82144]
 		- 20190715@Howard: Add Odds Type [RedmineId: #115460]
 		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
+		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -128,6 +131,8 @@ BEGIN
 				,LicenseeTypeId				= @LicenseeTypeId
 				,IsChineseMarketOnly		= @IsChineseMarketOnly
 				,IsReseller					= @IsReseller
+				,InvoiceBaseCurrency		= @InvoiceBaseCurrency
+				,InvoiceLanguage			= @InvoiceLanguage
 		WHERE	LicenseeId					= @LicenseeId
 	END TRY
 	BEGIN CATCH

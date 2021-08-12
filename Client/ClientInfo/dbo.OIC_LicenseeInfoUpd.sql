@@ -34,8 +34,10 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd]
 	,@LicOddsType			VARCHAR(100)	= NULL
 	,@LicService			XML				= NULL
 	,@LicRestrictCountry	VARCHAR(1000)	= NULL
-	,@RestrictCountryRemark	NVARCHAR(500)	= NULL		
+	,@RestrictCountryRemark	NVARCHAR(500)	= NULL
 	,@Remark				NVARCHAR(300)	= NULL
+	,@InvoiceBaseCurrency	VARCHAR(4)
+	,@InvoiceLanguage		NVARCHAR(50)
 	
 	,@UpdateStep2			BIT				= 1
 	,@LicProduct			XML				= NULL
@@ -71,6 +73,7 @@ AS
 		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
 		- 20200917@Howard: Use table Currency instead of table Exchange [RedmindId: #141670]
 		- 20210706@Mark: Don't write log if a client edited without having Group info [RedmindId: #157501]
+		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		
 	Param's Explanation:
 	* @LicBackupLink
@@ -334,7 +337,7 @@ BEGIN
 							,l.FullLaunch				AS '@fl'
 							,l.MainUrl					AS '@mu'
 							,l.APILinkageUrl			AS '@au'
-							,l.RestrictedLocationRemark	AS '@rlr'			
+							,l.RestrictedLocationRemark	AS '@rlr'
 							,l.Remark					AS '@rm'
 							,l.IsChineseMarketOnly		AS '@icm'
 							,l.IsReseller				AS '@res'
@@ -342,6 +345,8 @@ BEGIN
 							,@location					AS '@lc'
 							,@AMDisplayName				AS '@amn'
 							,@PMDisplayName				AS '@pmn'
+							,l.InvoiceBaseCurrency		AS '@ibc'
+							,l.InvoiceLanguage			AS '@il'
 							,@log_backupLink
 							,@log_maincontact
 							,@log_currency
@@ -401,8 +406,10 @@ BEGIN
 			,@LicOddsType				= @LicOddsType
 			,@LicService				= @LicService
 			,@LicRestrictCountry		= @LicRestrictCountry
-			,@RestrictCountryRemark		= @RestrictCountryRemark		
+			,@RestrictCountryRemark		= @RestrictCountryRemark
 			,@Remark					= @Remark
+			,@InvoiceBaseCurrency		= @InvoiceBaseCurrency
+			,@InvoiceLanguage			= @InvoiceLanguage
 			
 			,@UserId					= @UserId
 			,@Language					= @Language
@@ -628,7 +635,7 @@ BEGIN
 								,l.FullLaunch				AS '@fl'
 								,l.MainUrl					AS '@mu'
 								,l.APILinkageUrl			AS '@au'
-								,l.RestrictedLocationRemark	AS '@rlr'			
+								,l.RestrictedLocationRemark	AS '@rlr'
 								,l.Remark					AS '@rm'
 								,l.IsChineseMarketOnly		AS '@icm'
 								,l.IsReseller				AS '@res'
@@ -636,6 +643,8 @@ BEGIN
 								,@location					AS '@lc'
 								,@AMDisplayName				AS '@amn'
 								,@PMDisplayName				AS '@pmn'
+								,l.InvoiceBaseCurrency		AS '@ibc'
+								,l.InvoiceLanguage			AS '@il'
 								,@log_backupLink
 								,@log_maincontact
 								,@log_currency

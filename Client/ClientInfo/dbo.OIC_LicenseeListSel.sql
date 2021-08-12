@@ -35,6 +35,7 @@ AS
 		- 20200113@Hogan: Add Group into Client functions [RedmindId: #126855]
 		- 20200917@Howard: Use table Currency instead of table Exchange [RedmindId: #141670]
 		- 20210301@Mark: Add Registered Site name for Clients [RedmindId: #150728]
+		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 
 	Param's Explanation:
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
@@ -86,6 +87,8 @@ BEGIN
 			,OddsType				VARCHAR(100)
 			,IsReseller				BIT
 			,IsChineseMarketOnly 	BIT
+			,InvoiceBaseCurrency	VARCHAR(4)
+			,InvoiceLanguage		NVARCHAR(50)
 	)				
 
 	IF @SelectedProduct <> 'All'	
@@ -162,6 +165,8 @@ BEGIN
 			,MainContactName
 			,IsReseller
 			,IsChineseMarketOnly
+			,InvoiceBaseCurrency
+			,InvoiceLanguage
 	)	
 		 
 	SELECT	ROW_NUMBER() OVER(ORDER BY LicenseeName) AS RowNumber
@@ -177,6 +182,8 @@ BEGIN
 			,c.ContactName
 			,l.IsReseller
 			,l.IsChineseMarketOnly
+			,l.InvoiceBaseCurrency
+			,l.InvoiceLanguage
 	FROM	dbo.Licensee l WITH(NOLOCK)
 		INNER JOIN dbo.LicenseeStatus ls WITH(NOLOCK)
 			ON	ls.LicenseeStatusId = l.LicenseeStatusId
@@ -218,6 +225,8 @@ BEGIN
 			,OddsType.value AS OddsType
 			,t.IsReseller
 			,t.IsChineseMarketOnly
+			,t.InvoiceBaseCurrency
+			,t.InvoiceLanguage
 	 FROM (
 				SELECT *
 				FROM #tblResult tr
