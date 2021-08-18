@@ -19,16 +19,16 @@ UPDATE oic
 SET oic.InvoiceLanguage = pd.InvoiceLanguage
 FROM #OIC_Licensee oic
 	INNER JOIN bodb_Licensee.dbo.Licensees l WITH(NOLOCK) ON oic.RegisteredLicenseeName = l.LicenseeName
-	INNER JOIN bodb_Licensee.dbo.OAS_Party p WITH(NOLOCK) ON l.LicenseeId = p.OldRefId
-	INNER JOIN bodb_Licensee.dbo.OAS_PartyDetail pd with (nolock) ON p.PartyId = pd.PartyId
+	INNER JOIN bodb_Licensee.dbo.OAS_Party p WITH(NOLOCK) ON l.LicenseeId = p.OldRefId AND p.PartyType IN (1,5)
+	INNER JOIN bodb_Licensee.dbo.OAS_PartyDetail pd with (nolock) ON p.PartyId = pd.PartyId AND pd.IsDeposit = 1
 
 --get InvoiceBaseCurrency
 UPDATE oic
 SET oic.InvoiceBaseCurrency = e.Code
 FROM #OIC_Licensee oic
 	INNER JOIN bodb_Licensee.dbo.Licensees l  WITH(NOLOCK) ON oic.RegisteredLicenseeName = l.LicenseeName
-	INNER JOIN bodb_Licensee.dbo.OAS_Party p  WITH(NOLOCK) ON l.LicenseeId = p.OldRefId
-	INNER JOIN bodb_Licensee.dbo.OAS_PartyDetail pd  WITH(NOLOCK) ON p.PartyId = pd.PartyId
+	INNER JOIN bodb_Licensee.dbo.OAS_Party p  WITH(NOLOCK) ON l.LicenseeId = p.OldRefId AND p.PartyType IN (1,5)
+	INNER JOIN bodb_Licensee.dbo.OAS_PartyDetail pd  WITH(NOLOCK) ON p.PartyId = pd.PartyId AND pd.IsDeposit = 1
 	INNER JOIN
 		(SELECT c.partyid, c.basecurrencyid,ROW_NUMBER() OVER(PARTITION BY partyid ORDER BY todate DESC) AS RN
 		FROM bodb_Licensee.dbo.OAS_PartyBaseCurrency c  WITH(NOLOCK)
