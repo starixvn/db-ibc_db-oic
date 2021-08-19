@@ -21,6 +21,7 @@ AS
 		- 20190717@Howard: Add Odds Type [#115460]
 		- 20190815@Howard: Batch update features and products [#115462]
 		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
+		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -57,6 +58,8 @@ BEGIN
 			@ClientTargetMarket NVARCHAR(MAX), -- list of target markets
 			@CommunicationLanguages NVARCHAR(MAX), -- list of communication languagues
 			@OddsTypes NVARCHAR(300), -- list of odds types
+			@InvoiceBaseCurrency VARCHAR(4),
+			@InvoiceLanguage NVARCHAR(50),
 			@UnasService NVARCHAR(100),
 			@UnasService_Username NVARCHAR(100),
 			@UnasService_Password NVARCHAR(100),
@@ -114,6 +117,8 @@ BEGIN
 			@ClientTargetMarket_old NVARCHAR(MAX), -- list of target markets
 			@CommunicationLanguages_old NVARCHAR(MAX), -- list of communication languagues
 			@OddsTypes_old NVARCHAR(300), -- list of odds types
+			@InvoiceBaseCurrency_old VARCHAR(4),
+			@InvoiceLanguage_old NVARCHAR(50),
 			@UnasService_old NVARCHAR(100),
 			@UnasService_Username_old NVARCHAR(100),
 			@UnasService_Password_old NVARCHAR(100),
@@ -167,6 +172,8 @@ BEGIN
 			@IsChineseMarketOnly = d.c.value('@icm', 'NVARCHAR(1)'),
 			@Reseller = d.c.value('@res', 'NVARCHAR(1)'),
 			@InternalURL = d.c.value('@iu', 'NVARCHAR(MAX)'),
+			@InvoiceBaseCurrency = d.c.value('@ibc', 'VARCHAR(4)'), -- invoice base currency
+			@InvoiceLanguage = d.c.value('@il', 'NVARCHAR(50)'), -- invoice language
 
 			@TypeOfLicensee_old = od.c.value('@tn', 'NVARCHAR(30)'), -- type of licensee
 			@Sitename_old = od.c.value('@ln', 'NVARCHAR(100)'), -- site name
@@ -185,7 +192,9 @@ BEGIN
 			@AM_old = od.c.value('@amn', 'NVARCHAR(50)'), -- account manager
 			@IsChineseMarketOnly_old = od.c.value('@icm', 'NVARCHAR(1)'),
 			@Reseller_old = od.c.value('@res', 'NVARCHAR(1)'),
-			@InternalURL_old = od.c.value('@iu', 'NVARCHAR(MAX)')
+			@InternalURL_old = od.c.value('@iu', 'NVARCHAR(MAX)'),
+			@InvoiceBaseCurrency_old = od.c.value('@ibc', 'VARCHAR(4)'), -- invoice base currency
+			@InvoiceLanguage_old = od.c.value('@il', 'NVARCHAR(50)') -- invoice language
 		FROM (
 				SELECT
 					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
@@ -704,7 +713,9 @@ BEGIN
 			(52, N'Internal backend URL', @InternalURL, @InternalURL_old),
 			(53, N'OneonOne CS (username - password)', @CS, @CS_old),
 			(54, N'Training Account (username - password)', @TA, @TA_old),
-			(55, N'Client Group', @ClientGroup, @ClientGroup_old)	
+			(55, N'Client Group', @ClientGroup, @ClientGroup_old),
+			(55, N'Invoice Base Currency', @InvoiceBaseCurrency, @InvoiceBaseCurrency_old),
+			(55, N'Invoice Language', @InvoiceLanguage, @InvoiceLanguage_old)
 	END
 	ELSE IF @LogActionId IN (600, 601, 602) -- Insert/Update Client Group
 	BEGIN

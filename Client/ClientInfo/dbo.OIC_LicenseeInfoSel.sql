@@ -21,6 +21,7 @@ AS
 		- 20170828@Scofield: Add Reseller [#82144]
 		- 20190715@Howard: Add Odds Type [RedmineID: 115460]
 		- 20200203@Hogan: Return licenseeGroupId [RedmineID: #126855]
+		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 	
 	Param's Explanation:
 		@Step: 1,2,3
@@ -124,6 +125,8 @@ BEGIN
 				,l.Remark					AS LicenseeRemark
 				,l.IsChineseMarketOnly		AS IsChineseMarketOnly
 				,l.IsReseller				AS IsReseller
+				,l.InvoiceBaseCurrency		AS InvoiceBaseCurrency
+				,l.InvoiceLanguage			AS InvoiceLanguage
 		FROM	dbo.Licensee l WITH(NOLOCK)
 			LEFT JOIN dbo.Contact c WITH(NOLOCK) 
 				ON	l.LicenseeId = c.LicenseeID AND c.IsMain = 1	

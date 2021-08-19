@@ -33,8 +33,10 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns_Step1]
 	,@LicOddsType			VARCHAR(100)    = NULL
 	,@LicService			XML				= NULL
 	,@LicRestrictCountry	VARCHAR(1000)	= NULL
-	,@RestrictCountryRemark	NVARCHAR(2000)	= NULL		
+	,@RestrictCountryRemark	NVARCHAR(2000)	= NULL
 	,@Remark				NVARCHAR(300)	= NULL
+	,@InvoiceBaseCurrency	VARCHAR(4)
+	,@InvoiceLanguage		NVARCHAR(50)
 	
 	,@Language				VARCHAR(10)		= 'E'
 	,@IP					VARCHAR(50)		= NULL
@@ -57,6 +59,7 @@ AS
 		- 20170828@Scofield: Add Reseller [#82144]
 		- 20190715@Howard: Add Odds Type [RedmineId: #115460]
 		- 20200110@Hogan: Add Group into Client functions [RedmindId: #126855]
+		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -107,6 +110,8 @@ BEGIN
 			,Remark
 			,IsChineseMarketOnly
 			,IsReseller
+			,InvoiceBaseCurrency
+			,InvoiceLanguage
 			)
 		VALUES(
 			@SiteName
@@ -119,11 +124,13 @@ BEGIN
 			,@FullLaunch
 			,@MainUrl
 			,@APIUrl
-			,@LocationId		
-			,@RestrictCountryRemark	
+			,@LocationId
+			,@RestrictCountryRemark
 			,@Remark
 			,@IsChineseMarketOnly
 			,@IsReseller
+			,@InvoiceBaseCurrency
+			,@InvoiceLanguage
 		)
 	
 		SET @LicenseeId = SCOPE_IDENTITY()
