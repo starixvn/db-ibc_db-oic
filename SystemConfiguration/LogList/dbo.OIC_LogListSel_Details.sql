@@ -22,6 +22,7 @@ AS
 		- 20190815@Howard: Batch update features and products [#115462]
 		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
+		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -34,7 +35,7 @@ BEGIN
 	IF @LogActionId IN (7,8) -- Insert/Update Client
 	BEGIN
 		DECLARE
-			@TypeOfLicensee NVARCHAR(30),
+			@TypeOfLicensee NVARCHAR(40),
 			@Sitename NVARCHAR(100),
 			@RegisteredSitename NVARCHAR(100),
 			@CompanyName NVARCHAR(100),
@@ -93,7 +94,7 @@ BEGIN
 			@Reseller NVARCHAR(MAX),
 			@InternalURL NVARCHAR(MAX),
 
-			@TypeOfLicensee_old NVARCHAR(30),
+			@TypeOfLicensee_old NVARCHAR(40),
 			@Sitename_old NVARCHAR(100),
 			@RegisteredSitename_old NVARCHAR(100),
 			@CompanyName_old NVARCHAR(100),
@@ -154,7 +155,7 @@ BEGIN
 
 		-- Client Info
 		SELECT
-			@TypeOfLicensee = d.c.value('@tn', 'NVARCHAR(30)'), -- type of licensee
+			@TypeOfLicensee = d.c.value('@tn', 'NVARCHAR(40)'), -- type of licensee
 			@Sitename = d.c.value('@ln', 'NVARCHAR(100)'), -- site name
 			@RegisteredSitename = d.c.value('@rln', 'NVARCHAR(100)'), -- registered site name
 			@CompanyName = d.c.value('@cn', 'NVARCHAR(100)'), -- company name
@@ -175,7 +176,7 @@ BEGIN
 			@InvoiceBaseCurrency = d.c.value('@ibc', 'VARCHAR(4)'), -- invoice base currency
 			@InvoiceLanguage = d.c.value('@il', 'NVARCHAR(50)'), -- invoice language
 
-			@TypeOfLicensee_old = od.c.value('@tn', 'NVARCHAR(30)'), -- type of licensee
+			@TypeOfLicensee_old = od.c.value('@tn', 'NVARCHAR(40)'), -- type of licensee
 			@Sitename_old = od.c.value('@ln', 'NVARCHAR(100)'), -- site name
 			@RegisteredSitename_old = od.c.value('@rln', 'NVARCHAR(100)'), -- registered site name
 			@CompanyName_old = od.c.value('@cn', 'NVARCHAR(100)'), -- company name
@@ -1424,11 +1425,11 @@ BEGIN
 		;WITH CTE_Email AS (
 			SELECT
 				d.c.value('@lti', 'INT') AS TOLId, -- type of licensee id
-				d.c.value('@ltn', 'NVARCHAR(30)') AS TOL, -- type of licensee
+				d.c.value('@ltn', 'NVARCHAR(40)') AS TOL, -- type of licensee
 				d.c.value('@em', 'NVARCHAR(50)') AS Email, -- email
 
 				od.c.value('@lti', 'INT') AS TOLId_old, -- type of licensee id
-				od.c.value('@ltn', 'NVARCHAR(30)') AS TOL_old, -- type of licensee
+				od.c.value('@ltn', 'NVARCHAR(40)') AS TOL_old, -- type of licensee
 				od.c.value('@em', 'NVARCHAR(50)') AS Email_old -- email
 			FROM (
 				SELECT
@@ -1557,8 +1558,8 @@ BEGIN
 	BEGIN
 		;WITH CTE_TOL AS (
 			SELECT
-				d.c.value('@ltn', 'NVARCHAR(30)') AS TOL, -- Type Of Licensee
-				od.c.value('@ltn', 'NVARCHAR(30)') AS TOL_old -- Type Of Licensee
+				d.c.value('@ltn', 'NVARCHAR(40)') AS TOL, -- Type Of Licensee
+				od.c.value('@ltn', 'NVARCHAR(40)') AS TOL_old -- Type Of Licensee
 			FROM (
 				SELECT
 					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r><lt><row /></lt></r>') ELSE Data END AS Data,

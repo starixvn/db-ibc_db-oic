@@ -14,7 +14,7 @@ RETURNS @res TABLE (
 	LicenseeId INT NOT NULL
 	,LicenseeName NVARCHAR(50) NOT NULL
 	,LicenseeTypeId	INT NOT NULL
-	,LicenseeTypeName VARCHAR(30) NOT NULL
+	,LicenseeTypeName VARCHAR(40) NOT NULL
 	,PRIMARY KEY CLUSTERED (LicenseeId ASC)
 	) WITH EXECUTE AS CALLER
 AS
@@ -27,6 +27,7 @@ AS
     
     Revisions:
 		- 20210729@Hogan: Enhance Site Name in Send mail notification function [Redmine: #159206]
+		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
     
     Param's Explanation:
 		

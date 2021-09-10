@@ -1,10 +1,8 @@
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_ExternalNotificationListSel]    Script Date: 11/03/2015 16:41:29 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 ALTER PROCEDURE [dbo].[OIC_ExternalNotificationListSel]
 	@MessageTypeId		TINYINT			= 0
 	,@FromDate			DATETIME 
@@ -28,6 +26,7 @@ AS
 	DB: DBOIC.bodb_OIC
 	
 	Revisions:
+		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
 	
 	Param's Explanation:
 		@SortBy:	0: Message Type ASC
@@ -266,23 +265,4 @@ BEGIN
 	END
 END
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GO
-GRANT EXECUTE ON [dbo].[OIC_ExternalNotificationListSel] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_ExternalNotificationListSel] TO [vnteam] AS [dbo]
