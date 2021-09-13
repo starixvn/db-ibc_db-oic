@@ -17,6 +17,7 @@ AS
 
 	Revisions:
 		- 20201022@hogan: Remove email starixsoft from Param's Explanation [RedmineID: #143607]
+		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
 
 	Param's Explanation:
 		* @LicenseeTypeId_Email:
@@ -42,7 +43,7 @@ BEGIN
 
 		,@log_email		XML
 
-	DECLARE @tblLicenseeTypeEmail TABLE (LicenseeTypeId TINYINT, LicenseeTypeName VARCHAR(30), Email VARCHAR(50))
+	DECLARE @tblLicenseeTypeEmail TABLE (LicenseeTypeId TINYINT, LicenseeTypeName VARCHAR(40), Email VARCHAR(50))
 
 	SET @startRun = GETDATE()
 

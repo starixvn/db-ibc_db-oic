@@ -36,6 +36,7 @@ AS
 		- 20200917@Howard: Use table Currency instead of table Exchange [RedmindId: #141670]
 		- 20210301@Mark: Add Registered Site name for Clients [RedmindId: #150728]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
+		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
 
 	Param's Explanation:
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
@@ -76,7 +77,7 @@ BEGIN
 			,LicenseeStatusId		INT
 			,LicenseeStatusName		VARCHAR(30)
 			,LicenseeTypeId			TINYINT
-			,LicenseeTypeName		VARCHAR(30)
+			,LicenseeTypeName		VARCHAR(40)
 			,SoftLaunch				DATETIME
 			,FullLaunch				DATETIME
 			,AccountManager			NVARCHAR(50)
