@@ -1,10 +1,7 @@
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_OIC]
 GO
-/****** Object:  StoredProcedure [dbo].[OIC_UserInfoListSel]    Script Date: 08/19/2015 17:41:55 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 ALTER PROCEDURE [dbo].[OIC_UserInfoListSel] 
 	@DisplayName			NVARCHAR(50)	= '%'
 	,@SelectedPosition		VARCHAR(100)	= 'All'
@@ -20,6 +17,7 @@ AS
 	DB: DBOIC.bodb_OIC
 	
 	Revisions:
+		- 20210913@Hogan: Fix XML character reference [RedmineID: #160430]
 	
 	Param's Explanation:
 		
@@ -40,8 +38,8 @@ BEGIN
 						INNER JOIN dbo.LicenseeType lt WITH(NOLOCK) 
 							ON	lt.LicenseeTypeId = ult.LicenseeTypeId
 					WHERE	ult.UserId = u.UserId
-					FOR XML PATH('')),1,1,''
-			) AS LicenseeType
+					FOR XML PATH(''), TYPE
+            ).value('.', 'VARCHAR(MAX)'), 1, 1, '') AS LicenseeType
 			,u.Email
 			,u.Skype
 			,u.PhoneNumber
@@ -78,16 +76,4 @@ BEGIN
 	WHERE	RowNumber BETWEEN @RowStart AND @RowEnd		
 			
 END
-
-
-
-
-
-
-
-
-
 GO
-GRANT EXECUTE ON [dbo].[OIC_UserInfoListSel] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_UserInfoListSel] TO [vnteam] AS [dbo]
