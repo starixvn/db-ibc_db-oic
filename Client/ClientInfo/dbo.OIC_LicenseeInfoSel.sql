@@ -22,6 +22,7 @@ AS
 		- 20190715@Howard: Add Odds Type [RedmineID: 115460]
 		- 20200203@Hogan: Return licenseeGroupId [RedmineID: #126855]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
+		- 20211001@Alex: Support Product Type on Client Product [RedmindId: #161508]
 	
 	Param's Explanation:
 		@Step: 1,2,3
@@ -136,6 +137,8 @@ BEGIN
 	BEGIN
 		SELECT	p.ProductId
 				,p.ProductName
+				,pt.Id AS ProductTypeId
+				,pt.ProductTypeName
 				,lp.LaunchDate
 				,lp.TerminationDate
 				,CASE WHEN lp.ProductId IS NOT NULL THEN 1 ELSE 0 END AS Selected
@@ -143,7 +146,10 @@ BEGIN
 			LEFT JOIN dbo.LicenseeProduct lp WITH(NOLOCK)
 				ON	p.ProductId = lp.ProductId
 					AND lp.LicenseeId = @LicenseeId
-		ORDER BY p.[Order]
+			LEFT JOIN dbo.ProductType pt WITH(NOLOCK)
+				ON p.ProductTypeId = pt.Id
+		WHERE 	p.Active = 1
+		ORDER BY pt.[Order], p.[Order]
 					
 		SELECT f.FeatureId
 				,f.FeatureName

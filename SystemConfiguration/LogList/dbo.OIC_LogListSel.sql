@@ -23,6 +23,7 @@ AS
 		- 20171019@Scofield: Update log for update Amendment Notification [#84004]
 		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
 		- 20200914@Howard: Use linked server DBNAP [RedmineID: #141531]
+		- 20211006@Alex: Add new function: Type Of Status Product [RedmineID: #161508]
 
 	Param's Explanation:
 		- @ActionID: '1,2' -- List of LogActionID
@@ -159,6 +160,21 @@ BEGIN
 			) A
 				CROSS APPLY A.[Target].nodes('r') d(c)
 			WHERE d.c.value('@ltn','VARCHAR(100)') LIKE @Target
+		END
+		
+		-- Target: Type Of Status Product
+		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (3015)))
+		BEGIN
+			INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy)
+			SELECT DISTINCT A.LogID, A.LogDate, A.[Action], d.c.value('@pn','VARCHAR(100)'), A.DoneBy
+			FROM (
+				SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], CONVERT(XML, ISNULL(ISNULL(ll.NewAction, ll.OldAction), N'<r></r>')) AS [Target], ll.DoneBy
+				FROM #LogList ll
+					INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
+				WHERE la.LogActionId IN (3015)
+			) A
+				CROSS APPLY A.[Target].nodes('r') d(c)
+			WHERE d.c.value('@pn','VARCHAR(100)') LIKE @Target
 		END
 		
 		-- Target: Feature
