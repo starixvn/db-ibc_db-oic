@@ -1,2 +1,1 @@
-Notification/ExternalNotification/dbo.OIC_ExternalNotificationListSel.sql
-Notification/ExternalNotification/dbo.OIC_LicenseeListByProduct.sql
+Client/ClientInfo/dbo.OIC_LicenseeInfoUpd.sql

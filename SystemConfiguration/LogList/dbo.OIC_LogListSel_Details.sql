@@ -23,6 +23,8 @@ AS
 		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
+		- 20211005@Alex: Support Product Type on Client Product [RedmineID: #161508]
+		
 */
 BEGIN
 	SET NOCOUNT ON
@@ -1481,11 +1483,76 @@ BEGIN
 		INSERT INTO @Result (ID, Field, NewValue, OldValue)
 		SELECT
 			1,
+			N'ProductType',
+
+			d.c.value('@ptn', 'NVARCHAR(300)'), -- product type name
+
+			od.c.value('@ptn', 'NVARCHAR(300)') -- product type name
+		FROM (
+			SELECT
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE OldData END AS OldData
+			FROM (
+				SELECT CONVERT(XML, Data).query('/r') AS Data, CONVERT(XML, OldData).query('/r') AS OldData
+				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+				WHERE Id = @ActionID
+			) B
+		) A
+			OUTER APPLY A.Data.nodes('r') d(c)
+			OUTER APPLY A.OldData.nodes('r') od(c)
+			
+		INSERT INTO @Result (ID, Field, NewValue, OldValue)
+		SELECT
+			2,
+			N'Main Product',
+
+			d.c.value('@mpn', 'NVARCHAR(300)'), -- main product name
+
+			od.c.value('@mpn', 'NVARCHAR(300)') -- main product name
+		FROM (
+			SELECT
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE OldData END AS OldData
+			FROM (
+				SELECT CONVERT(XML, Data).query('/r') AS Data, CONVERT(XML, OldData).query('/r') AS OldData
+				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+				WHERE Id = @ActionID
+			) B
+		) A
+			OUTER APPLY A.Data.nodes('r') d(c)
+			OUTER APPLY A.OldData.nodes('r') od(c)
+			
+				INSERT INTO @Result (ID, Field, NewValue, OldValue)
+		SELECT
+			3,
 			N'Product',
 
 			d.c.value('@pn', 'NVARCHAR(300)'), -- product name
 
 			od.c.value('@pn', 'NVARCHAR(300)') -- product name
+		FROM (
+			SELECT
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE OldData END AS OldData
+			FROM (
+				SELECT CONVERT(XML, Data).query('/r') AS Data, CONVERT(XML, OldData).query('/r') AS OldData
+				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+				WHERE Id = @ActionID
+			) B
+		) A
+			OUTER APPLY A.Data.nodes('r') d(c)
+			OUTER APPLY A.OldData.nodes('r') od(c)
+	END
+	ELSE IF @LogActionId IN (3015) -- Update Product Status
+	BEGIN
+		INSERT INTO @Result (ID, Field, NewValue, OldValue)
+		SELECT
+			1,
+			N'Active',
+
+			d.c.value('@s', 'NVARCHAR(300)'), -- status
+
+			od.c.value('@s', 'NVARCHAR(300)') -- status
 		FROM (
 			SELECT
 				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
