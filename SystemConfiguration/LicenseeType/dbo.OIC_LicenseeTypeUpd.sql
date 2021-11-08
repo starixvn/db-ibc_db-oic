@@ -19,6 +19,7 @@ AS
 	
 	Revisions:
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
+		- 20211116@Alex: Change Type Of Licensee [RedmineID: #163521]
 		
 */
 BEGIN
@@ -36,7 +37,7 @@ BEGIN
 
 	SET @startRun = GETDATE()
 	
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.LicenseeType WITH(NOLOCK) WHERE LicenseeTypeName = @LicenseeTypeName)
+	IF EXISTS (SELECT TOP 1 1 FROM dbo.LicenseeTypes WITH(NOLOCK) WHERE TypeName = @LicenseeTypeName)
 	BEGIN
 		SELECT	@ErrCode = 100
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](30003, @Language) -- The licensee type name is already used. Please try another name.
@@ -45,19 +46,19 @@ BEGIN
 	
 	-- get old data
 	SET @xml = (
-		SELECT	LicenseeTypeId		AS '@lti'
-				,LicenseeTypeName	AS '@ltn'
-		FROM	dbo.LicenseeType WITH(NOLOCK)
-		WHERE	LicenseeTypeId = @LicenseeTypeId
+		SELECT	TypeId		AS '@lti'
+				,TypeName	AS '@ltn'
+		FROM	dbo.LicenseeTypes WITH(NOLOCK)
+		WHERE	TypeId = @LicenseeTypeId
 		FOR XML PATH('r'), TYPE
 		)	
 		
 	SELECT @logSPOlddata = CONVERT(NVARCHAR(MAX), @xml)
 	
 	BEGIN TRY
-		UPDATE	dbo.LicenseeType WITH(ROWLOCK, UPDLOCK)
-			SET	LicenseeTypeName = @LicenseeTypeName
-		WHERE	LicenseeTypeId = @LicenseeTypeId	
+		UPDATE	dbo.LicenseeTypes WITH(ROWLOCK, UPDLOCK)
+			SET	TypeName = @LicenseeTypeName
+		WHERE	TypeId = @LicenseeTypeId	
 	END TRY
 	BEGIN CATCH
 		SELECT	@ErrCode = 101
@@ -66,10 +67,10 @@ BEGIN
 	END CATCH
 	
 	SET @xml = (
-		SELECT	LicenseeTypeId		AS '@lti'
-				,LicenseeTypeName	AS '@ltn'
-		FROM	dbo.LicenseeType WITH(NOLOCK)
-		WHERE	LicenseeTypeId = @LicenseeTypeId
+		SELECT	TypeId		AS '@lti'
+				,TypeName	AS '@ltn'
+		FROM	dbo.LicenseeTypes WITH(NOLOCK)
+		WHERE	TypeId = @LicenseeTypeId
 		FOR XML PATH('r'), TYPE
 		)		
 		

@@ -1,11 +1,10 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_OIC]
-GO
-
 ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd]	
 	@LicenseeId				INT
 	,@UpdateStep1			BIT				= 1
-	,@LicenseeTypeId		TINYINT			= NULL
+	,@TypeId				TINYINT			= NULL
+	,@PlatformId			TINYINT			= NULL
+	,@IntegrationMethods 	VARCHAR(1000)	= NULL
 	,@SiteName				NVARCHAR(50)	= NULL
 	,@RegisteredSiteName	NVARCHAR(50)
 	,@CompanyName			NVARCHAR(50)	= NULL
@@ -74,7 +73,7 @@ AS
 		- 20200917@Howard: Use table Currency instead of table Exchange [RedmindId: #141670]
 		- 20210706@Mark: Don't write log if a client edited without having Group info [RedmindId: #157501]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
-		
+		- 20211109@Alex: Change Type Of Licensee [RedmindId: #163521]
 	Param's Explanation:
 	* @LicBackupLink
 		<root>
@@ -162,6 +161,7 @@ BEGIN
 		,@log_backupLink			XML
 		,@log_maincontact			XML
 		,@log_currency				XML
+		,@log_integrationMethod		XML
 		,@log_targetedMarket		XML
 		,@log_restrictedLocation	XML
 		,@log_language				XML
@@ -261,6 +261,17 @@ BEGIN
 								WHERE lot.LicenseeId = @LicenseeId
 								FOR XML PATH('row'), ROOT('lot')
 							)
+							
+		SET @log_integrationMethod = (
+							SELECT im.IntegrationMethodId AS '@limid'
+								   ,im.IntegrationMethodName AS '@limn'
+							FROM dbo.LicenseeIntegrationMethod AS lim WITH(NOLOCK)
+								INNER JOIN dbo.IntegrationMethod AS im WITH(NOLOCK)
+									ON lim.IntegrationMethodId = im.IntegrationMethodId
+							WHERE lim.LicenseeId = @LicenseeId
+							FOR XML PATH('row'), ROOT('lot')
+	
+									)
 	
 		SET @log_service = (	SELECT	s.ServiceId				AS '@lsid'
 										,s.ServiceName				AS '@lsn'
@@ -327,7 +338,8 @@ BEGIN
 	END
 
 	SET @xml = (SELECT	@LicenseeId					AS '@lid'
-							,t.LicenseeTypeName			AS '@tn'
+							,t.TypeName					AS '@tn'
+							,i.PlatformName				AS '@pn'
 							,l.LicenseeName				AS '@ln'
 							,l.RegisteredLicenseeName 	AS '@rln'
 							,l.LicenseeCompanyName		AS '@cn'
@@ -353,6 +365,7 @@ BEGIN
 							,@log_Language
 							,@log_languageSB
 							,@log_oddsType
+							,@log_integrationMethod
 							,@log_restrictedLocation
 							,@log_targetedMarket
 							,@log_service
@@ -362,8 +375,9 @@ BEGIN
 					FROM dbo.Licensee AS l WITH (NOLOCK)
 						INNER JOIN dbo.LicenseeStatus AS s WITH(NOLOCK) 
 							ON	l.LicenseeStatusId = s.LicenseeStatusId
-						INNER JOIN dbo.LicenseeType AS t WITH(NOLOCK) 
-							ON	l.LicenseeTypeId = t.LicenseeTypeId
+						INNER JOIN dbo.LicenseeTypes AS t WITH(NOLOCK) 
+							ON	l.TypeId = t.TypeId
+						INNER JOIN dbo.Platform AS i WITH(NOLOCK) ON l.PlatformId = i.PlatformId
 						LEFT JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) 
 								ON	l.LicenseeGroupId = g.Id
 					WHERE	l.LicenseeId = @LicenseeId
@@ -377,7 +391,9 @@ BEGIN
 	BEGIN
 		EXEC dbo.OIC_LicenseeInfoUpd_Step1
 			@LicenseeId					= @LicenseeId
-			,@LicenseeTypeId			= @LicenseeTypeId
+			,@TypeId					= @TypeId
+			,@PlatformId				= @PlatformId
+			,@IntegrationMethods		= @IntegrationMethods
 			,@SiteName					= @SiteName
 			,@RegisteredSiteName		= @RegisteredSiteName
 			,@CompanyName				= @CompanyName
@@ -503,7 +519,17 @@ BEGIN
 									WHERE lot.LicenseeId = @LicenseeId
 									FOR XML PATH('row'), ROOT('lot')
 								)
-	
+								
+			SET @log_integrationMethod = (
+									SELECT im.IntegrationMethodId AS '@limid'
+										   ,im.IntegrationMethodName AS '@limn'
+									FROM dbo.LicenseeIntegrationMethod AS lim WITH(NOLOCK)
+										INNER JOIN dbo.IntegrationMethod AS im WITH(NOLOCK)
+											ON lim.IntegrationMethodId = im.IntegrationMethodId
+									WHERE lim.LicenseeId = @LicenseeId
+									FOR XML PATH('row'), ROOT('lot')
+									)					
+								
 			SET @log_service = (	SELECT	s.ServiceId				AS '@lsid'
 											,s.ServiceName				AS '@lsn'
 											,lp.PropertyId				AS '@lspid'
@@ -625,9 +651,10 @@ BEGIN
 
 	-- Write log
 	SET @xml = (		SELECT	@LicenseeId					AS '@lid'
-								,t.LicenseeTypeName			AS '@tn'
+								,t.TypeName					AS '@tn'
+								,i.PlatformName				AS '@pn'
 								,l.LicenseeName				AS '@ln'
-								,l.RegisteredLicenseeName 		AS '@rln'
+								,l.RegisteredLicenseeName 	AS '@rln'
 								,l.LicenseeCompanyName		AS '@cn'
 								,s.LicenseeStatusName		AS '@sn'
 								,g.Name						AS '@gn'
@@ -651,6 +678,7 @@ BEGIN
 								,@log_Language
 								,@log_LanguageSB
 								,@log_oddsType
+								,@log_integrationMethod
 								,@log_restrictedLocation
 								,@log_targetedMarket
 								,@log_service
@@ -660,8 +688,10 @@ BEGIN
 						FROM dbo.Licensee AS l WITH (NOLOCK)
 							INNER JOIN dbo.LicenseeStatus AS s WITH(NOLOCK) 
 								ON	l.LicenseeStatusId = s.LicenseeStatusId
-							INNER JOIN dbo.LicenseeType AS t WITH(NOLOCK) 
-								ON	l.LicenseeTypeId = t.LicenseeTypeId
+							INNER JOIN dbo.LicenseeTypes AS t WITH(NOLOCK) 
+								ON	l.TypeId = t.TypeId
+							INNER JOIN dbo.Platform AS i WITH(NOLOCK) 
+								ON l.PlatformId = i.PlatformId
 							LEFT JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) 
 								ON	l.LicenseeGroupId = g.Id
 						WHERE	l.LicenseeId = @LicenseeId

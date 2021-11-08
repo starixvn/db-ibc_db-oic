@@ -28,6 +28,7 @@ AS
 		- 20160229@Percy: Change write log when editing email cc list [Redmine: #52857]
 		- 20170302@Percy: Expand length of Content [RedmineID: #70322]
 		- 20180914@Scofield: Change content display orders of the languages [#100984]
+		- 20211122@Kai: Enhancement of Type of Licensee [#163521]
 	
 	Param's Explanation:
 		@MailCCList format:
@@ -52,7 +53,7 @@ BEGIN
 	SET @startRun = GETDATE()
 	
 	INSERT INTO @tblLicensee (LicenseeId, LicenseeTypeId)
-	SELECT	LicenseeId, LicenseeTypeId
+	SELECT	LicenseeId, TypeId
 	FROM	dbo.f_LicenseeBelongToUser(@UserId)
 	WHERE	LicenseeId IN (SELECT LicenseeId FROM dbo.LicenseeCategoryAssigned WITH(NOLOCK) WHERE CategoryId = @CategoryId)
 			AND (@SelectedLicensee = 'All' OR LicenseeId IN (SELECT val FROM dbo.strSplit(@SelectedLicensee,',')))
@@ -88,7 +89,7 @@ BEGIN
 		
 		IF @IsTesting = 0 -- just insert msg into MessageTarget for real user
 		BEGIN
-			INSERT INTO dbo.MessageTarget (MessageId, LicenseeTypeId, PositionId)
+			INSERT INTO dbo.MessageLicenseeType(MessageId, TypeId, PositionId)
 			SELECT	@MessageId, LicenseeTypeId, 0
 			FROM	@tblLicensee
 			GROUP BY LicenseeTypeId

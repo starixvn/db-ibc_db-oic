@@ -1,3 +1,4 @@
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_OIC]
 GO
 
@@ -13,21 +14,18 @@ AS
 
 	Revisions:
 		- 20160823@Percy: Sort TOL by Id [RedmineID: #62883]
+		- 20211116@Alex: Change Type Of Licensee [RedmineID: #163521]
 */
 
 BEGIN
 	SET NOCOUNT ON
 
 	SELECT
-		lt.LicenseeTypeId, lt.LicenseeTypeName, ult.Email
+		lt.TypeId, lt.TypeName, ult.Email
 	FROM
-		dbo.UserLicenseeType ult WITH(NOLOCK)
-		INNER JOIN dbo.LicenseeType lt WITH(NOLOCK) ON ult.LicenseeTypeId = lt.LicenseeTypeId
+		dbo.UserLicenseeTypes ult WITH(NOLOCK)
+		INNER JOIN dbo.LicenseeTypes lt WITH(NOLOCK) ON ult.TypeId = lt.TypeId
 	WHERE ult.UserId = @UserID
-	ORDER BY lt.LicenseeTypeId
+	ORDER BY lt.TypeId
 END
-GO
-GRANT EXECUTE ON [dbo].[OIC_ManageUserEmailSel] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_ManageUserEmailSel] TO [vnteam] AS [dbo]
 GO

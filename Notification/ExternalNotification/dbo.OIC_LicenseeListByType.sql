@@ -23,13 +23,13 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	SELECT	LicenseeTypeId
-			,LicenseeTypeName
+	SELECT	TypeId
+			,TypeName
 			,LicenseeId
 			,LicenseeName
 	FROM	dbo.f_LicenseeBelongToLicenseeType (@UserId)
 	WHERE	LicenseeId IS NOT NULL
-	ORDER BY LicenseeTypeId
+	ORDER BY TypeId
 END
 
 

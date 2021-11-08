@@ -1,21 +1,23 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeListSel] 
-	@UserId					INT				
-	,@SelectedLicenseeType	VARCHAR(50)		= 'All'
-	,@LicenseeName			NVARCHAR(50)	= '%'
-	,@LicenseeStatusIds		VARCHAR(50)		= 'All'
-	,@LicenseeGroupIds		VARCHAR(50)		= 'All'
-	,@SelectedProduct		VARCHAR(500)	= 'All'
-	,@SelectedCurrency		VARCHAR(100)	= 'All'
-	,@SelectedOddsType		VARCHAR(50)		= 'All'
-	,@AMUserId				INT				= 0			--All
-	,@PMUserId				INT				= 0			--All
-	,@ResellerType			INT				= -1		--All
-	,@MarketType			INT				= -1		--All
-	,@PageSize				INT 			= 10
-	,@PageIndex				INT				= 0 
-	,@TotalRecords			INT 			= 0 OUTPUT
+	@UserId							INT				
+	,@SelectedLicenseeType			VARCHAR(50)		= 'All'
+	,@SelectedPlatform				VARCHAR(50)		= 'All'
+	,@SelectedIntegrationMethod		VARCHAR(50)		= 'All'
+	,@LicenseeName					NVARCHAR(50)	= '%'
+	,@LicenseeStatusIds				VARCHAR(50)		= 'All'
+	,@LicenseeGroupIds				VARCHAR(50)		= 'All'
+	,@SelectedProduct				VARCHAR(500)	= 'All'
+	,@SelectedCurrency				VARCHAR(100)	= 'All'
+	,@SelectedOddsType				VARCHAR(50)		= 'All'
+	,@AMUserId						INT				= 0			--All
+	,@PMUserId						INT				= 0			--All
+	,@ResellerType					INT				= -1		--All
+	,@MarketType					INT				= -1		--All
+	,@PageSize						INT 			= 10
+	,@PageIndex						INT				= 0 
+	,@TotalRecords					INT 			= 0 OUTPUT
 AS
 
 /*
@@ -37,6 +39,7 @@ AS
 		- 20210301@Mark: Add Registered Site name for Clients [RedmindId: #150728]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
+		- 20211112@Kai: Enhancement of Type of Licensee (Add Platform and IntegrationMethod for licensee) [RedmineID: #163521]
 
 	Param's Explanation:
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
@@ -63,6 +66,8 @@ BEGIN
 			,@RowEnd	= @RowStart + @PageSize - 1	
 	
 	DECLARE @tblLicenseeType	TABLE (LicenseeTypeId TINYINT)
+	DECLARE @tblPlatform	TABLE (PlatformId TINYINT)
+	DECLARE @tblIntegrationMethod	TABLE (IntegrationMethodId TINYINT)
 	DECLARE @tblLicenseeProduct TABLE (LicenseeId INT)
 	DECLARE @tblLicenseeCurrency TABLE (LicenseeId INT)
 	DECLARE @tblLicenseeOddsType TABLE (LicenseeId INT)
@@ -78,6 +83,9 @@ BEGIN
 			,LicenseeStatusName		VARCHAR(30)
 			,LicenseeTypeId			TINYINT
 			,LicenseeTypeName		VARCHAR(40)
+			,PlatformId				TINYINT
+			,PlatformName			VARCHAR(50)
+			,IntegrationMethodName	VARCHAR(400)
 			,SoftLaunch				DATETIME
 			,FullLaunch				DATETIME
 			,AccountManager			NVARCHAR(50)
@@ -111,8 +119,8 @@ BEGIN
 	IF @SelectedLicenseeType = 'All'
 	BEGIN
 		INSERT INTO @tblLicenseeType (LicenseeTypeId)
-		SELECT	LicenseeTypeId
-		FROM	dbo.UserLicenseeType WITH(NOLOCK)
+		SELECT	TypeId
+		FROM	dbo.UserLicenseeTypes WITH(NOLOCK)
 		WHERE	UserId = @UserId
 	END
 	ELSE
@@ -122,8 +130,32 @@ BEGIN
 
 		DELETE lt
 		FROM @tblLicenseeType lt
-			LEFT JOIN dbo.UserLicenseeType ult WITH(NOLOCK) ON lt.LicenseeTypeId = ult.LicenseeTypeId AND ult.UserId = @UserId
-		WHERE ult.LicenseeTypeId IS NULL
+			LEFT JOIN dbo.UserLicenseeTypes ult WITH(NOLOCK) ON lt.LicenseeTypeId = ult.TypeId AND ult.UserId = @UserId
+		WHERE ult.TypeId IS NULL
+	END
+
+	IF @SelectedPlatform = 'All'
+	BEGIN
+		INSERT INTO @tblPlatform (PlatformId)
+		SELECT	PlatformId
+		FROM	dbo.Platform WITH(NOLOCK)
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @tblPlatform (PlatformId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedPlatform, ',')
+	END
+
+	IF @SelectedIntegrationMethod = 'All'
+	BEGIN
+		INSERT INTO @tblIntegrationMethod (IntegrationMethodId)
+		SELECT	IntegrationMethodId
+		FROM	dbo.IntegrationMethod WITH(NOLOCK)
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @tblIntegrationMethod (IntegrationMethodId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedIntegrationMethod, ',')
 	END
 	
 	IF @SelectedCurrency <> 'All'
@@ -160,6 +192,7 @@ BEGIN
 			,LicenseeStatusId
 			,LicenseeStatusName
 			,LicenseeTypeId
+			,PlatformId
 			,SoftLaunch
 			,FullLaunch
 			,MainContactId
@@ -176,7 +209,8 @@ BEGIN
 			,l.RegisteredLicenseeName
 			,ls.LicenseeStatusId
 			,ls.LicenseeStatusName
-			,l.LicenseeTypeId
+			,l.TypeId
+			,l.PlatformId
 			,l.SoftLaunch
 			,l.FullLaunch
 			,c.ContactID
@@ -193,9 +227,11 @@ BEGIN
 				AND c.IsMain = 1
 			
 	WHERE	l.LicenseeName LIKE ISNULL(@LicenseeName,'%') + '%'
-			AND l.LicenseeTypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
+			AND l.TypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
+			AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
 			AND (@LicenseeStatusIds = 'All' OR ls.LicenseeStatusId IN (SELECT val FROM dbo.strSplit(@LicenseeStatusIds,','))) 				
 			AND (@SelectedProduct = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeProduct))
+			AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
 			AND l.LicenseeId IN (SELECT LicenseeId FROM  @tblLicenseePM)
 			AND l.LicenseeId IN (SELECT LicenseeId FROM  @tblLicenseeAM)
 			AND (@ResellerType = -1 OR l.IsReseller = @ResellerType)
@@ -216,6 +252,9 @@ BEGIN
 			,t.LicenseeStatusName
 			,t.LicenseeTypeId
 			,LicenseeType.value AS LicenseeTypeName
+			,t.PlatformId
+			,PlatformName.value AS PlatformName
+			,IntegrationName.value AS IntegrationMethodName
 			,t.FullLaunch
 			,t.SoftLaunch
 			,AM.value AS AccountManager
@@ -241,9 +280,21 @@ BEGIN
 										 WHERE LicenseeId = t.LicenseeId 
 										 FOR XML PATH('')), 1, 1, '')
 						) OddsType(value)
-			OUTER APPLY (SELECT lt.LicenseeTypeName 
-						 FROM dbo.LicenseeType lt WITH(NOLOCK) 
-						 WHERE lt.LicenseeTypeId = t.LicenseeTypeId) LicenseeType(value)
+			OUTER APPLY (SELECT lt.TypeName 
+						 FROM dbo.LicenseeTypes lt WITH(NOLOCK) 
+						 WHERE lt.TypeId = t.LicenseeTypeId) LicenseeType(value)
+			OUTER APPLY (SELECT pl.PlatformName 
+						 FROM dbo.Platform pl WITH(NOLOCK) 
+						 WHERE pl.PlatformId = t.PlatformId) PlatformName(value)
+			OUTER APPLY (
+							SELECT STUFF((SELECT ', ' + im.IntegrationMethodName
+										FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK)
+											INNER JOIN dbo.IntegrationMethod im WITH(NOLOCK) 
+												ON lim.IntegrationMethodId = im.IntegrationMethodId
+										WHERE lim.LicenseeId = t.LicenseeId AND im.IntegrationMethodName IS NOT NULL 
+										ORDER BY im.IntegrationMethodId asc
+										FOR XML PATH('')), 1, 1, '')
+						) IntegrationName(value)
 			OUTER APPLY (
 							SELECT STUFF((SELECT ', ' + c.Code
 										FROM dbo.LicenseeCurrency lc WITH(NOLOCK)

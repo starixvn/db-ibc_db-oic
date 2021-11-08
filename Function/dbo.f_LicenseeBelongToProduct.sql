@@ -13,8 +13,8 @@ ALTER FUNCTION [dbo].[f_LicenseeBelongToProduct]
 RETURNS @res TABLE (
 	LicenseeId INT NOT NULL
 	,LicenseeName NVARCHAR(50) NOT NULL
-	,LicenseeTypeId	INT NOT NULL
-	,LicenseeTypeName VARCHAR(40) NOT NULL
+	,TypeId	INT NOT NULL
+	,TypeName VARCHAR(40) NOT NULL
 	,PRIMARY KEY CLUSTERED (LicenseeId ASC)
 	) WITH EXECUTE AS CALLER
 AS
@@ -28,19 +28,20 @@ AS
     Revisions:
 		- 20210729@Hogan: Enhance Site Name in Send mail notification function [Redmine: #159206]
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
+		- 20211122@Kai: Enhancement of Type of Licensee [#163521]
     
     Param's Explanation:
 		
 */
 
 BEGIN
-	INSERT INTO @res (LicenseeId, LicenseeName, LicenseeTypeId, LicenseeTypeName)
-	SELECT  l.LicenseeId, l.LicenseeName, l.LicenseeTypeId, f.LicenseeTypeName
+	INSERT INTO @res (LicenseeId, LicenseeName, TypeId, TypeName)
+	SELECT  l.LicenseeId, l.LicenseeName, l.TypeId, f.TypeName
 	FROM	dbo.Licensee l WITH(NOLOCK)
 		INNER JOIN dbo.LicenseeProduct lp WITH(NOLOCK)
 			ON l.LicenseeId = lp.LicenseeId
 		INNER JOIN dbo.f_LicenseeTypeBelongToUser(@UserId) f
-			ON f.LicenseeTypeId = l.LicenseeTypeId
+			ON f.TypeId = l.TypeId
 	WHERE	lp.ProductId = @ProductId
 		AND (@ExcludeTerminationProduct = 0 OR (lp.TerminationDate IS NULL OR lp.TerminationDate > CAST(GETDATE() AS DATE)))
 	

@@ -4,7 +4,9 @@ GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns_Step1]
 	@UserId					INT
-	,@LicenseeTypeId		TINYINT
+	,@PlatformId			TINYINT
+	,@TypeId				TINYINT
+	,@IntegrationMethods	VARCHAR(1000)
 	,@SiteName				NVARCHAR(50)
 	,@RegisteredSiteName	NVARCHAR(50)
 	,@CompanyName			NVARCHAR(50)	= NULL
@@ -60,6 +62,7 @@ AS
 		- 20190715@Howard: Add Odds Type [RedmineId: #115460]
 		- 20200110@Hogan: Add Group into Client functions [RedmindId: #126855]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
+		- 20211110@Alex: Change Type Of Licensee [RedmindId: #163521]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -96,8 +99,9 @@ BEGIN
 	BEGIN TRY
 		INSERT INTO dbo.Licensee (
 			LicenseeName
+			,PlatformId
+			,TypeId
 			,RegisteredLicenseeName
-			,LicenseeTypeId
 			,LicenseeCompanyName
 			,LicenseeStatusId
 			,LicenseeGroupId
@@ -115,8 +119,9 @@ BEGIN
 			)
 		VALUES(
 			@SiteName
+			,@PlatformId
+			,@TypeId
 			,@RegisteredSiteName
-			,@LicenseeTypeId
 			,@CompanyName
 			,@LicenseeStatusId
 			,@LicenseeGroupId
@@ -309,6 +314,23 @@ BEGIN
 			RETURN
 		END
 	END
+	
+	-- Insert integration methods
+	IF @IntegrationMethods IS NOT NULL AND @IntegrationMethods <> ''
+	BEGIN
+		INSERT INTO dbo.LicenseeIntegrationMethod(
+			LicenseeId,
+			IntegrationMethodId
+		)
+		SELECT @LicenseeId, CONVERT(INT, s.val)
+		FROM dbo.strSplit(@IntegrationMethods, ',') AS s
+		
+		IF @@ERROR <> 0
+		BEGIN
+			SELECT @ErrCode = 110
+			RETURN
+		END
+	END	
 
 	SELECT @ErrCode = 0
 END

@@ -1,7 +1,4 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_OIC]
-GO
-
 ALTER PROCEDURE [dbo].[OIC_LicenseeContactSel]
 	@ContactId		INT
 AS
@@ -13,6 +10,7 @@ AS
 	
 	Revisions:
 		- 20210913@Hogan: return IsMain column [RedmineID: #160430]
+		- 20211109@Alex: Change Type Of Licensee [RedmindId: #163521]
 	
 	Param's Explanation:
 	*
@@ -22,7 +20,8 @@ BEGIN
 	
 	SELECT	c.ContactID
 			,l.LicenseeId
-			,l.LicenseeTypeId
+			,l.TypeId
+			,l.PlatformId
 			,c.ContactType
 			,c.ContactName
 			,c.ContactPosition AS Position
@@ -43,6 +42,14 @@ BEGIN
 	FROM dbo.CategoryContact WITH(NOLOCK)
 	WHERE ContactID = @ContactId
 	
-	
+	SELECT	im.IntegrationMethodId, im.IntegrationMethodName
+	FROM dbo.Contact c WITH(NOLOCK)
+		INNER JOIN dbo.Licensee l WITH(NOLOCK) 
+			ON	c.LicenseeID = l.LicenseeId
+		INNER JOIN dbo.LicenseeIntegrationMethod lim WITH(NOLOCK)
+			ON  c.LicenseeID = lim.LicenseeId
+		INNER JOIN dbo.IntegrationMethod im WITH(NOLOCK)
+			ON 	lim.IntegrationMethodId = im.IntegrationMethodId
+	WHERE	c.ContactID = @ContactId
 END
 GO

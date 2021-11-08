@@ -5,6 +5,9 @@ GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeListByCategory] 
 	@CategoryId						TINYINT
+	,@LicenseeTypeId				INT
+	,@PlatformId					INT
+	,@IntegrationMethodId			INT
 	,@UserId						INT
 	,@MarketType					INT		= -1 -- All
 	,@ProductId						TINYINT	= 0 -- All
@@ -33,11 +36,11 @@ AS
 BEGIN
     SET NOCOUNT ON
 
-	SELECT l.LicenseeId, l.LicenseeName, l.LicenseeTypeId, lt.LicenseeTypeName, ls.LicenseeStatusName
+	SELECT l.LicenseeId, l.LicenseeName, ls.LicenseeStatusName
 	FROM dbo.Licensee l WITH(NOLOCK)
 		INNER JOIN dbo.LicenseeStatus ls WITH(NOLOCK) ON ls.LicenseeStatusId = l.LicenseeStatusId
-		INNER JOIN dbo.UserLicenseeType ult WITH(NOLOCK) ON ult.LicenseeTypeId = l.LicenseeTypeId
-		INNER JOIN dbo.LicenseeType lt WITH(NOLOCK) ON ult.LicenseeTypeId = lt.LicenseeTypeId
+		INNER JOIN dbo.UserLicenseeTypes ult WITH(NOLOCK) ON ult.TypeId = l.TypeId
+		INNER JOIN dbo.LicenseeTypes lt WITH(NOLOCK) ON ult.TypeId = lt.TypeId
 		INNER JOIN dbo.LicenseeCategoryAssigned	lca WITH(NOLOCK) ON l.LicenseeId = lca.LicenseeId
 		INNER JOIN dbo.Contact c WITH(NOLOCK) ON l.LicenseeId = c.LicenseeId
 		INNER JOIN dbo.CategoryContact cc WITH(NOLOCK) ON cc.ContactId = c.ContactId AND cc.CategoryId = lca.CategoryId
@@ -61,6 +64,9 @@ BEGIN
 			l.LicenseeStatusId = 3 -- Active
 			OR (ct.IsAllowUpComing = 1 AND l.LicenseeStatusId = 1 ) -- Upcoming if allowed
 		)
-	GROUP BY l.LicenseeId, l.LicenseeName, l.LicenseeTypeId, lt.LicenseeTypeName, ls.LicenseeStatusName
+		AND @LicenseeTypeId = l.TypeId
+		AND @PlatformId = l.PlatformId
+		AND @IntegrationMethodId IN (SELECT lim.IntegrationMethodId FROM dbo.LicenseeIntegrationMethod lim WHERE lim.LicenseeId = l.LicenseeId)
+	GROUP BY l.LicenseeId, l.LicenseeName, ls.LicenseeStatusName
 END
 GO

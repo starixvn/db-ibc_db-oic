@@ -23,6 +23,7 @@ AS
 		- 20200203@Hogan: Return licenseeGroupId [RedmineID: #126855]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20211001@Alex: Support Product Type on Client Product [RedmindId: #161508]
+		- 20211115@Alex: Change Type Of Licensee [RedmindId: #163521]
 	
 	Param's Explanation:
 		@Step: 1,2,3
@@ -37,6 +38,7 @@ BEGIN
 			,@LicLanguage			XML
 			,@LicLanguageSB			XML
 			,@LicOddsType			VARCHAR(100)
+			,@IntegrationMethod		VARCHAR(1000)
 			,@LicService			XML
 			,@LicRestrictCountry	VARCHAR(1000)
 			,@PMUserId				INT
@@ -69,6 +71,10 @@ BEGIN
 		SELECT @LicOddsType = COALESCE(@LicOddsType + ',' + CONVERT(VARCHAR(10), OddsTypeId), CONVERT(VARCHAR(10), OddsTypeId))
 		FROM dbo.LicenseeOddsType WITH(NOLOCK)
 		WHERE LicenseeId = @LicenseeId
+		
+		SELECT @IntegrationMethod = COALESCE(@IntegrationMethod + ',' + CONVERT(VARCHAR(10), IntegrationMethodId), CONVERT(VARCHAR(10), IntegrationMethodId))
+		FROM dbo.LicenseeIntegrationMethod WITH(NOLOCK)
+		WHERE LicenseeId = @LicenseeId
 				
 		SET @LicLanguage = (
 								SELECT	ll.LanguageId	AS '@id'
@@ -95,8 +101,7 @@ BEGIN
 								FOR XML PATH('row'), ROOT('root')		
 							)
 			
-		SELECT	l.LicenseeTypeId
-				,l.LicenseeName
+		SELECT	l.LicenseeName
 				,l.RegisteredLicenseeName
 				,l.LicenseeCompanyName
 				,l.LicenseeStatusId
@@ -122,12 +127,15 @@ BEGIN
 				,@LicOddsType				AS OddsType
 				,@LicService				AS ServiceIncluded
 				,@LicRestrictCountry		AS RestrictCountry
+				,@IntegrationMethod			AS IntegrationMethod
 				,l.RestrictedLocationRemark
 				,l.Remark					AS LicenseeRemark
 				,l.IsChineseMarketOnly		AS IsChineseMarketOnly
 				,l.IsReseller				AS IsReseller
 				,l.InvoiceBaseCurrency		AS InvoiceBaseCurrency
 				,l.InvoiceLanguage			AS InvoiceLanguage
+				,l.PlatformId				AS PlatformId
+				,l.TypeId					AS TypeId
 		FROM	dbo.Licensee l WITH(NOLOCK)
 			LEFT JOIN dbo.Contact c WITH(NOLOCK) 
 				ON	l.LicenseeId = c.LicenseeID AND c.IsMain = 1	

@@ -28,6 +28,7 @@ AS
 	Revisions:
 		- 20170302@Percy: Expand length of Content [RedmineID: #70322]
 		- 20180914@Scofield: Change content display orders of the languages [#100984]
+		- 20211122@Kai: Enhancement of Type of Licensee [#163521]
 	
 	Param's Explanation:
 		@MessageTypeId: 40: public
@@ -94,11 +95,11 @@ BEGIN
 			SELECT	@log_Licensee = @log_Licensee + CAST(LicenseeId AS VARCHAR(10)) + ','
 			FROM	dbo.f_LicenseeBelongToUser(@UserId) 
 			
-			IF @IsTesting = 0 -- just insert msg into MessageTarget for real user
-				INSERT INTO dbo.MessageTarget (MessageId, LicenseeTypeId, PositionId)
-				SELECT	@MessageId, LicenseeTypeId, 0
+			IF @IsTesting = 0 -- just insert msg into MessageLicenseeType for real user
+				INSERT INTO dbo.MessageLicenseeType (MessageId, TypeId, PositionId)
+				SELECT	@MessageId, TypeId, 0
 				FROM	dbo.Licensee WITH(NOLOCK)
-				GROUP BY LicenseeTypeId
+				GROUP BY TypeId
 		END
 		IF @MessageTypeId IN(42, 43,44) -- Personal,  match delay
 		BEGIN
@@ -110,16 +111,16 @@ BEGIN
 			-- for log
 			SELECT @log_Licensee = @SelectedLicensee
 			
-			IF @IsTesting = 0  -- just insert msg into MessageTarget for real user
-				INSERT INTO dbo.MessageTarget (MessageId, LicenseeTypeId, PositionId)
-				SELECT	@MessageId, LicenseeTypeId, 0
+			IF @IsTesting = 0  -- just insert msg into MessageLicenseeType for real user
+				INSERT INTO dbo.MessageLicenseeType (MessageId, TypeId, PositionId)
+				SELECT	@MessageId, TypeId, 0
 				FROM	dbo.f_LicenseeBelongToUser(@UserId)
 				WHERE	LicenseeId IN (SELECT val FROM dbo.strSplit(@SelectedLicensee,','))
-				GROUP BY LicenseeTypeId
+				GROUP BY TypeId
 		END				
 	END TRY
 	BEGIN CATCH
-			DELETE FROM dbo.MessageTarget WITH(ROWLOCK, UPDLOCK)
+			DELETE FROM dbo.MessageLicenseeType WITH(ROWLOCK, UPDLOCK)
 			WHERE MessageId = @MessageId
 			
 			DELETE FROM dbo.LicenseeMessage WITH(ROWLOCK, UPDLOCK)

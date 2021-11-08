@@ -1,8 +1,4 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-
-USE [bodb_OIC]
-GO
-
 ALTER PROCEDURE [dbo].[OIC_LicenseeTypeDel] 
 	@LicenseeTypeId			TINYINT
 	,@UserId				INT
@@ -19,7 +15,7 @@ AS
 	
 	Revisions:
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
-		
+		- 20211116@Alex: Change Type Of Licensee [RedmineID: #163521]
  */
 BEGIN
 	SET NOCOUNT ON
@@ -37,18 +33,18 @@ BEGIN
 
 	SET @startRun = GETDATE()		
 	
-	SELECT	@LicenseeTypeName = LicenseeTypeName
-	FROM	dbo.LicenseeType WITH(NOLOCK)
-	WHERE	LicenseeTypeId = @LicenseeTypeId
+	SELECT	@LicenseeTypeName = TypeName
+	FROM	dbo.LicenseeTypes WITH(NOLOCK)
+	WHERE	TypeId = @LicenseeTypeId
 	
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.UserLicenseeType WITH(NOLOCK) WHERE LicenseeTypeId = @LicenseeTypeId)
+	IF EXISTS (SELECT TOP 1 1 FROM dbo.UserLicenseeTypes WITH(NOLOCK) WHERE TypeId = @LicenseeTypeId)
 	BEGIN
 		SELECT	@ErrCode = 100
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](30005, @Language) -- Unable to delete the type of licensee because one or many assigned client(s) or user(s) exist(s)
 		RETURN
 	END
 	
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.Licensee WITH(NOLOCK) WHERE LicenseeTypeId = @LicenseeTypeId)
+	IF EXISTS (SELECT TOP 1 1 FROM dbo.Licensee WITH(NOLOCK) WHERE TypeId = @LicenseeTypeId)
 	BEGIN
 		SELECT	@ErrCode = 100
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](30005, @Language) -- Unable to delete the type of licensee because one or many assigned client(s) or user(s) exist(s)
@@ -57,8 +53,8 @@ BEGIN
 	
 	BEGIN TRY
 		DELETE
-		FROM	dbo.LicenseeType WITH(ROWLOCK, UPDLOCK)
-		WHERE	LicenseeTypeId = @LicenseeTypeId	
+		FROM	dbo.LicenseeTypes WITH(ROWLOCK, UPDLOCK)
+		WHERE	TypeId = @LicenseeTypeId	
 	END TRY
 	BEGIN CATCH
 		SELECT	@ErrCode = 101
