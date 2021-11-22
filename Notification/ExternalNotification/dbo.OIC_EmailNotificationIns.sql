@@ -87,7 +87,7 @@ BEGIN
 		SELECT	LicenseeId, @MessageId
 		FROM	@tblLicensee
 		
-		IF @IsTesting = 0 -- just insert msg into MessageTarget for real user
+		IF @IsTesting = 0 -- just insert msg into MessageLicenseeType for real user
 		BEGIN
 			INSERT INTO dbo.MessageLicenseeType(MessageId, TypeId, PositionId)
 			SELECT	@MessageId, LicenseeTypeId, 0

@@ -71,9 +71,9 @@ BEGIN
 		,LicenseeId				INT
 		,LicenseeName			NVARCHAR(50)
 		,StatusName				VARCHAR(30)
-		,TypeName				VARCHAR(40)
-		,PlatformName			VARCHAR(50)
-		,IntegrationMethodName	VARCHAR(400)
+		,TypeName				NVARCHAR(50)
+		,PlatformName			NVARCHAR(50)
+		,IntegrationMethodName	NVARCHAR(400)
 	)
 							
 	INSERT INTO @tblFeature(FeatureId)
@@ -175,7 +175,7 @@ BEGIN
 			AND l.LicenseeName LIKE ISNULL(@LicenseeName,'%') + '%'
 			AND (@LicenseeStatusIds = 'All' OR l.LicenseeStatusId IN (SELECT val FROM dbo.strSplit(@LicenseeStatusIds,','))) 
 			AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
-			AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
+			AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
 	GROUP BY l.LicenseeId
 			,l.LicenseeName
 			,ls.LicenseeStatusName

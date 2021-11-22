@@ -1,5 +1,4 @@
-USE [bodb_OIC]
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeListByUserTOLSel]
 	@UserId						INT,
@@ -16,6 +15,7 @@ AS
 	Task: Enhancement of Type of Licensee  [RedmineID: #163521]
 
 	Revisions:
+	- 20211122@Kai: Enhancement of Type of Licensee [#163521]
 
 	Param's Explanation:
 		* @SelectedLicenseeType: list of Type of Licensee
@@ -77,14 +77,9 @@ BEGIN
 	FROM	dbo.UserLicensee ul WITH(NOLOCK)
 		INNER JOIN dbo.Licensee l WITH(NOLOCK)
 			ON	l.LicenseeId = ul.LicenseeId AND ul.UserId = @UserId
-	WHERE l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
+	WHERE l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH (NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
 		AND l.TypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
 		AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
 	ORDER BY l.LicenseeName ASC
 END
-
-GO
-GRANT EXECUTE ON [dbo].[OIC_LicenseeListByUserTOLSel] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_LicenseeListByUserTOLSel] TO [vnteam] AS [dbo]
 GO

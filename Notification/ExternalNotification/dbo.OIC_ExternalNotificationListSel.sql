@@ -27,6 +27,7 @@ AS
 	
 	Revisions:
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
+		- 20211122@Kai: Enhancement of Type of Licensee [#163521]
 	
 	Param's Explanation:
 		@SortBy:	0: Message Type ASC
@@ -109,8 +110,8 @@ BEGIN
 	(
 		SELECT	m.MessageId, m.MessageTypeId
 		FROM	dbo.Message m WITH(NOLOCK)
-			INNER JOIN dbo.MessageTarget mt WITH(NOLOCK)
-				ON m.MessageId = mt.MessageId
+			INNER JOIN dbo.MessageLicenseeType ml WITH(NOLOCK)
+				ON m.MessageId = ml.MessageId
 		WHERE	m.MessageTypeId IN (SELECT MessageTypeId FROM @tblMessageType WHERE MessageTypeId IN (40,41))				
 				AND m.CreateTime BETWEEN @FromDate AND @ToDate
 				AND (m.Creator IN (SELECT UserId FROM @tblSender) 
@@ -150,13 +151,13 @@ BEGIN
 	SET @TotalRecords = @TotalRecords + @@rowcount
 			
 	-- for new user
-	;WITH cteMessageTarget
+	;WITH cteMessageLicenseeType
 	AS
 	(
 		SELECT	m.MessageId, m.MessageTypeId
 		FROM	dbo.Message m WITH(NOLOCK)
-			INNER JOIN dbo.MessageTarget mt WITH(NOLOCK)
-				ON m.MessageId = mt.MessageId
+			INNER JOIN dbo.MessageLicenseeType ml WITH(NOLOCK)
+				ON m.MessageId = ml.MessageId
 		WHERE	(m.MessageTypeId = @MessageTypeId 
 					OR @MessageTypeId = 0)
 				AND m.MessageTypeId IN (SELECT MessageTypeId FROM @tblMessageType )				
@@ -164,13 +165,13 @@ BEGIN
 				AND (m.Creator IN (SELECT UserId FROM @tblSender) 
 					OR @Sender = 'All'
 					)			
-				AND mt.LicenseeTypeId IN (SELECT LicenseeTypeId FROM dbo.f_LicenseeTypeBelongToUser (@UserId))
+				AND ml.TypeId IN (SELECT TypeId FROM dbo.f_LicenseeTypeBelongToUser (@UserId))
 		GROUP BY m.MessageId, m.MessageTypeId
 	)
 	
 	INSERT INTO #tblMessage (MessageId, MessageTypeId)		
 	SELECT	MessageId, MessageTypeId
-	FROM	cteMessageTarget c
+	FROM	cteMessageLicenseeType c
 	WHERE	MessageId NOT IN (SELECT MessageId FROM #tblMessage)
 		
 	SET @TotalRecords = @TotalRecords + @@rowcount

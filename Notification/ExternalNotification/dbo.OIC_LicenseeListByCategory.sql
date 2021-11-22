@@ -5,9 +5,9 @@ GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeListByCategory] 
 	@CategoryId						TINYINT
-	,@LicenseeTypeId				INT
-	,@PlatformId					INT
-	,@IntegrationMethodId			INT
+	,@SelectedLicenseeType			VARCHAR(50) = 'All'
+	,@SelectedPlatform				VARCHAR(50) = 'All'
+	,@SelectedIntegrationMethod		VARCHAR(50) = 'All'
 	,@UserId						INT
 	,@MarketType					INT		= -1 -- All
 	,@ProductId						TINYINT	= 0 -- All
@@ -35,6 +35,52 @@ AS
 
 BEGIN
     SET NOCOUNT ON
+
+	DECLARE @tblLicenseeType	TABLE (LicenseeTypeId TINYINT)
+	DECLARE @tblPlatform	TABLE (PlatformId TINYINT)
+	DECLARE @tblIntegrationMethod	TABLE (IntegrationMethodId TINYINT)
+
+	IF @SelectedLicenseeType = 'All'
+	BEGIN
+		INSERT INTO @tblLicenseeType (LicenseeTypeId)
+		SELECT	TypeId
+		FROM	dbo.UserLicenseeTypes WITH(NOLOCK)
+		WHERE	UserId = @UserId
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @tblLicenseeType (LicenseeTypeId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedLicenseeType, ',')
+
+		DELETE lt
+		FROM @tblLicenseeType lt
+			LEFT JOIN dbo.UserLicenseeTypes ult WITH(NOLOCK) ON lt.LicenseeTypeId = ult.TypeId AND ult.UserId = @UserId
+		WHERE ult.TypeId IS NULL
+	END
+
+	IF @SelectedPlatform = 'All'
+	BEGIN
+		INSERT INTO @tblPlatform (PlatformId)
+		SELECT	PlatformId
+		FROM	dbo.Platform WITH(NOLOCK)
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @tblPlatform (PlatformId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedPlatform, ',')
+	END
+
+	IF @SelectedIntegrationMethod = 'All'
+	BEGIN
+		INSERT INTO @tblIntegrationMethod (IntegrationMethodId)
+		SELECT	IntegrationMethodId
+		FROM	dbo.IntegrationMethod WITH(NOLOCK)
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @tblIntegrationMethod (IntegrationMethodId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedIntegrationMethod, ',')
+	END
 
 	SELECT l.LicenseeId, l.LicenseeName, ls.LicenseeStatusName
 	FROM dbo.Licensee l WITH(NOLOCK)
@@ -64,9 +110,9 @@ BEGIN
 			l.LicenseeStatusId = 3 -- Active
 			OR (ct.IsAllowUpComing = 1 AND l.LicenseeStatusId = 1 ) -- Upcoming if allowed
 		)
-		AND @LicenseeTypeId = l.TypeId
-		AND @PlatformId = l.PlatformId
-		AND @IntegrationMethodId IN (SELECT lim.IntegrationMethodId FROM dbo.LicenseeIntegrationMethod lim WHERE lim.LicenseeId = l.LicenseeId)
+		AND l.TypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
+		AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
+		AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
 	GROUP BY l.LicenseeId, l.LicenseeName, ls.LicenseeStatusName
 END
 GO

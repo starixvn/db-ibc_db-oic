@@ -78,11 +78,11 @@ BEGIN
 	FROM	dbo.UserInfo u WITH(NOLOCK)
 	WHERE	u.DisplayName LIKE ISNULL(@DisplayName,'%') + '%'
 			AND (@SelectedPosition = 'All' OR u.PositionId IN (SELECT val FROM dbo.strSplit(@SelectedPosition,',')))
-			AND EXISTS (SELECT	LicenseeTypeId 
-						FROM	UserLicenseeType ult WITH(NOLOCK) 
+			AND EXISTS (SELECT	TypeId 
+						FROM	UserLicenseeTypes ult WITH(NOLOCK) 
 						WHERE	u.UserId = ult.UserId 
 								AND (@SelectedLicenseeType = 'All' 
-										OR (ult.LicenseeTypeId IN (SELECT val FROM dbo.strSplit(@SelectedLicenseeType,',')))
+										OR (ult.TypeId IN (SELECT val FROM dbo.strSplit(@SelectedLicenseeType,',')))
 									) 
 						)
 			AND EXISTS (SELECT	pf.PlatformId

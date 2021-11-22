@@ -56,7 +56,7 @@ BEGIN
 		,LicenseeId				INT  
 		,LicenseeName			NVARCHAR(50)
 		,StatusName				VARCHAR(30)  
-		,TypeName				VARCHAR(40)  
+		,TypeName				NVARCHAR(50)  
 		,PlatformName			NVARCHAR(50)
 		,IntegrationMethodName	NVARCHAR(400)
 	)  
@@ -144,7 +144,7 @@ BEGIN
 		AND l.LicenseeName LIKE @LicenseeName + '%'  
 		AND l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeCategoryAssigned)
 		AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
-		AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
+		AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
 
       
 	IF @TotalRecords = 0  

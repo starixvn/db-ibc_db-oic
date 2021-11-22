@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="" viewers="" isFunction="1" isNested="1"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" viewers="" isFunction="1" isNested="1"></info>*/
 
 USE [bodb_OIC]
 GO
@@ -14,7 +14,7 @@ RETURNS @res TABLE (
 	LicenseeId INT NOT NULL
 	,LicenseeName NVARCHAR(50) NOT NULL
 	,TypeId	INT NOT NULL
-	,TypeName VARCHAR(40) NOT NULL
+	,TypeName NVARCHAR(50) NOT NULL
 	,PRIMARY KEY CLUSTERED (LicenseeId ASC)
 	) WITH EXECUTE AS CALLER
 AS

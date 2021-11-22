@@ -1,5 +1,5 @@
-USE [bodb_OIC]
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+
 
 ALTER PROCEDURE [dbo].[OIC_InternalNotificationListSel]
 	@MessageTypeId	TINYINT			= 0
@@ -25,6 +25,7 @@ AS
 	Revisions:
 		- 20161216@Percy: Support sort message type [RedmineID: #68774]
 		- 20170302@Percy: Expand length of Content [RedmineID: #70322]
+		- 20211122@Kai: Enhancement of Type of Licensee [#163521]
 
 	
 	Param's Explanation:
@@ -81,8 +82,8 @@ BEGIN
 	WHERE	UserId = @UserId
 	
 	INSERT INTO @tblLicenseeType (LicenseeTypeId)
-	SELECT	LicenseeTypeId
-	FROM	dbo.UserLicenseeType WITH(NOLOCK)
+	SELECT	TypeId
+	FROM	dbo.UserLicenseeTypes WITH(NOLOCK)
 	WHERE	UserId = @UserId
 	
 	IF @Sender <> 'All'
@@ -133,7 +134,7 @@ BEGIN
 	
 	IF @ReadStatus <> 0 -- unread
 	BEGIN					
-		;WITH cteMessageTarget
+		;WITH cteMessageLicenseeType
 		AS(
 			SELECT	m.MessageId
 					,MessageTypeId
@@ -145,14 +146,14 @@ BEGIN
 					,m.ContentEn
 					,1 AS IsRead -- read
 			FROM	dbo.Message m WITH(NOLOCK)
-			INNER JOIN dbo.MessageTarget mt WITH(NOLOCK)
-				ON	m.MessageId = mt.MessageId
+			INNER JOIN dbo.MessageLicenseeType ml WITH(NOLOCK)
+				ON	m.MessageId = ml.MessageId
 			WHERE	(m.MessageTypeId = @MessageTypeId OR @MessageTypeId = 0)
 					AND m.MessageTypeId IN (SELECT MessageTypeId FROM @tblMessageType)
 					AND m.CreateTime BETWEEN @FromDate AND @ToDate
 					AND ( m.Creator IN (SELECT UserId FROM @tblSender) OR @Sender = 'All')
-					AND (mt.LicenseeTypeId IN (SELECT t.LicenseeTypeId FROM @tblLicenseeType t)
-							OR mt.PositionId = @PositionId
+					AND (ml.TypeId IN (SELECT t.LicenseeTypeId FROM @tblLicenseeType t)
+							OR ml.PositionId = @PositionId
 						)
 					AND m.MessageId NOT IN (SELECT MessageId FROM #tblMessage)
 			--GROUP BY m.MessageId, MessageTypeId, CreateTime, m.Creator, SubjectEn, ContentEn,m.ReminderTypeId,ISNULL(m.ReminderTypeValue, '')
@@ -179,7 +180,7 @@ BEGIN
 				,ContentEn			
 				,IsRead	
 				,1 -- always disable old messages for the new authorized user
-		FROM cteMessageTarget
+		FROM cteMessageLicenseeType
 	
 		SET @TotalRecords = @TotalRecords + @@rowcount
 	END
@@ -239,7 +240,3 @@ BEGIN
 	) Result
 	WHERE RowNumber BETWEEN @RowStart AND @RowEnd
 END
-GO
-GRANT EXECUTE ON [dbo].[OIC_InternalNotificationListSel] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_InternalNotificationListSel] TO [vnteam] AS [dbo]

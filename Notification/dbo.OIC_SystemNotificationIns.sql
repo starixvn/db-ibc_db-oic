@@ -1,5 +1,5 @@
-USE [bodb_OIC]
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+
 
 ALTER PROCEDURE [dbo].[OIC_SystemNotificationIns] 
 	@MessageTypeId		TINYINT
@@ -19,6 +19,7 @@ AS
 	
 	Revisions:
 		- 20170302@Percy: Expand length of Content [RedmineID: #70322]
+		- 20211122@Kai: Enhancement of Type of Licensee [#163521]
 	
 	Param's Explanation:
 		@MessageContent	=	<root>
@@ -91,8 +92,8 @@ BEGIN
 		WHERE	PositionId IN (SELECT PositionId FROM dbo.f_PositionNotificationList(@EventId))
 		UNION -- send notification for all internal user who has permission on licensee type of this licensee
 		SELECT  UserId
-		FROM	dbo.UserLicenseeType WITH(NOLOCK)
-		WHERE	LicenseeTypeId = @LicenseeTypeId
+		FROM	dbo.UserLicenseeTypes WITH(NOLOCK)
+		WHERE	TypeId = @LicenseeTypeId
 		
 		BEGIN TRY
 			INSERT INTO dbo.Message (SubjectEn, ContentEn, MessageTypeId, Creator, CreateTime)
@@ -110,22 +111,22 @@ BEGIN
 			WHERE	(@IsTesting = 0
 						OR (@IsTesting = 1 AND u.DisplayName LIKE 'starix%')) -- if the msg for testing, dont send to real user
 			
-			IF @IsTesting = 0 -- just insert msg into MessageTarget for real user
+			IF @IsTesting = 0 -- just insert msg into MessageLicenseeType for real user
 			BEGIN
 				IF @LicenseeTypeId <> 0
 				BEGIN
-					INSERT INTO dbo.MessageTarget(LicenseeTypeId, MessageId, PositionId) VALUES (@LicenseeTypeId, @MessageId, 0)			
+					INSERT INTO dbo.MessageLicenseeType(TypeId, MessageId, PositionId) VALUES (@LicenseeTypeId, @MessageId, 0)			
 				END
 				ELSE
 				BEGIN
-					INSERT INTO dbo.MessageTarget(LicenseeTypeId, MessageId, PositionId)
+					INSERT INTO dbo.MessageLicenseeType(TypeId, MessageId, PositionId)
 					SELECT	0, @MessageId, PositionId
 					FROM	dbo.f_PositionNotificationList(@EventId)
 				END
 			END
 		END TRY
 		BEGIN CATCH
-			DELETE FROM dbo.MessageTarget WITH(ROWLOCK, UPDLOCK)
+			DELETE FROM dbo.MessageLicenseeType WITH(ROWLOCK, UPDLOCK)
 			WHERE MessageId = @MessageId
 			
 			DELETE FROM dbo.UserMessage WITH(ROWLOCK, UPDLOCK)
@@ -166,7 +167,3 @@ BEGIN
 		,@OldData		= NULL
 		,@Duration		= @Duration	
 END
-GO
-GRANT EXECUTE ON [dbo].[OIC_SystemNotificationIns] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_SystemNotificationIns] TO [vnteam] AS [dbo]

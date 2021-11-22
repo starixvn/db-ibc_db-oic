@@ -1,12 +1,9 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="" viewers="" isFunction="1" isNested="0"></info>*/
-
-USE [bodb_OIC]
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" viewers="" isFunction="1" isNested="0"></info>*/
 
 ALTER FUNCTION [dbo].[f_LicenseeTypeBelongToUser] (@UserId INT)
 RETURNS @res TABLE (
 	TypeId		INT NOT NULL
-	,TypeName	VARCHAR(40) NOT NULL
+	,TypeName	NVARCHAR(50) NOT NULL
 	,PRIMARY KEY CLUSTERED (TypeId ASC)
 	) WITH EXECUTE AS CALLER
 AS

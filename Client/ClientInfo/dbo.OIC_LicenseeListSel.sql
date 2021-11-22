@@ -82,10 +82,10 @@ BEGIN
 			,LicenseeStatusId		INT
 			,LicenseeStatusName		VARCHAR(30)
 			,LicenseeTypeId			TINYINT
-			,LicenseeTypeName		VARCHAR(40)
+			,LicenseeTypeName		NVARCHAR(50)
 			,PlatformId				TINYINT
-			,PlatformName			VARCHAR(50)
-			,IntegrationMethodName	VARCHAR(400)
+			,PlatformName			NVARCHAR(50)
+			,IntegrationMethodName	NVARCHAR(400)
 			,SoftLaunch				DATETIME
 			,FullLaunch				DATETIME
 			,AccountManager			NVARCHAR(50)
@@ -231,7 +231,7 @@ BEGIN
 			AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
 			AND (@LicenseeStatusIds = 'All' OR ls.LicenseeStatusId IN (SELECT val FROM dbo.strSplit(@LicenseeStatusIds,','))) 				
 			AND (@SelectedProduct = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeProduct))
-			AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
+			AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
 			AND l.LicenseeId IN (SELECT LicenseeId FROM  @tblLicenseePM)
 			AND l.LicenseeId IN (SELECT LicenseeId FROM  @tblLicenseeAM)
 			AND (@ResellerType = -1 OR l.IsReseller = @ResellerType)
