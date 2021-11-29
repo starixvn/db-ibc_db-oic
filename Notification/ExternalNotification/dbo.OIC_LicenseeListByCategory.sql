@@ -28,6 +28,7 @@ AS
 		- 20200518@hogan: Support sending mail for upcoming licensees [RedmineID: #133714]
 		- 20210203@Mark: Add more Product option for Email Notification [RedmineID: #148733]
 		- 20210729@Hogan: Enhance Site Name in Send mail notification function [Redmine: #159206]
+		- 20211116@Kai: Enhancement of Type of Licensee [RedmineID: #163521]
     
     Param's Explanation:
 		

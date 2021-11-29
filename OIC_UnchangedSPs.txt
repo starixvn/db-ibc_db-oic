@@ -1,1 +1,1 @@
-Client/ClientInfo/dbo.OIC_LicenseeInfoUpd.sql
+Notification/ExternalNotification/dbo.OIC_EmailNotificationRecipientSel.sql

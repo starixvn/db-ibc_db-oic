@@ -79,7 +79,7 @@ BEGIN
 		
 		IF @LicenseeTypeId = 0
 		BEGIN
-			SELECT	@LicenseeTypeId = LicenseeTypeId 
+			SELECT	@LicenseeTypeId = TypeId 
 			FROM	dbo.Licensee WITH(NOLOCK)
 			WHERE	LicenseeId = @LicenseeId
 		END

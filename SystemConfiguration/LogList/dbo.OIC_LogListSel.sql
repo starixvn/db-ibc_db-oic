@@ -24,6 +24,7 @@ AS
 		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
 		- 20200914@Howard: Use linked server DBNAP [RedmineID: #141531]
 		- 20211006@Alex: Add new function: Type Of Status Product [RedmineID: #161508]
+		- 20211207@Kai: Enhancement of Type of Licensee [RedmineID: #163521]
 
 	Param's Explanation:
 		- @ActionID: '1,2' -- List of LogActionID
@@ -250,7 +251,8 @@ BEGIN
 			FROM DBNAP.bodb_NAPLOG.dbo.NAPLog_RUNSP n WITH(NOLOCK)
 				INNER JOIN DBNAP.bodb_NAPLOG.dbo.NAPLOG_RUNSP_Detail nd WITH(NOLOCK) ON n.Id = nd.ID
 				INNER JOIN @ModifyUser m ON n.UserId = m.ID
-			WHERE n.ActionId = 3 AND n.siteID = 24 -- OIC /*89: local, 24: UAT, PRO*/
+			WHERE n.LogDate BETWEEN @FDate AND @TDate
+				AND n.ActionId = 3 AND n.siteID = 24 -- OIC /*89: local, 24: UAT, PRO*/
 
 			INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy, IsDetail)
 			SELECT DISTINCT A.LogID, A.LogDate, A.[Action], u.DisplayName, A.DoneBy, 0
