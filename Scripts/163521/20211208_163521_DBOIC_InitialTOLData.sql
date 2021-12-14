@@ -11,6 +11,9 @@ GO
 
 PRINT('insert data into UserLicenseeTypes');
 
+DELETE 
+FROM UserLicenseeTypes WITH(ROWLOCK, UPDLOCK)
+
 INSERT INTO dbo.UserLicenseeTypes 
 ( UserId, TypeId, Email )
 VALUES(2456,2,'lmd@enpine.com'),
@@ -1290,8 +1293,8 @@ PRINT('insert data into MessageLicenseeType')
 
 INSERT INTO MessageLicenseeType
 (TypeId, MessageId, PositionId)
-SELECT 
-	CASE
+SELECT DISTINCT
+	CASE 
 		WHEN ty.LicenseeTypeName LIKE 'Boping%' THEN 1
 		WHEN ty.LicenseeTypeName LIKE 'ONEWorks%' THEN 2
 		WHEN ty.LicenseeTypeName LIKE 'Zelianta%' THEN 3
