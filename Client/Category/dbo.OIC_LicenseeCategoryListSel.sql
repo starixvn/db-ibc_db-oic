@@ -3,15 +3,17 @@ USE [bodb_OIC]
 GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeCategoryListSel]   
-	@UserId					INT  
-	,@SelectedLicenseeType	VARCHAR(50)	= 'All'
-	,@LicenseeName			NVARCHAR(50) = '%'  
-	,@StatusIds				VARCHAR(50)	= 'All'
-	,@SelectedCategory		VARCHAR(500) = 'All'  
+	@UserId							INT  
+	,@SelectedLicenseeType			VARCHAR(50)	= 'All'
+	,@SelectedPlatform				VARCHAR(50)	= 'All'
+	,@SelectedIntegrationMethod		VARCHAR(50)	= 'All'
+	,@LicenseeName					NVARCHAR(50) = '%'  
+	,@StatusIds						VARCHAR(50)	= 'All'
+	,@SelectedCategory				VARCHAR(500) = 'All'  
    
-	,@PageSize				INT = 10  
-	,@PageIndex				INT = 0  
-	,@TotalRecords			INT = 0 OUTPUT  
+	,@PageSize						INT = 10  
+	,@PageIndex						INT = 0  
+	,@TotalRecords					INT = 0 OUTPUT  
 AS  
 /*  
 	Created by: Kathy  
@@ -24,6 +26,7 @@ AS
 		- 20161214@Percy: Change dropdown TOL filter multiple choices [RedmineID: #68774]
 		- 20170828@Scofield: Update LicenseeStatusIds [#82144]
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
+		- 20211112@Kai: Enhancement of Type of Licensee (Add Platform and IntegrationMethod for licensee) [RedmineID: #163521]
    
 	Param's Explanation:  
 		@SelectedCategory: support multiple selection  
@@ -45,12 +48,17 @@ BEGIN
 	DECLARE @tblCategory     TABLE (CategoryId TINYINT, CategoryName VARCHAR(100), CategoryNameCN NVARCHAR(200))         
 	DECLARE @tblLicenseeCategoryAssigned TABLE (LicenseeId INT)  
 	DECLARE @tblLicenseeType    TABLE (LicenseeTypeId TINYINT)  
+	DECLARE @tblPlatform    TABLE (PlatformId TINYINT) 
+	DECLARE @tblIntegrationMethod    TABLE (IntegrationMethodId TINYINT) 
+
 	CREATE TABLE #tblResult (  
-		RowNumber		INT  
-		,LicenseeId		INT  
-		,LicenseeName	NVARCHAR(50)  
-		,StatusName		VARCHAR(30)  
-		,TypeName		VARCHAR(40)  
+		RowNumber				INT  
+		,LicenseeId				INT  
+		,LicenseeName			NVARCHAR(50)
+		,StatusName				VARCHAR(30)  
+		,TypeName				NVARCHAR(50)  
+		,PlatformName			NVARCHAR(50)
+		,IntegrationMethodName	NVARCHAR(400)
 	)  
    
 	INSERT INTO @tblCategory (CategoryId, CategoryName, CategoryNameCN)  
@@ -71,8 +79,8 @@ BEGIN
 	IF @SelectedLicenseeType = 'All'
 	BEGIN
 		INSERT INTO @tblLicenseeType (LicenseeTypeId)
-		SELECT	LicenseeTypeId
-		FROM	dbo.UserLicenseeType WITH(NOLOCK)
+		SELECT	TypeId
+		FROM	dbo.UserLicenseeTypes WITH(NOLOCK)
 		WHERE	UserId = @UserId
 	END
 	ELSE
@@ -82,31 +90,62 @@ BEGIN
 
 		DELETE lt
 		FROM @tblLicenseeType lt
-			LEFT JOIN dbo.UserLicenseeType ult WITH(NOLOCK) ON lt.LicenseeTypeId = ult.LicenseeTypeId AND ult.UserId = @UserId
-		WHERE ult.LicenseeTypeId IS NULL
+			LEFT JOIN dbo.UserLicenseeTypes ult WITH(NOLOCK) ON lt.LicenseeTypeId = ult.TypeId AND ult.UserId = @UserId
+		WHERE ult.TypeId IS NULL
 	END
      
+	IF @SelectedPlatform = 'All'
+	BEGIN
+		INSERT INTO @tblPlatform (PlatformId)
+		SELECT	PlatformId
+		FROM	dbo.Platform WITH(NOLOCK)
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @tblPlatform (PlatformId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedPlatform, ',')
+	END
+
+	IF @SelectedIntegrationMethod = 'All'
+	BEGIN
+		INSERT INTO @tblIntegrationMethod (IntegrationMethodId)
+		SELECT	IntegrationMethodId
+		FROM	dbo.IntegrationMethod WITH(NOLOCK)
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @tblIntegrationMethod (IntegrationMethodId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedIntegrationMethod, ',')
+	END
+
 	INSERT INTO #tblResult(  
 		RowNumber  
 		,LicenseeId  
 		,LicenseeName  
 		,StatusName  
-		,TypeName  
+		,TypeName
+		,PlatformName
 	)       
 	SELECT ROW_NUMBER() OVER(ORDER BY l.LicenseeName) AS RowNumber  
 		,l.LicenseeId  
 		,l.LicenseeName  
 		,ls.LicenseeStatusName  
-		,lt.LicenseeTypeName  
+		,lt.TypeName
+		,pf.PlatformName
 	FROM dbo.Licensee l WITH(NOLOCK)  
 		INNER JOIN dbo.LicenseeStatus ls WITH(NOLOCK)   
 			ON l.LicenseeStatusId = ls.LicenseeStatusId  
-		INNER JOIN dbo.LicenseeType lt WITH(NOLOCK)   
-			ON l.LicenseeTypeId = lt.LicenseeTypeId  
-	WHERE l.LicenseeTypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)  
+		INNER JOIN dbo.LicenseeTypes lt WITH(NOLOCK)   
+			ON l.TypeId = lt.TypeId
+		INNER JOIN [dbo].[Platform] pf WITH(NOLOCK)
+			ON l.PlatformId = pf.PlatformId
+	WHERE l.TypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)  
 		AND (@StatusIds = 'All' OR ls.LicenseeStatusId IN (SELECT val FROM dbo.strSplit(@StatusIds,',')))  
 		AND l.LicenseeName LIKE @LicenseeName + '%'  
-		AND l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeCategoryAssigned)  
+		AND l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeCategoryAssigned)
+		AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
+		AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
+
       
 	IF @TotalRecords = 0  
 	BEGIN  
@@ -114,12 +153,23 @@ BEGIN
 		FROM #tblResult  
 	END   
    
-	SELECT LicenseeId  
-		,LicenseeName  
-		,StatusName  
-		,TypeName  
-	FROM #tblResult  
-	WHERE RowNumber BETWEEN @RowStart AND @RowEnd  
+	SELECT t.LicenseeId  
+		,t.LicenseeName
+		,t.StatusName  
+		,t.TypeName
+		,t.PlatformName
+		,IntegrationName.value AS IntegrationMethodName
+	FROM ( SELECT * FROM #tblResult  
+	WHERE RowNumber BETWEEN @RowStart AND @RowEnd ) t
+	OUTER APPLY (
+							SELECT STUFF((SELECT ', ' + im.IntegrationMethodName
+										FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK)
+											INNER JOIN dbo.IntegrationMethod im WITH(NOLOCK) 
+												ON lim.IntegrationMethodId = im.IntegrationMethodId
+										WHERE lim.LicenseeId = t.LicenseeId AND im.IntegrationMethodName IS NOT NULL 
+										ORDER BY im.IntegrationMethodId asc
+										FOR XML PATH('')), 1, 1, '')
+						) IntegrationName(value)
    
 	SELECT t.LicenseeId  
 		,lc.CategoryId  
@@ -153,5 +203,6 @@ BEGIN
 		INNER JOIN @tblCategory c   
 			ON c.CategoryId = lc.CategoryId  
 	WHERE t.RowNumber BETWEEN @RowStart AND @RowEnd  
+	
 END
 GO

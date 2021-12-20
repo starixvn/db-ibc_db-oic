@@ -1,5 +1,4 @@
-USE [bodb_OIC]
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_ReminderSel]
 	@UserId				INT,
@@ -21,6 +20,7 @@ AS
 
 	Revisions:
 		- 20170302@Percy: Expand length of Content [RedmineID: #70322]
+		- 20211122@Kai: Enhancement of Type of Licensee [#163521]
 
 	Param's Explanation:
 */
@@ -52,8 +52,8 @@ BEGIN
 	)
 
 	INSERT INTO @tblLicenseeType (LicenseeTypeId)
-	SELECT	LicenseeTypeId
-	FROM	dbo.UserLicenseeType WITH(NOLOCK)
+	SELECT	TypeId
+	FROM	dbo.UserLicenseeTypes WITH(NOLOCK)
 	WHERE	UserId = @UserId
 
 	SELECT	@PositionId = PositionId
@@ -89,15 +89,15 @@ BEGIN
 	
 	SET @TotalRecords = @@ROWCOUNT
 
-	;WITH cteMessageTarget AS (
+	;WITH cteMessageLicenseeType AS (
 		SELECT m.MessageId, m.MessageTypeId, m.CreateTime, m.Creator, m.SubjectEn, m.ContentEn, m.ReminderTypeId, m.ReminderTypeValue
 		FROM dbo.Message m WITH(NOLOCK)
-			INNER JOIN dbo.MessageTarget mt WITH(NOLOCK) ON	m.MessageId = mt.MessageId
+			INNER JOIN dbo.MessageLicenseeType ml WITH(NOLOCK) ON	m.MessageId = ml.MessageId
 		WHERE	m.MessageTypeId IN (21, 24)
 				AND m.CreateTime BETWEEN @FromDate AND @ToDate
 				AND (m.Creator IN (SELECT UserId FROM @tblSender) OR @SelectedSender = 'All')
-				AND (mt.LicenseeTypeId IN (SELECT t.LicenseeTypeId FROM @tblLicenseeType t)
-						OR mt.PositionId = @PositionId
+				AND (ml.TypeId IN (SELECT t.LicenseeTypeId FROM @tblLicenseeType t)
+						OR ml.PositionId = @PositionId
 					)
 				AND m.MessageId NOT IN (SELECT MessageId FROM #tblMessage)
 				AND (
@@ -108,7 +108,7 @@ BEGIN
 	)
 	INSERT INTO #tblMessage (MessageId, MessageTypeId, CreateTime, SenderId, SubjectEn, ContentEn, IsRead, IsDisable, ReminderTypeId, ReminderTypeValue)
 	SELECT	MessageId, MessageTypeId, CreateTime, Creator, SubjectEn, ContentEn, 1, 1, ReminderTypeId, ReminderTypeValue
-	FROM cteMessageTarget
+	FROM cteMessageLicenseeType
 	
 	SET @TotalRecords = @TotalRecords + @@ROWCOUNT
 
@@ -135,7 +135,3 @@ BEGIN
 	DROP TABLE #Result
 	DROP TABLE #tblMessage
 END
-GO
-GRANT EXECUTE ON [dbo].[OIC_ReminderSel] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_ReminderSel] TO [vnteam] AS [dbo]

@@ -18,7 +18,7 @@ AS
 	
 	Revisions:
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
-		
+		- 20211116@Alex: Change Type Of Licensee [RedmineID: #163521]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -36,7 +36,7 @@ BEGIN
 
 	SET @startRun = GETDATE()		
 	
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.LicenseeType WITH(NOLOCK) WHERE LicenseeTypeName = @LicenseeTypeName)
+	IF EXISTS (SELECT TOP 1 1 FROM dbo.LicenseeTypes WITH(NOLOCK) WHERE TypeName = @LicenseeTypeName)
 	BEGIN
 		SELECT	@ErrCode = 100
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](30003, @Language) -- The licensee type name is already used. Please try another name.
@@ -44,10 +44,9 @@ BEGIN
 	END
 	
 	BEGIN TRY
-		INSERT INTO dbo.LicenseeType (LicenseeTypeName) VALUES (@LicenseeTypeName)
-	
-		SET @LicenseeTypeId = SCOPE_IDENTITY()
-	
+		SELECT @LicenseeTypeId = MAX([TypeId]) FROM dbo.LicenseeTypes WITH (NOLOCK)
+		SELECT @LicenseeTypeId = @LicenseeTypeId + 1
+		INSERT INTO dbo.LicenseeTypes (TypeId, TypeName) VALUES (@LicenseeTypeId, @LicenseeTypeName)
 	END TRY
 	BEGIN CATCH
 		SELECT	@ErrCode = 101

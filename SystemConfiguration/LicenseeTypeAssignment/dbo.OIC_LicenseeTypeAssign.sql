@@ -1,7 +1,4 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_OIC]
-GO
-
 ALTER PROCEDURE [dbo].[OIC_LicenseeTypeAssign]
 	@updUserId				INT
 	,@SelectedLicenseeType	VARCHAR(500)
@@ -21,6 +18,7 @@ AS
 	Revisions:
 		- 20160805@Percy: Add column Email of LicenseeType [RedmineID: #61904]
 		- 20211810@Hogan: Extend length of LicenseeType [RedmineID: #163376]
+		- 20211116@Alex: Change Type Of Licensee [RedmineID: #163521]
 */
 
 BEGIN
@@ -40,22 +38,22 @@ BEGIN
 		,@newDisplayName NVARCHAR(50)
 		,@errLicenseeType NVARCHAR(300) = ''
 
-	DECLARE @tblLicenseeType TABLE (LicenseeTypeId TINYINT)
+	DECLARE @tblLicenseeType TABLE (TypeId TINYINT)
 	
 	SET @startRun = GETDATE()
 	
-	INSERT INTO @tblLicenseeType (LicenseeTypeId)
+	INSERT INTO @tblLicenseeType (TypeId)
 	SELECT val FROM dbo.strSplit (@SelectedLicenseeType,',')
 	
-	SELECT @errLicenseeType = ISNULL (@errLicenseeType, '' ) + lt.LicenseeTypeName + ','
+	SELECT @errLicenseeType = ISNULL (@errLicenseeType, '' ) + lt.TypeName + ','
 	FROM	dbo.UserLicensee ul WITH(NOLOCK)
 		INNER JOIN dbo.Licensee l WITH(NOLOCK)
 			ON l.LicenseeId = ul.LicenseeId
-		INNER JOIN dbo.LicenseeType lt WITH(NOLOCK)
-			ON lt.LicenseeTypeId = l.LicenseeTypeId
+		INNER JOIN dbo.LicenseeTypes lt WITH(NOLOCK)
+			ON lt.TypeId = l.TypeId
 	WHERE	ul.UserId = @updUserId
-			AND l.LicenseeTypeId NOT IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
-	GROUP BY l.LicenseeTypeId, lt.LicenseeTypeName
+			AND l.TypeId NOT IN (SELECT TypeId FROM @tblLicenseeType)
+	GROUP BY l.TypeId, lt.TypeName
 	
 	-- If the user is AM or PM, check if there is any client assigned to him.
 	IF @errLicenseeType <> ''
@@ -99,10 +97,10 @@ BEGIN
 	END
 	
 	SET @xml = (SELECT @updUserId AS '@uid',
-						(SELECT lt.LicenseeTypeId		AS '@lti'
-								,lt.LicenseeTypeName	AS '@ltn'
-						FROM	UserLicenseeType ult WITH(NOLOCK)
-							INNER JOIN dbo.LicenseeType lt WITH (NOLOCK) ON ult.LicenseeTypeId = lt.LicenseeTypeId
+						(SELECT lt.TypeId		AS '@lti'
+								,lt.TypeName	AS '@ltn'
+						FROM	UserLicenseeTypes ult WITH(NOLOCK)
+							INNER JOIN dbo.LicenseeTypes lt WITH (NOLOCK) ON ult.TypeId = lt.TypeId
 						WHERE	UserId = @updUserId
 						FOR XML PATH('row'), ROOT('lt'), TYPE
 						)
@@ -120,11 +118,11 @@ BEGIN
 		DECLARE @Email VARCHAR(50)
 		SELECT  @Email = Email FROM dbo.UserInfo WITH(NOLOCK) WHERE UserId = @updUserId
 		
-		MERGE dbo.UserLicenseeType AS ult
-		USING (SELECT LicenseeTypeId FROM @tblLicenseeType) AS t
-		ON (ult.LicenseeTypeId = t.LicenseeTypeId)
+		MERGE dbo.UserLicenseeTypes AS ult
+		USING (SELECT TypeId FROM @tblLicenseeType) AS t
+		ON (ult.TypeId = t.TypeId)
 			AND ult.UserId = @updUserId
-		WHEN NOT MATCHED BY TARGET THEN INSERT (UserId, LicenseeTypeId, Email) VALUES (@updUserId, t.LicenseeTypeId, @Email)
+		WHEN NOT MATCHED BY TARGET THEN INSERT (UserId, TypeId, Email) VALUES (@updUserId, t.TypeId, @Email)
 		WHEN NOT MATCHED BY SOURCE AND ult.UserId = @updUserId THEN DELETE;		
 	END TRY
 	BEGIN CATCH
@@ -135,10 +133,10 @@ BEGIN
 	END CATCH
 	
 	SET @xml = (SELECT @updUserId AS '@uid',
-						(SELECT lt.LicenseeTypeId		AS '@lti'
-								,lt.LicenseeTypeName	AS '@ltn'
-						FROM	UserLicenseeType ult WITH(NOLOCK)
-							INNER JOIN dbo.LicenseeType lt WITH (NOLOCK) ON ult.LicenseeTypeId = lt.LicenseeTypeId
+						(SELECT lt.TypeId		AS '@lti'
+								,lt.TypeName	AS '@ltn'
+						FROM	UserLicenseeTypes ult WITH(NOLOCK)
+							INNER JOIN dbo.LicenseeTypes lt WITH (NOLOCK) ON ult.TypeId = lt.TypeId
 						WHERE	UserId = @updUserId
 						FOR XML PATH('row'), ROOT('lt'), TYPE
 						)

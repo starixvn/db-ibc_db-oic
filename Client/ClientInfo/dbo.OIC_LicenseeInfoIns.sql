@@ -1,10 +1,9 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_OIC]
-GO
-
 ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns]
 	@UserId					INT
-	,@LicenseeTypeId		TINYINT
+	,@PlatformId			TINYINT
+	,@TypeId				TINYINT
+	,@IntegrationMethods	VARCHAR(1000)
 	,@SiteName				NVARCHAR(50)
 	,@RegisteredSiteName	NVARCHAR(50)
 	,@CompanyName			NVARCHAR(50)	= NULL
@@ -68,6 +67,7 @@ AS
 		- 20200917@Howard: Use table Currency instead of table Exchange [RedmindId: #141670]
 		- 20210706@Mark: Don't write log if a client created without having Group info [RedmindId: #157501]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
+		- 20211109@Alex: Change Type Of Licensee [RedmindId: #163521]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -128,6 +128,7 @@ BEGIN
 		,@log_backupLink			XML
 		,@log_maincontact			XML
 		,@log_currency				XML
+		,@log_integrationMethod		XML
 		,@log_targetedMarket		XML
 		,@log_restrictedLocation	XML
 		,@log_language				XML
@@ -170,7 +171,9 @@ BEGIN
 	-- Step1: Insert general info
 	EXEC dbo.OIC_LicenseeInfoIns_Step1
 		@UserId						= @UserId
-		,@LicenseeTypeId			= @LicenseeTypeId
+		,@PlatformId				= @PlatformId
+		,@TypeId					= @TypeId
+		,@IntegrationMethods		= @IntegrationMethods
 		,@SiteName					= @SiteName
 		,@RegisteredSiteName		= @RegisteredSiteName
 		,@CompanyName				= @CompanyName
@@ -241,6 +244,9 @@ BEGIN
 		
 		DELETE FROM dbo.Contact WITH(ROWLOCK, UPDLOCK)
 		WHERE LicenseeID = @LicenseeId
+		
+		DELETE FROM dbo.LicenseeIntegrationMethod WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
 		-- END rollback Step1
 		
 		RETURN
@@ -287,6 +293,9 @@ BEGIN
 			WHERE LicenseeId = @LicenseeId
 			
 			DELETE FROM dbo.Licensee  WITH(ROWLOCK, UPDLOCK)
+			WHERE LicenseeId = @LicenseeId
+			
+			DELETE FROM dbo.LicenseeIntegrationMethod WITH(ROWLOCK, UPDLOCK)
 			WHERE LicenseeId = @LicenseeId
 			-- END rollback Step1
 			
@@ -345,6 +354,9 @@ BEGIN
 		WHERE LicenseeId = @LicenseeId
 		
 		DELETE FROM dbo.LicenseeProperty  WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		
+		DELETE FROM dbo.LicenseeIntegrationMethod WITH(ROWLOCK, UPDLOCK)
 		WHERE LicenseeId = @LicenseeId
 		-- END rollback Step1
 		
@@ -452,6 +464,17 @@ BEGIN
 							WHERE lot.LicenseeId = @LicenseeId
 							FOR XML PATH('row'), ROOT('lot')
 						)
+						
+	SET @log_integrationMethod = (
+							SELECT im.IntegrationMethodId AS '@limid'
+								   ,im.IntegrationMethodName AS '@limn'
+							FROM dbo.LicenseeIntegrationMethod AS lim WITH(NOLOCK)
+								INNER JOIN dbo.IntegrationMethod AS im WITH(NOLOCK)
+									ON lim.IntegrationMethodId = im.IntegrationMethodId
+							WHERE lim.LicenseeId = @LicenseeId
+							FOR XML PATH('row'), ROOT('lot')
+	
+								 )
 
 	SET @log_service = (	SELECT	s.ServiceId				AS '@lsid'
 									,s.ServiceName				AS '@lsn'
@@ -496,6 +519,8 @@ BEGIN
 							WHERE la.LicenseeId = @LicenseeId
 							FOR XML PATH('row'), ROOT('la')	
 						)
+						
+	
 	
 	DECLARE @pmn NVARCHAR(100), @amn NVARCHAR(100), @location NVARCHAR(50)
 	
@@ -512,7 +537,8 @@ BEGIN
 	-- Write log
 	SET @xml = (
 		SELECT	@LicenseeId					AS '@lid'
-				,t.LicenseeTypeName			AS '@tn'
+				,t.TypeName					AS '@tn'
+				,i.PlatformName				AS '@pn'
 				,l.LicenseeName				AS '@ln'
 				,l.RegisteredLicenseeName	AS '@rln'
 				,l.LicenseeCompanyName		AS '@cn'
@@ -538,6 +564,7 @@ BEGIN
 				,@log_Language
 				,@log_LanguageSB
 				,@log_oddsType
+				,@log_integrationMethod
 				,@log_restrictedLocation
 				,@log_targetedMarket
 				,@log_service
@@ -546,7 +573,8 @@ BEGIN
 				,@log_account
 		FROM dbo.Licensee AS l WITH (NOLOCK)
 			INNER JOIN dbo.LicenseeStatus AS s WITH(NOLOCK) ON l.LicenseeStatusId = s.LicenseeStatusId
-			INNER JOIN dbo.LicenseeType AS t WITH(NOLOCK) ON l.LicenseeTypeId = t.LicenseeTypeId
+			INNER JOIN dbo.LicenseeTypes AS t WITH(NOLOCK) ON l.TypeId = t.TypeId
+			INNER JOIN dbo.Platform AS i WITH(NOLOCK) ON l.PlatformId = i.PlatformId
 			LEFT JOIN dbo.LicenseeGroup AS g WITH(NOLOCK) ON l.LicenseeGroupId = g.Id 
 		WHERE l.LicenseeId = @LicenseeId
 		FOR XML PATH('r'), TYPE)		

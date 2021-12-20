@@ -5,6 +5,9 @@ GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeListByCategory] 
 	@CategoryId						TINYINT
+	,@SelectedLicenseeType			VARCHAR(50) = 'All'
+	,@SelectedPlatform				VARCHAR(50) = 'All'
+	,@SelectedIntegrationMethod		VARCHAR(50) = 'All'
 	,@UserId						INT
 	,@MarketType					INT		= -1 -- All
 	,@ProductId						TINYINT	= 0 -- All
@@ -25,6 +28,7 @@ AS
 		- 20200518@hogan: Support sending mail for upcoming licensees [RedmineID: #133714]
 		- 20210203@Mark: Add more Product option for Email Notification [RedmineID: #148733]
 		- 20210729@Hogan: Enhance Site Name in Send mail notification function [Redmine: #159206]
+		- 20211116@Kai: Enhancement of Type of Licensee [RedmineID: #163521]
     
     Param's Explanation:
 		
@@ -33,11 +37,57 @@ AS
 BEGIN
     SET NOCOUNT ON
 
-	SELECT l.LicenseeId, l.LicenseeName, l.LicenseeTypeId, lt.LicenseeTypeName, ls.LicenseeStatusName
+	DECLARE @tblLicenseeType	TABLE (LicenseeTypeId TINYINT)
+	DECLARE @tblPlatform	TABLE (PlatformId TINYINT)
+	DECLARE @tblIntegrationMethod	TABLE (IntegrationMethodId TINYINT)
+
+	IF @SelectedLicenseeType = 'All'
+	BEGIN
+		INSERT INTO @tblLicenseeType (LicenseeTypeId)
+		SELECT	TypeId
+		FROM	dbo.UserLicenseeTypes WITH(NOLOCK)
+		WHERE	UserId = @UserId
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @tblLicenseeType (LicenseeTypeId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedLicenseeType, ',')
+
+		DELETE lt
+		FROM @tblLicenseeType lt
+			LEFT JOIN dbo.UserLicenseeTypes ult WITH(NOLOCK) ON lt.LicenseeTypeId = ult.TypeId AND ult.UserId = @UserId
+		WHERE ult.TypeId IS NULL
+	END
+
+	IF @SelectedPlatform = 'All'
+	BEGIN
+		INSERT INTO @tblPlatform (PlatformId)
+		SELECT	PlatformId
+		FROM	dbo.Platform WITH(NOLOCK)
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @tblPlatform (PlatformId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedPlatform, ',')
+	END
+
+	IF @SelectedIntegrationMethod = 'All'
+	BEGIN
+		INSERT INTO @tblIntegrationMethod (IntegrationMethodId)
+		SELECT	IntegrationMethodId
+		FROM	dbo.IntegrationMethod WITH(NOLOCK)
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @tblIntegrationMethod (IntegrationMethodId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedIntegrationMethod, ',')
+	END
+
+	SELECT l.LicenseeId, l.LicenseeName, ls.LicenseeStatusName
 	FROM dbo.Licensee l WITH(NOLOCK)
 		INNER JOIN dbo.LicenseeStatus ls WITH(NOLOCK) ON ls.LicenseeStatusId = l.LicenseeStatusId
-		INNER JOIN dbo.UserLicenseeType ult WITH(NOLOCK) ON ult.LicenseeTypeId = l.LicenseeTypeId
-		INNER JOIN dbo.LicenseeType lt WITH(NOLOCK) ON ult.LicenseeTypeId = lt.LicenseeTypeId
+		INNER JOIN dbo.UserLicenseeTypes ult WITH(NOLOCK) ON ult.TypeId = l.TypeId
+		INNER JOIN dbo.LicenseeTypes lt WITH(NOLOCK) ON ult.TypeId = lt.TypeId
 		INNER JOIN dbo.LicenseeCategoryAssigned	lca WITH(NOLOCK) ON l.LicenseeId = lca.LicenseeId
 		INNER JOIN dbo.Contact c WITH(NOLOCK) ON l.LicenseeId = c.LicenseeId
 		INNER JOIN dbo.CategoryContact cc WITH(NOLOCK) ON cc.ContactId = c.ContactId AND cc.CategoryId = lca.CategoryId
@@ -61,6 +111,9 @@ BEGIN
 			l.LicenseeStatusId = 3 -- Active
 			OR (ct.IsAllowUpComing = 1 AND l.LicenseeStatusId = 1 ) -- Upcoming if allowed
 		)
-	GROUP BY l.LicenseeId, l.LicenseeName, l.LicenseeTypeId, lt.LicenseeTypeName, ls.LicenseeStatusName
+		AND l.TypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
+		AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
+		AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
+	GROUP BY l.LicenseeId, l.LicenseeName, ls.LicenseeStatusName
 END
 GO

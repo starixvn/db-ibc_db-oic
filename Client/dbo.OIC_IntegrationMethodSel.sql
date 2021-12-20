@@ -1,0 +1,21 @@
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[OIC_IntegrationMethodSel] 
+AS
+/*
+	Created by: Alex
+	Date: 20211109
+	Task: Change Type Of Licensee [Redmine:#163521]
+	DB: DBOIC.bodb_OIC
+	
+	Revisions:
+	- 20211122@Alex: Enhancement of Type of Licensee [#163521]
+	
+ */
+BEGIN
+	SET NOCOUNT ON
+
+	SELECT	im.IntegrationMethodId
+			,im.IntegrationMethodName
+	FROM	dbo.IntegrationMethod im WITH(NOLOCK)
+END
+GO

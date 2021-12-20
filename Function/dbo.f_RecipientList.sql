@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" isFunction="1" isNested="1"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" isFunction="1" isNested="0"></info>*/
 
 ALTER FUNCTION [dbo].[f_RecipientList] (
 	@SelectedLicensee	VARCHAR(MAX)
@@ -18,6 +18,7 @@ AS
 /*
     Revisions:
 		- 20200518@hogan: csoneonone@enpine.com does not receive email when sending to upcomming licensees [RedmineID: #133714]
+		- 20211122@Kai: Enhancement of Type of Licensee [#163521]
     
     Param's Explanation:
 		
@@ -35,7 +36,7 @@ BEGIN
 	WHERE	UserId = @UserId
 	
 	INSERT INTO @tblLicensee (LicenseeId, LicenseeTypeId, LicenseeStatusId)
-	SELECT	DISTINCT LicenseeId, LicenseeTypeId, LicenseeStatusId
+	SELECT	DISTINCT LicenseeId, TypeId, LicenseeStatusId
 	FROM	dbo.Licensee WITH(NOLOCK)
 	WHERE	LicenseeId IN (SELECT val FROM dbo.strSplit(@SelectedLicensee,','))
 	
@@ -69,10 +70,10 @@ BEGIN
 	FROM	dbo.UserLicensee ul WITH(NOLOCK)
 		INNER JOIN dbo.UserInfo ui WITH(NOLOCK)
 			ON ul.UserId = ui.UserId
-		INNER JOIN dbo.UserLicenseeType ult WITH(NOLOCK)
+		INNER JOIN dbo.UserLicenseeTypes ult WITH(NOLOCK)
 			ON ui.UserId = ult.UserId
 		INNER JOIN @tblLicensee t
-			ON t.LicenseeId = ul.LicenseeId AND t.LicenseeTypeId = ult.LicenseeTypeId
+			ON t.LicenseeId = ul.LicenseeId AND t.LicenseeTypeId = ult.TypeId
 	WHERE	ui.PositionId = 6
 	UNION 
 	SELECT	t.LicenseeId
@@ -82,10 +83,10 @@ BEGIN
 			,0
 			,2 -- AddtoCc
 	FROM	dbo.UserInfo ui WITH(NOLOCK)
-		INNER JOIN dbo.UserLicenseeType ult WITH(NOLOCK)
+		INNER JOIN dbo.UserLicenseeTypes ult WITH(NOLOCK)
 			ON ui.UserId = ult.UserId
 		INNER JOIN @tblLicensee t
-			ON t.LicenseeTypeId = ult.LicenseeTypeId
+			ON t.LicenseeTypeId = ult.TypeId
 	WHERE	ui.PositionId = 3 
 	UNION
 	SELECT	LicenseeId

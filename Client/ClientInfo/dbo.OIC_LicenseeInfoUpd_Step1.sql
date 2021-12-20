@@ -3,7 +3,9 @@ USE [bodb_OIC]
 GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd_Step1]
-	@LicenseeTypeId			TINYINT
+	@TypeId					TINYINT
+	,@PlatformId			TINYINT
+	,@IntegrationMethods	VARCHAR(1000)
 	,@SiteName				NVARCHAR(50)
 	,@RegisteredSiteName	NVARCHAR(50)
 	,@CompanyName			NVARCHAR(50)	= NULL
@@ -60,7 +62,8 @@ AS
 		- 20190715@Howard: Add Odds Type [RedmineId: #115460]
 		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
-	
+		- 20211110@Alex: Change Type Of Licensee [RedmindId: #163521]
+		
 	Param's Explanation:
 	* @LicBackupLink
 		<root>
@@ -128,7 +131,8 @@ BEGIN
 				,LicenseeLocationId			= @LocationId
 				,RestrictedLocationRemark	= @RestrictCountryRemark
 				,Remark						= @Remark
-				,LicenseeTypeId				= @LicenseeTypeId
+				,TypeId						= @TypeId
+				,PlatformId 				= @PlatformId
 				,IsChineseMarketOnly		= @IsChineseMarketOnly
 				,IsReseller					= @IsReseller
 				,InvoiceBaseCurrency		= @InvoiceBaseCurrency
@@ -326,6 +330,21 @@ BEGIN
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = 110
+		RETURN
+	END CATCH
+	
+	-- Update integration methods type
+	IF @IntegrationMethods IS NOT NULL
+	BEGIN TRY 
+		MERGE dbo.LicenseeIntegrationMethod lit 
+		USING (SELECT CONVERT(INT, val) AS IntegrationMethodId FROM dbo.strSplit(@IntegrationMethods, ',')) t
+			ON lit.IntegrationMethodId = t.IntegrationMethodId
+			AND lit.LicenseeId = @LicenseeId
+		WHEN NOT MATCHED BY TARGET THEN INSERT (LicenseeId, IntegrationMethodId) VALUES (@LicenseeId, t.IntegrationMethodId)
+		WHEN NOT MATCHED BY SOURCE AND lit.LicenseeId = @LicenseeId THEN DELETE;
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrCode = 111
 		RETURN
 	END CATCH
 		

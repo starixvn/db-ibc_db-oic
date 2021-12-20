@@ -24,6 +24,7 @@ AS
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
 		- 20211005@Alex: Support Product Type on Client Product [RedmineID: #161508]
+		- 20211115@Alex: Change Type Of Licensee [RedmindId: #163521]
 		
 */
 BEGIN
@@ -38,6 +39,7 @@ BEGIN
 	BEGIN
 		DECLARE
 			@TypeOfLicensee NVARCHAR(40),
+			@Platform NVARCHAR(40),
 			@Sitename NVARCHAR(100),
 			@RegisteredSitename NVARCHAR(100),
 			@CompanyName NVARCHAR(100),
@@ -61,6 +63,7 @@ BEGIN
 			@ClientTargetMarket NVARCHAR(MAX), -- list of target markets
 			@CommunicationLanguages NVARCHAR(MAX), -- list of communication languagues
 			@OddsTypes NVARCHAR(300), -- list of odds types
+			@IntegrationMethods NVARCHAR(300), -- list of integration methods
 			@InvoiceBaseCurrency VARCHAR(4),
 			@InvoiceLanguage NVARCHAR(50),
 			@UnasService NVARCHAR(100),
@@ -97,6 +100,7 @@ BEGIN
 			@InternalURL NVARCHAR(MAX),
 
 			@TypeOfLicensee_old NVARCHAR(40),
+			@Platform_old NVARCHAR(40),
 			@Sitename_old NVARCHAR(100),
 			@RegisteredSitename_old NVARCHAR(100),
 			@CompanyName_old NVARCHAR(100),
@@ -120,6 +124,7 @@ BEGIN
 			@ClientTargetMarket_old NVARCHAR(MAX), -- list of target markets
 			@CommunicationLanguages_old NVARCHAR(MAX), -- list of communication languagues
 			@OddsTypes_old NVARCHAR(300), -- list of odds types
+			@IntegrationMethods_old NVARCHAR(300), -- list of integration methods
 			@InvoiceBaseCurrency_old VARCHAR(4),
 			@InvoiceLanguage_old NVARCHAR(50),
 			@UnasService_old NVARCHAR(100),
@@ -158,6 +163,7 @@ BEGIN
 		-- Client Info
 		SELECT
 			@TypeOfLicensee = d.c.value('@tn', 'NVARCHAR(40)'), -- type of licensee
+			@Platform = d.c.value('@pn', 'NVARCHAR(40)'), -- platform
 			@Sitename = d.c.value('@ln', 'NVARCHAR(100)'), -- site name
 			@RegisteredSitename = d.c.value('@rln', 'NVARCHAR(100)'), -- registered site name
 			@CompanyName = d.c.value('@cn', 'NVARCHAR(100)'), -- company name
@@ -179,6 +185,7 @@ BEGIN
 			@InvoiceLanguage = d.c.value('@il', 'NVARCHAR(50)'), -- invoice language
 
 			@TypeOfLicensee_old = od.c.value('@tn', 'NVARCHAR(40)'), -- type of licensee
+			@Platform_old = od.c.value('@pn', 'NVARCHAR(40)'), -- platform
 			@Sitename_old = od.c.value('@ln', 'NVARCHAR(100)'), -- site name
 			@RegisteredSitename_old = od.c.value('@rln', 'NVARCHAR(100)'), -- registered site name
 			@CompanyName_old = od.c.value('@cn', 'NVARCHAR(100)'), -- company name
@@ -403,6 +410,28 @@ BEGIN
 		)
 		SELECT	@OddsTypes = (SELECT STUFF((SELECT DISTINCT ', ' + OddsTypeName FROM CTE_OddsTypes FOR XML PATH('')), 1, 1, '')),
 				@OddsTypes_old = (SELECT STUFF((SELECT DISTINCT ', ' + OddsTypeName_old FROM CTE_OddsTypes FOR XML PATH('')), 1, 1, ''))
+		
+		-- Integration Methods
+		;WITH CTE_IntegrationMethods AS (
+			SELECT
+				d.c.value('@limn', 'NVARCHAR(50)') AS IntegrationMethodName, --  integration method name (new)
+				od.c.value('@limn', 'NVARCHAR(50)') AS IntegrationMethodName_old -- integration method name (old)
+			FROM (
+				SELECT
+					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE Data END AS Data,
+					CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE OldData END AS OldData
+				FROM (
+					SELECT CONVERT(XML, Data).query('/r/lot/row') AS Data, CONVERT(XML, OldData).query('/r/lot/row') AS OldData
+					FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+					WHERE Id = @ActionID
+				) B
+			) A
+				OUTER APPLY A.Data.nodes('row') d(c)
+				OUTER APPLY A.OldData.nodes('row') od(c)
+			
+		)
+		SELECT	@IntegrationMethods = (SELECT STUFF((SELECT DISTINCT ', ' + IntegrationMethodName FROM CTE_IntegrationMethods FOR XML PATH('')), 1, 1, '')),
+				@IntegrationMethods_old = (SELECT STUFF((SELECT DISTINCT ', ' + IntegrationMethodName_old FROM CTE_IntegrationMethods FOR XML PATH('')), 1, 1, ''))
 		
 		-- Services
 		;WITH CTE_Service AS (
@@ -662,6 +691,8 @@ BEGIN
 		INSERT INTO @Result(ID, Field, NewValue, OldValue)
 		VALUES
 			(1, N'Type of licensee', @TypeOfLicensee, @TypeOfLicensee_old),
+			(1, N'Platform', @Platform, @Platform_old),
+			(1, N'Integration Method', @IntegrationMethods, @IntegrationMethods_old),
 			(2, N'Registered Site name', @RegisteredSitename, @RegisteredSitename_old),
 			(2, N'Site name', @Sitename, @Sitename_old),
 			(3, N'Company name', @CompanyName, @CompanyName_old),

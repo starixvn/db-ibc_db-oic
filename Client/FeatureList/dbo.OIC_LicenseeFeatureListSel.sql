@@ -3,21 +3,23 @@ USE [bodb_OIC]
 GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeFeatureListSel] 
-	@UserId				INT
-	,@SelectedLicenseeType VARCHAR(50)	= 'All'
-	,@LicenseeName		NVARCHAR(50)		= '%'
-	,@LicenseeStatusIds	VARCHAR(50)	= 'All'
-	,@SelectedFeature	VARCHAR(500)	= 'All'
-	,@FeatureShown		VARCHAR(500)
-	,@FeatureStatusId	TINYINT			= 0
-	,@LaunchFrom		DATETIME		= NULL
-	,@LaunchTo			DATETIME		= NULL
-	,@TerminationFrom	DATETIME		= NULL
-	,@TerminationTo		DATETIME		= NULL
+	@UserId							INT
+	,@SelectedLicenseeType			VARCHAR(50)	= 'All'
+	,@SelectedPlatform				VARCHAR(50)		= 'All'
+	,@SelectedIntegrationMethod		VARCHAR(50)		= 'All'
+	,@LicenseeName					NVARCHAR(50)		= '%'
+	,@LicenseeStatusIds				VARCHAR(50)	= 'All'
+	,@SelectedFeature				VARCHAR(500)	= 'All'
+	,@FeatureShown					VARCHAR(500)
+	,@FeatureStatusId				TINYINT			= 0
+	,@LaunchFrom					DATETIME		= NULL
+	,@LaunchTo						DATETIME		= NULL
+	,@TerminationFrom				DATETIME		= NULL
+	,@TerminationTo					DATETIME		= NULL
 		
-	,@PageSize			INT = 10
-	,@PageIndex			INT	= 0 
-	,@TotalRecords		INT = 0 OUTPUT
+	,@PageSize						INT = 10
+	,@PageIndex						INT	= 0 
+	,@TotalRecords					INT = 0 OUTPUT
 AS
 
 /*
@@ -29,7 +31,8 @@ AS
 	Revisions:
 	- 20170828@Scofield: Update LicenseeStatusIds [#82144]
 	- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
-	
+	- 20211116@Kai: Enhancement of Type of Licensee (Add Platform and IntegrationMethod for licensee) [RedmineID: #163521]
+
 	Param's Explanation:
 		@SelectedFeature: multiple selection feature
 		@FeatureShown: list features shall be shown, support multiple selection
@@ -59,14 +62,18 @@ BEGIN
 	DECLARE @today				DATETIME = CONVERT(DATE, GETDATE())
 	DECLARE @tblFeature			TABLE (FeatureId INT)
 	DECLARE @tblLicenseeType	TABLE (LicenseeTypeId TINYINT)
+	DECLARE @tblPlatform	TABLE (PlatformId TINYINT)
+	DECLARE @tblIntegrationMethod	TABLE (IntegrationMethodId TINYINT)
 	CREATE TABLE #tblLicenseeFeature (LicenseeId INT, FeatureId INT, IsFilled BIT)
 	
 	CREATE TABLE #tblResult	(
-		RowNumber			INT
-		,LicenseeId			INT
-		,LicenseeName		NVARCHAR(50)
-		,StatusName			VARCHAR(30)
-		,TypeName			VARCHAR(40)
+		RowNumber				INT
+		,LicenseeId				INT
+		,LicenseeName			NVARCHAR(50)
+		,StatusName				VARCHAR(30)
+		,TypeName				NVARCHAR(50)
+		,PlatformName			NVARCHAR(50)
+		,IntegrationMethodName	NVARCHAR(400)
 	)
 							
 	INSERT INTO @tblFeature(FeatureId)
@@ -104,8 +111,8 @@ BEGIN
 	IF @SelectedLicenseeType = 'All'
 	BEGIN
 		INSERT INTO @tblLicenseeType (LicenseeTypeId)
-		SELECT	LicenseeTypeId
-		FROM	dbo.UserLicenseeType WITH(NOLOCK)
+		SELECT	TypeId
+		FROM	dbo.UserLicenseeTypes WITH(NOLOCK)
 		WHERE	UserId = @UserId
 	END
 	ELSE
@@ -115,8 +122,32 @@ BEGIN
 
 		DELETE lt
 		FROM @tblLicenseeType lt
-			LEFT JOIN dbo.UserLicenseeType ult WITH(NOLOCK) ON lt.LicenseeTypeId = ult.LicenseeTypeId AND ult.UserId = @UserId
-		WHERE ult.LicenseeTypeId IS NULL
+			LEFT JOIN dbo.UserLicenseeTypes ult WITH(NOLOCK) ON lt.LicenseeTypeId = ult.TypeId AND ult.UserId = @UserId
+		WHERE ult.TypeId IS NULL
+	END
+
+	IF @SelectedPlatform = 'All'
+	BEGIN
+		INSERT INTO @tblPlatform (PlatformId)
+		SELECT	PlatformId
+		FROM	dbo.Platform WITH(NOLOCK)
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @tblPlatform (PlatformId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedPlatform, ',')
+	END
+
+	IF @SelectedIntegrationMethod = 'All'
+	BEGIN
+		INSERT INTO @tblIntegrationMethod (IntegrationMethodId)
+		SELECT	IntegrationMethodId
+		FROM	dbo.IntegrationMethod WITH(NOLOCK)
+	END
+	ELSE
+	BEGIN
+		INSERT INTO @tblIntegrationMethod (IntegrationMethodId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedIntegrationMethod, ',')
 	END
 					
 	INSERT INTO #tblResult( 
@@ -125,24 +156,31 @@ BEGIN
 			,LicenseeName
 			,StatusName
 			,TypeName
+			,PlatformName
 	)	
 	SELECT	ROW_NUMBER() OVER(ORDER BY LicenseeName) AS RowNumber
 			, l.LicenseeId
 			,l.LicenseeName
 			,ls.LicenseeStatusName
-			,lt.LicenseeTypeName
+			,lt.TypeName
+			,pf.PlatformName
 	FROM	dbo.Licensee l
-		INNER JOIN LicenseeType lt 
-			ON	l.licenseeTypeId = lt.LicenseeTypeId
+		INNER JOIN LicenseeTypes lt 
+			ON	l.TypeId = lt.TypeId
 		INNER JOIN LicenseeStatus ls 
-			ON	l.LicenseeStatusId = ls.LicenseeStatusId	
-	WHERE	l.LicenseeTypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
+			ON	l.LicenseeStatusId = ls.LicenseeStatusId
+		INNER JOIN [dbo].[Platform] pf WITH(NOLOCK)
+			ON l.PlatformId = pf.PlatformId
+	WHERE	l.TypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
 			AND l.LicenseeName LIKE ISNULL(@LicenseeName,'%') + '%'
-			AND (@LicenseeStatusIds = 'All' OR l.LicenseeStatusId IN (SELECT val FROM dbo.strSplit(@LicenseeStatusIds,','))) 	
+			AND (@LicenseeStatusIds = 'All' OR l.LicenseeStatusId IN (SELECT val FROM dbo.strSplit(@LicenseeStatusIds,','))) 
+			AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
+			AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
 	GROUP BY l.LicenseeId
 			,l.LicenseeName
 			,ls.LicenseeStatusName
-			,lt.LicenseeTypeName						
+			,lt.TypeName
+			,pf.PlatformName
 	
 	IF @TotalRecords = 0
 	BEGIN
@@ -161,9 +199,11 @@ BEGIN
 								,LicenseeName
 								,StatusName
 								,TypeName
+								,PlatformName
+								,IntegrationName.value AS IntegrationMethodName
 								,' + @strFeatureName +
 	'FROM (
-			SELECT	 RowNumber, t.LicenseeId, t.LicenseeName, t.StatusName, t.TypeName, p.Featurename
+			SELECT	 RowNumber, t.LicenseeId, t.LicenseeName, t.StatusName, t.TypeName, p.Featurename, t.PlatformName
 			,CONVERT(VARCHAR(1), ISNULL(IsFilled, 0)) + '','' + CONVERT(VARCHAR(10), lp.LaunchDate, 20) + CASE WHEN ISNULL(lp.TerminationDate, '''') <> ''''THEN + '','' + CONVERT(VARCHAR(10), lp.TerminationDate, 20) ELSE '''' END AS [Date]
 			FROM	 #tblResult t WITH(NOLOCK)
 				LEFT JOIN dbo.LicenseeFeature lp WITH(NOLOCK)
@@ -176,6 +216,15 @@ BEGIN
 	PIVOT (
 		MAX(p.[Date]) FOR Featurename IN (' + @strFeatureName + ')
 	) Result
+	OUTER APPLY (
+							SELECT STUFF((SELECT '', '' + im.IntegrationMethodName
+										FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK)
+											INNER JOIN dbo.IntegrationMethod im WITH(NOLOCK) 
+												ON lim.IntegrationMethodId = im.IntegrationMethodId
+										WHERE lim.LicenseeId = Result.LicenseeId AND im.IntegrationMethodName IS NOT NULL 
+										ORDER BY im.IntegrationMethodId asc
+										FOR XML PATH('''')), 1, 1, '''')
+						) IntegrationName(value)
 	WHERE RowNumber BETWEEN ' + CONVERT(VARCHAR(10),@RowStart) + ' AND ' + CONVERT(VARCHAR(10),@RowEnd) + ''
 	
 	EXEC (@DynamicPIVOT)

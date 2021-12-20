@@ -1,10 +1,5 @@
-USE [bodb_OIC]
-GO
-/****** Object:  StoredProcedure [dbo].[OIC_LicenseeListByType]    Script Date: 09/07/2015 10:18:04 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[OIC_LicenseeListByType]
 	@UserId INT
 AS
@@ -15,6 +10,7 @@ AS
 	DB: DBOIC.bodb_OIC
 	
 	Revisions:
+	- 20211122@Kai: Enhancement of Type of Licensee [#163521]
 	
 	Param's Explanation:
 	
@@ -23,30 +19,11 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	SELECT	LicenseeTypeId
-			,LicenseeTypeName
+	SELECT	TypeId
+			,TypeName
 			,LicenseeId
 			,LicenseeName
 	FROM	dbo.f_LicenseeBelongToLicenseeType (@UserId)
 	WHERE	LicenseeId IS NOT NULL
-	ORDER BY LicenseeTypeId
+	ORDER BY TypeId
 END
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-GO
-GRANT EXECUTE ON [dbo].[OIC_LicenseeListByType] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_LicenseeListByType] TO [vnteam] AS [dbo]

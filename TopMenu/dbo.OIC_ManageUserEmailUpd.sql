@@ -1,5 +1,4 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-
 ALTER PROCEDURE [dbo].[OIC_ManageUserEmailUpd]
 	@UserID					INT
 	,@LicenseeTypeId_Email	XML
@@ -18,6 +17,8 @@ AS
 	Revisions:
 		- 20201022@hogan: Remove email starixsoft from Param's Explanation [RedmineID: #143607]
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
+		- 20211116@Alex: Change Type Of Licensee [RedmineID: #163521]
+
 
 	Param's Explanation:
 		* @LicenseeTypeId_Email:
@@ -43,18 +44,18 @@ BEGIN
 
 		,@log_email		XML
 
-	DECLARE @tblLicenseeTypeEmail TABLE (LicenseeTypeId TINYINT, LicenseeTypeName VARCHAR(40), Email VARCHAR(50))
+	DECLARE @tblLicenseeTypeEmail TABLE (TypeId TINYINT, TypeName VARCHAR(40), Email VARCHAR(50))
 
 	SET @startRun = GETDATE()
 
 	SET @log_email = (
 		SELECT
-			ult.LicenseeTypeId AS '@lti'
-			,lt.LicenseeTypeName AS '@ltn'
+			ult.TypeId AS '@lti'
+			,lt.TypeName AS '@ltn'
 			,ult.Email AS '@em'
 		FROM
-			dbo.UserLicenseeType ult WITH(NOLOCK)
-			INNER JOIN dbo.LicenseeType lt WITH(NOLOCK) ON ult.LicenseeTypeId = lt.LicenseeTypeId
+			dbo.UserLicenseeTypes ult WITH(NOLOCK)
+			INNER JOIN dbo.LicenseeTypes lt WITH(NOLOCK) ON ult.TypeId = lt.TypeId
 		WHERE ult.UserId = @UserID
 		FOR XML PATH('row'), ROOT('ltm')
 	)
@@ -65,17 +66,17 @@ BEGIN
 
 	IF @log_email IS NOT NULL
 	BEGIN TRY
-		INSERT INTO @tblLicenseeTypeEmail (LicenseeTypeId, Email)
+		INSERT INTO @tblLicenseeTypeEmail (TypeId, Email)
 		SELECT
 			t.c.value('@lti', 'tinyint')
 			,t.c.value('@em', 'varchar(50)')
 		FROM @LicenseeTypeId_Email.nodes('root/row') t(c)
 
-		MERGE dbo.UserLicenseeType u
+		MERGE dbo.UserLicenseeTypes u
 		USING (SELECT * FROM @tblLicenseeTypeEmail) t
-			ON u.LicenseeTypeId = t.LicenseeTypeId AND u.UserID = @UserID
+			ON u.TypeId = t.TypeId AND u.UserID = @UserID
 		WHEN MATCHED AND u.Email <> t.Email THEN UPDATE SET u.Email = t.Email
-		WHEN NOT MATCHED BY TARGET THEN INSERT (UserId, LicenseeTypeId, Email) VALUES (@UserId, t.LicenseeTypeId, t.Email)
+		WHEN NOT MATCHED BY TARGET THEN INSERT (UserId, TypeId, Email) VALUES (@UserId, t.TypeId, t.Email)
 		WHEN NOT MATCHED BY SOURCE AND u.UserId = @UserId THEN DELETE;
 
 		IF @@ROWCOUNT = 0
@@ -95,12 +96,12 @@ BEGIN
 
 	SET @log_email = (
 		SELECT
-			ult.LicenseeTypeId AS '@lti'
-			,lt.LicenseeTypeName AS '@ltn'
+			ult.TypeId AS '@lti'
+			,lt.TypeName AS '@ltn'
 			,ult.Email AS '@em'
 		FROM
-			dbo.UserLicenseeType ult WITH(NOLOCK)
-			INNER JOIN dbo.LicenseeType lt WITH(NOLOCK) ON ult.LicenseeTypeId = lt.LicenseeTypeId
+			dbo.UserLicenseeTypes ult WITH(NOLOCK)
+			INNER JOIN dbo.LicenseeTypes lt WITH(NOLOCK) ON ult.TypeId = lt.TypeId
 		WHERE ult.UserId = @UserID
 		FOR XML PATH('row'), ROOT('ltm')
 	)

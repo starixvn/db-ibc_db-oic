@@ -1,5 +1,4 @@
-USE [bodb_OIC]
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_UserListByTOLPositionSel]
 	@UserId					INT,
@@ -14,6 +13,7 @@ AS
 	Task: Get User List by Type of Licensee and Position
 
 	Revisions:
+	- 20211122@Kai: Enhancement of Type of Licensee [#163521]
 
 	Param's Explanation:
 		* @SelectedLicenseeType: list of Type of Licensee
@@ -27,26 +27,22 @@ BEGIN
 	IF @SelectedLicenseeType <> 'All'
 	BEGIN
 		INSERT INTO @tblLicenseeType (LicenseeTypeId)
-		SELECT ul.LicenseeTypeId
-		FROM dbo.UserLicenseeType ul WITH(NOLOCK)
+		SELECT ul.TypeId
+		FROM dbo.UserLicenseeTypes ul WITH(NOLOCK)
 		WHERE ul.UserId = @UserId
-			AND EXISTS (SELECT TOP 1 1 FROM dbo.strSplit(@SelectedLicenseeType, ',') s WHERE ul.LicenseeTypeId = CONVERT(TINYINT, s.val))
+			AND EXISTS (SELECT TOP 1 1 FROM dbo.strSplit(@SelectedLicenseeType, ',') s WHERE ul.TypeId = CONVERT(TINYINT, s.val))
 	END
 	
 	SELECT  DISTINCT ui.UserId
 			,ui.DisplayName
 	FROM	dbo.UserInfo ui WITH(NOLOCK)
-		INNER JOIN UserLicenseeType ul WITH(NOLOCK)
+		INNER JOIN UserLicenseeTypes ul WITH(NOLOCK)
 			ON ui.UserId = ul.UserId
 	WHERE	ui.PositionId = @PositionId
 			AND (
 				@SelectedLicenseeType = 'All'
-				OR EXISTS (SELECT TOP 1 1 FROM @tblLicenseeType lt WHERE ul.LicenseeTypeId = lt.LicenseeTypeId)
+				OR EXISTS (SELECT TOP 1 1 FROM @tblLicenseeType lt WHERE ul.TypeId = lt.LicenseeTypeId)
 			)
 END
 
-GO
-GRANT EXECUTE ON [dbo].[OIC_UserListByTOLPositionSel] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_UserListByTOLPositionSel] TO [vnteam] AS [dbo]
 GO
