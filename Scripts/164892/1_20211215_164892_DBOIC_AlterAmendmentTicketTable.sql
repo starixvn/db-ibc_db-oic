@@ -5,7 +5,7 @@ GO
 /*
 	Created: 20211215@Alex
 	DB: DBOIC.bodb_OIC
-	Task:  #164892
+	Task:  OIC - Enhance Result Amendment/ Recalculation [Redmine:#164892]
 */
 
 ALTER TABLE [dbo].[AmendmentTicket]
