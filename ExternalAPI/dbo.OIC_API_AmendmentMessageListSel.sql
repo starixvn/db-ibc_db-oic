@@ -22,6 +22,7 @@ AS
 		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee back-end
 		- 20170118@Alex    : #89670 - Support to query data by event date
 		- 20180123@Scofield: #89901 - Enhance Result Notification function : sorting records
+		- 20211229@Howard: #166703 - Datetime and time are incompatible in the add operator
 
 	Param's Explanation:		
  */
@@ -36,7 +37,7 @@ BEGIN
 	SELECT	@PageIndex   = @PageIndex, 
 			@RowStart	 = @PageSize * @PageIndex + 1,
 			@RowEnd	     = @RowStart + @PageSize - 1
-	SELECT @ToDate = DATEADD(dd, DATEDIFF(dd, 0, @ToDate), 0) + CAST('23:59:59.999' AS Time)
+	SELECT @ToDate = DATEADD(dd, DATEDIFF(dd, 0, @ToDate), 0) + CAST('23:59:59' AS DATETIME)
 			
 	DECLARE @messageResult TABLE (
 		MessageId 		INT, 
