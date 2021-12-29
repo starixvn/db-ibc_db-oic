@@ -1,6 +1,4 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_OIC]
-GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeProductListSel] 
 	@UserId							INT
@@ -33,6 +31,7 @@ AS
 		- 20170828@Scofield: Update LicenseeStatusIds [#82144]
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
 		- 20211115@Kai: Enhancement of Type of Licensee (Add Platform and IntegrationMethod for licensee) [RedmineID: #163521]
+		- 20211229@Kos: Hotfix - Upgrade SQL Server 2019 [RedmineID: #166701]
 	
 	Param's Explanation:
 		@SelectedProduct: multiple selection
@@ -64,6 +63,7 @@ BEGIN
 	DECLARE @tblLicenseeType	TABLE (LicenseeTypeId TINYINT)
 	DECLARE @tblPlatform	TABLE (PlatformId TINYINT)
 	DECLARE @tblIntegrationMethod	TABLE (IntegrationMethodId TINYINT)
+	DECLARE @tblStatusId	TABLE (StatusId TINYINT)
 	CREATE TABLE #tblLicenseeProduct (LicenseeId INT, ProductId INT, IsFilled BIT)
 	
 	CREATE TABLE #tblResult	(
@@ -149,7 +149,13 @@ BEGIN
 		INSERT INTO @tblIntegrationMethod (IntegrationMethodId)
 		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedIntegrationMethod, ',')
 	END
-					
+
+	IF @LicenseeStatusIds <> 'All'
+	BEGIN
+		INSERT INTO @tblStatusId(StatusId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@LicenseeStatusIds, ',')
+	END
+
 	INSERT INTO #tblResult( 
 			RowNumber
 			,LicenseeId
@@ -173,7 +179,7 @@ BEGIN
 			ON l.PlatformId = pf.PlatformId
 	WHERE	l.TypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
 			AND l.LicenseeName LIKE ISNULL(@LicenseeName,'%') + '%'
-			AND (@LicenseeStatusIds = 'All' OR l.LicenseeStatusId IN (SELECT val FROM dbo.strSplit(@LicenseeStatusIds,',')))
+			AND (@LicenseeStatusIds = 'All' OR l.LicenseeStatusId IN (SELECT StatusId FROM @tblStatusId))
 			AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
 			AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
 	GROUP BY l.LicenseeId

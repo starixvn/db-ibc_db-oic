@@ -1,6 +1,4 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_OIC]
-GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeCategoryListSel]   
 	@UserId							INT  
@@ -27,7 +25,8 @@ AS
 		- 20170828@Scofield: Update LicenseeStatusIds [#82144]
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
 		- 20211112@Kai: Enhancement of Type of Licensee (Add Platform and IntegrationMethod for licensee) [RedmineID: #163521]
-   
+		- 20211229@Kos: Hotfix - Upgrade SQL Server 2019 [RedmineID: #166701]
+
 	Param's Explanation:  
 		@SelectedCategory: support multiple selection  
 		@PageIndex: 0 - the first page  
@@ -49,7 +48,8 @@ BEGIN
 	DECLARE @tblLicenseeCategoryAssigned TABLE (LicenseeId INT)  
 	DECLARE @tblLicenseeType    TABLE (LicenseeTypeId TINYINT)  
 	DECLARE @tblPlatform    TABLE (PlatformId TINYINT) 
-	DECLARE @tblIntegrationMethod    TABLE (IntegrationMethodId TINYINT) 
+	DECLARE @tblIntegrationMethod    TABLE (IntegrationMethodId TINYINT)
+	DECLARE @tblStatusId	TABLE (StatusId TINYINT)
 
 	CREATE TABLE #tblResult (  
 		RowNumber				INT  
@@ -118,6 +118,12 @@ BEGIN
 		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedIntegrationMethod, ',')
 	END
 
+	IF @StatusIds <> 'All'
+	BEGIN
+		INSERT INTO @tblStatusId(StatusId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@StatusIds, ',')
+	END
+
 	INSERT INTO #tblResult(  
 		RowNumber  
 		,LicenseeId  
@@ -139,8 +145,8 @@ BEGIN
 			ON l.TypeId = lt.TypeId
 		INNER JOIN [dbo].[Platform] pf WITH(NOLOCK)
 			ON l.PlatformId = pf.PlatformId
-	WHERE l.TypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)  
-		AND (@StatusIds = 'All' OR ls.LicenseeStatusId IN (SELECT val FROM dbo.strSplit(@StatusIds,',')))  
+	WHERE l.TypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
+		AND (@StatusIds = 'All' OR ls.LicenseeStatusId IN (SELECT StatusId FROM @tblStatusId))
 		AND l.LicenseeName LIKE @LicenseeName + '%'  
 		AND l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeCategoryAssigned)
 		AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
@@ -203,6 +209,5 @@ BEGIN
 		INNER JOIN @tblCategory c   
 			ON c.CategoryId = lc.CategoryId  
 	WHERE t.RowNumber BETWEEN @RowStart AND @RowEnd  
-	
 END
 GO
