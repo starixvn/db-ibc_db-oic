@@ -40,6 +40,7 @@ AS
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
 		- 20211112@Kai: Enhancement of Type of Licensee (Add Platform and IntegrationMethod for licensee) [RedmineID: #163521]
+		- 20211229@Kos: Hotfix - Upgrade SQL Server 2019 [RedmineID: #166701]
 
 	Param's Explanation:
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
@@ -68,6 +69,7 @@ BEGIN
 	DECLARE @tblLicenseeType	TABLE (LicenseeTypeId TINYINT)
 	DECLARE @tblPlatform	TABLE (PlatformId TINYINT)
 	DECLARE @tblIntegrationMethod	TABLE (IntegrationMethodId TINYINT)
+	DECLARE @tblStatusId	TABLE (StatusId TINYINT)
 	DECLARE @tblLicenseeProduct TABLE (LicenseeId INT)
 	DECLARE @tblLicenseeCurrency TABLE (LicenseeId INT)
 	DECLARE @tblLicenseeOddsType TABLE (LicenseeId INT)
@@ -157,6 +159,12 @@ BEGIN
 		INSERT INTO @tblIntegrationMethod (IntegrationMethodId)
 		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedIntegrationMethod, ',')
 	END
+
+	IF @LicenseeStatusIds <> 'All'
+	BEGIN
+		INSERT INTO @tblStatusId(StatusId)
+		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@LicenseeStatusIds, ',')
+	END
 	
 	IF @SelectedCurrency <> 'All'
 	BEGIN
@@ -165,7 +173,7 @@ BEGIN
 		FROM dbo.LicenseeCurrency lc WITH(NOLOCK)
 		WHERE lc.CurrencyId IN (SELECT val FROM dbo.strSplit(@SelectedCurrency,','))  
 	END
-	
+
 	INSERT INTO @tblLicenseePM (LicenseeId, UserId, DisplayName)
 	SELECT LicenseeId, uip.UserId, uip.DisplayName
 	FROM dbo.UserLicensee ulp WITH(NOLOCK)
@@ -229,7 +237,7 @@ BEGIN
 	WHERE	l.LicenseeName LIKE ISNULL(@LicenseeName,'%') + '%'
 			AND l.TypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
 			AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
-			AND (@LicenseeStatusIds = 'All' OR ls.LicenseeStatusId IN (SELECT val FROM dbo.strSplit(@LicenseeStatusIds,','))) 				
+			AND (@LicenseeStatusIds = 'All' OR ls.LicenseeStatusId IN (SELECT StatusId FROM @tblStatusId))
 			AND (@SelectedProduct = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeProduct))
 			AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
 			AND l.LicenseeId IN (SELECT LicenseeId FROM  @tblLicenseePM)
@@ -310,5 +318,4 @@ BEGIN
 
 	DROP TABLE #tblResult
 END
-
 GO
