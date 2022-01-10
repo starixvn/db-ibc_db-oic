@@ -23,7 +23,7 @@ AS
 		- 20170118@Alex    : #89670 - Support to query data by event date
 		- 20180123@Scofield: #89901 - Enhance Result Notification function : sorting records
 		- 20211229@Howard: #166703 - Datetime and time are incompatible in the add operator
-
+		- 20211230@Howard: #164893 - Enhance Resettlement - return SessionID
 	Param's Explanation:		
  */
 BEGIN
@@ -50,30 +50,31 @@ BEGIN
 		EventDate		DateTime,
 		IsRead			BIT,
 		DataFilePath	VARCHAR(MAX),
+		SessionID	    NVARCHAR(300),
 		TotalRecords	INT)	
 	 
 	;WITH tempMessage AS
 	(SELECT ROW_NUMBER() OVER(ORDER BY am.EventDate DESC, am.MessageID DESC) AS RowNumber,
-		am.MessageID, am.SubjectEn, am.SubjectCh, am.SubjectCs, am.ContentEn, am.ContentCh, am.ContentCs, am.EventDate, at.DataFilePath, 
+		am.MessageID, am.SubjectEn, am.SubjectCh, am.SubjectCs, am.ContentEn, am.ContentCh, am.ContentCs, am.EventDate, at.DataFilePath, at.SessionID,
 		ISNULL(mu.IsRead, 0) AS IsRead
 	FROM dbo.AmendmentMessage am WITH(NOLOCK)
 	INNER JOIN dbo.AmendmentTicket at WITH(NOLOCK) ON am.MessageID = at.MessageID
-	LEFT JOIN dbo.ExternalMessageUser mu ON am.MessageID = mu.MessageID AND mu.MessageType = @AmendmentMessageType 
+	LEFT JOIN dbo.ExternalMessageUser mu WITH(NOLOCK) ON am.MessageID = mu.MessageID AND mu.MessageType = @AmendmentMessageType 
 		AND mu.UserName = @UserName AND mu.LicenseeName = @LicenseeName
 	WHERE am.Status = @ActiveStatus AND (am.EventDate BETWEEN @FromDate AND @ToDate) AND am.IsTest = 0
 		AND at.LicenseeName = @LicenseeName
 		AND (@IsOnlyUnread = 0 OR mu.IsRead IS NULL OR mu.IsRead = 0)
 	)
 		
-	INSERT INTO @messageResult(MessageID, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, EventDate, DataFilePath, IsRead, TotalRecords)
-	SELECT tmp.MessageID, tmp.SubjectEn, tmp.SubjectCh, tmp.SubjectCs, tmp.ContentEn, tmp.ContentCh, tmp.ContentCs, tmp.EventDate, tmp.DataFilePath, tmp.IsRead,
+	INSERT INTO @messageResult(MessageID, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, EventDate, DataFilePath, SessionID, IsRead, TotalRecords)
+	SELECT tmp.MessageID, tmp.SubjectEn, tmp.SubjectCh, tmp.SubjectCs, tmp.ContentEn, tmp.ContentCh, tmp.ContentCs, tmp.EventDate, tmp.DataFilePath, tmp.SessionID, tmp.IsRead,
 		(SELECT MAX(RowNumber) FROM tempMessage) AS TotalRecords
 	FROM tempMessage tmp
 	WHERE tmp.RowNumber BETWEEN @RowStart AND @RowEnd
 	ORDER BY tmp.EventDate DESC
 	
 	-- Select Results
-	SELECT MessageID, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, EventDate, DataFilePath, IsRead
+	SELECT MessageID, SubjectEn, SubjectCh, SubjectCs, ContentEn, ContentCh, ContentCs, EventDate, DataFilePath, SessionID, IsRead
 	FROM @messageResult
 	
 	SET @TotalRecords = (SELECT TOP 1 TotalRecords FROM @messageResult)
