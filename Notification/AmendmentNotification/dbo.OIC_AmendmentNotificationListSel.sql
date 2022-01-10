@@ -23,6 +23,8 @@ AS
 		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
 		- 20180123@Scofield: #89901 - Enhance Result Notification function : sorting records, update @SelectedSiteNames
 		- 20180202@Scofield: #90464 - Add PublishedDate
+		- 20211215@Alex: #164892 - Enhance Result Amendment/Recalculation List Function
+		
 
 	Param's Explanation:
 		@@AmendmentStatus: -1: All, 0: New, 1: Active, 2: Inactive		
@@ -83,7 +85,7 @@ BEGIN
 	SELECT MessageId, Subject, Content, Status, EventDate, PublishedDate
 	FROM @messageResult
 	
-	SELECT TicketId, MessageId, LicenseeName AS SiteName, DataFilePath
+	SELECT TicketId, MessageId, LicenseeName AS SiteName, DataFilePath, SessionID
 	FROM dbo.AmendmentTicket WITH(NOLOCK)
 	WHERE MessageId IN (SELECT MessageId FROM @messageResult)		
 	
