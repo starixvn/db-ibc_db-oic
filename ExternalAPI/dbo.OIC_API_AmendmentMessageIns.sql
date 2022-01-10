@@ -1,8 +1,5 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
-USE [bodb_OIC]
-GO
-
 ALTER PROCEDURE [dbo].[OIC_API_AmendmentMessageIns]
 	 @Title			NVARCHAR(300)
 	,@ReceivedDate	DATETIME
@@ -23,13 +20,14 @@ AS
 	Revisions:	
 		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
 		- 20180118@Alex	   : #89670 - Insert Event Date
+		- 20211215@Kai	   : #164892 - Enhance Result Amendment
 	Param's Explanation:
 		@SiteId: 0 - Special delete
 				 -1 - LRF
 		@Tickets: xml format
 			<root>
-				<ticket name="licensee name1" path="file path1"/>
-				<ticket name="licensee name2" path="file path2"/>
+				<ticket name="licensee name1" session="session1"/>
+				<ticket name="licensee name2" session="session2"/>
 			</root>
 	     status column = 0 -- for new result.
 */
@@ -45,8 +43,8 @@ BEGIN
 		
 		DECLARE @MessageId INT = SCOPE_IDENTITY()
 		
-		INSERT INTO dbo.AmendmentTicket(LicenseeName, DataFilePath, MessageID)
-		SELECT t.c.value('@name','nvarchar(300)'), t.c.value('@path','nvarchar(300)'), @MessageId
+		INSERT INTO dbo.AmendmentTicket(LicenseeName, DataFilePath, MessageID, SessionId)
+		SELECT t.c.value('@name','nvarchar(300)'), NULL, @MessageId, t.c.value('@session','nvarchar(300)')
 		FROM @Tickets.nodes('root/ticket') t(c)
 				
 	END TRY
