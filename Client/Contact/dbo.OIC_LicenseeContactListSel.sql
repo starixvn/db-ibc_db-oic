@@ -17,6 +17,7 @@ AS
     Revisions:
 		- 20160920@Percy: Add new return field: Change History [RedmineID: #]
 		- 20211109@Alex: Change Type Of Licensee [RedmindId: #163521]
+		- 20220117@Kai: New Licensee Contact function [Redmine:#165286]
     
     Param's Explanation:
 */
@@ -45,6 +46,7 @@ BEGIN
     SELECT ROW_NUMBER() OVER (ORDER BY lc.IsMain DESC, lc.ContactName) AS RowNumber
 			,lc.ContactID
 			,lc.ContactName
+			,lc.IsLicenseeContact
 			,lc.ContactType 
 			,lc.ContactPosition		AS Position
 			,lc.ContactDepartment	AS Department
@@ -128,6 +130,7 @@ BEGIN
 	
 	SELECT	r.ContactID
 			,ContactName
+			,r.IsLicenseeContact
 			,ContactType
 			,Position
 			,Department
