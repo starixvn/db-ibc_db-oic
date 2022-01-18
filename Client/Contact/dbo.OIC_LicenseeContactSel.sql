@@ -11,7 +11,8 @@ AS
 	Revisions:
 		- 20210913@Hogan: return IsMain column [RedmineID: #160430]
 		- 20211109@Alex: Change Type Of Licensee [RedmindId: #163521]
-	
+		- 20220117@Kai: New Licensee Contact function [Redmine:#165286]
+
 	Param's Explanation:
 	*
 */
@@ -23,6 +24,7 @@ BEGIN
 			,l.TypeId
 			,l.PlatformId
 			,c.ContactType
+			,c.IsLicenseeContact
 			,c.ContactName
 			,c.ContactPosition AS Position
 			,c.ContactDepartment AS Department
