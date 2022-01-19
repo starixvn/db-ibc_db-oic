@@ -1,6 +1,4 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_OIC]
-GO
 
 ALTER PROCEDURE [dbo].[OIC_LogListSel_Details]
 	@ActionID INT
@@ -25,6 +23,7 @@ AS
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
 		- 20211005@Alex: Support Product Type on Client Product [RedmineID: #161508]
 		- 20211115@Alex: Change Type Of Licensee [RedmindId: #163521]
+		- 20220117@Kai: New Licensee Contact function [Redmine:#165286]
 		
 */
 BEGIN
@@ -786,6 +785,7 @@ BEGIN
 		DECLARE
 			@LicenseeId INT,
 			@LicenseeName NVARCHAR(100),
+			@LicenseeContact NVARCHAR(10),
 			@Contact_Type NVARCHAR(10),
 			@Contact_Name NVARCHAR(100),
 			@Contact_Position NVARCHAR(100),
@@ -799,6 +799,7 @@ BEGIN
 
 			@LicenseeId_old INT,
 			@LicenseeName_old NVARCHAR(100),
+			@LicenseeContact_old NVARCHAR(10),
 			@Contact_Type_old NVARCHAR(10),
 			@Contact_Name_old NVARCHAR(100),
 			@Contact_Position_old NVARCHAR(100),
@@ -812,6 +813,7 @@ BEGIN
 
 		SELECT
 			@LicenseeId = d.c.value('@lid', 'INT'), -- client
+			@LicenseeContact = d.c.value('@lc', 'NVARCHAR(10)'), -- licenseee contact
 			@Contact_Type = d.c.value('@lcct', 'NVARCHAR(10)'), -- contact type
 			@Contact_Name = d.c.value('@lccn', 'NVARCHAR(100)'), -- contact name
 			@Contact_Position = d.c.value('@lcp', 'NVARCHAR(100)'), -- contact position
@@ -823,6 +825,7 @@ BEGIN
 			@Contact_Remark = d.c.value('@lcr', 'NVARCHAR(600)'), -- contact remark
 
 			@LicenseeId_old = od.c.value('@lid', 'INT'), -- client
+			@LicenseeContact_old = od.c.value('@lc', 'NVARCHAR(10)'), -- licenseee contact
 			@Contact_Type_old = od.c.value('@lcct', 'NVARCHAR(10)'), -- contact type
 			@Contact_Name_old = od.c.value('@lccn', 'NVARCHAR(100)'), -- contact name
 			@Contact_Position_old = od.c.value('@lcp', 'NVARCHAR(100)'), -- contact position
@@ -873,20 +876,24 @@ BEGIN
 
 		SELECT	@Contact_Type = CASE WHEN @Contact_Type = N'1' THEN N'Group' ELSE N'Individual' END,
 				@Contact_Type_old = CASE WHEN @Contact_Type_old = N'1' THEN N'Group' ELSE N'Individual' END
+
+		SELECT	@LicenseeContact = CASE WHEN @LicenseeContact = N'1' THEN N'Yes' ELSE N'No' END,
+				@LicenseeContact_old = CASE WHEN @LicenseeContact_old = N'1' THEN N'Yes' ELSE N'No' END
 		
 		INSERT INTO @Result (ID, Field, NewValue, OldValue)
 		VALUES
 			(1, N'Site name', @LicenseeName, @LicenseeName_old),
-			(2, N'Contact type', @Contact_Type, @Contact_Type_old),
-			(3, N'Name', @Contact_Name, @Contact_Name_old),
-			(4, N'Position', @Contact_Position, @Contact_Position_old),
-			(5, N'Department', @Contact_Department, @Contact_Department_old),
-			(6, N'Email address', @Contact_Email, @Contact_Email_old),
-			(7, N'Skype username', @Contact_Skype, @Contact_Skype_old),
-			(8, N'Mobile number', @Contact_Mobile, @Contact_Mobile_old),
-			(9, N'Landline', @Contact_Landline, @Contact_Landline_old),
-			(10, N'Remark', @Contact_Remark, @Contact_Remark_old),
-			(11, N'Category - List type', @Contact_Category, @Contact_Category_old)
+			(2, N'Licensee Contact',@LicenseeContact,@LicenseeContact_old),
+			(3, N'Contact type', @Contact_Type, @Contact_Type_old),
+			(4, N'Name', @Contact_Name, @Contact_Name_old),
+			(5, N'Position', @Contact_Position, @Contact_Position_old),
+			(6, N'Department', @Contact_Department, @Contact_Department_old),
+			(7, N'Email address', @Contact_Email, @Contact_Email_old),
+			(8, N'Skype username', @Contact_Skype, @Contact_Skype_old),
+			(9, N'Mobile number', @Contact_Mobile, @Contact_Mobile_old),
+			(10, N'Landline', @Contact_Landline, @Contact_Landline_old),
+			(11, N'Remark', @Contact_Remark, @Contact_Remark_old),
+			(12, N'Category - List type', @Contact_Category, @Contact_Category_old)
 	END
 	ELSE IF @LogActionId IN (302,303) -- Insert/Delete Category - Client
 	BEGIN

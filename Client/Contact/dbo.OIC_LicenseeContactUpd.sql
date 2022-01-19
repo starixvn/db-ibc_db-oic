@@ -166,6 +166,7 @@ BEGIN
 				,c.ContactLandline		AS '@lcll'
 				,c.ContactType			AS '@lcct'
 				,c.Remark				AS '@lcr'
+				,c.IsLicenseeContact	AS '@lc'
 				,@log_category
 		FROM dbo.Contact AS c WITH (NOLOCK)
 		WHERE c.ContactID = @ContactId
