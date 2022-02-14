@@ -13,3 +13,6 @@ ALTER TABLE [dbo].[Contact]
 ADD [IsLicenseeContact] BIT NOT NULL DEFAULT 0;
 GO
 
+ALTER TABLE [dbo].[UserLog_RunSP]
+ADD [ExtraInfo] NVARCHAR(100) NULL
+GO

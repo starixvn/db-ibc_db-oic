@@ -17,8 +17,10 @@ AS
     Revisions:
 		- 20160920@Percy: Add new return field: Change History [RedmineID: #]
 		- 20211109@Alex: Change Type Of Licensee [RedmindId: #163521]
-		- 20220117@Kai: New Licensee Contact function [Redmine:#165286]
-    
+		- 20220117@Kai/Howard: New Licensee Contact function [Redmine:#165286]
+							   - Kai: Add Licensee Contact field
+							   - Howard: Support DoneBy from LAP 
+
     Param's Explanation:
 */
 BEGIN
@@ -92,13 +94,13 @@ BEGIN
 	SELECT  @LogActionId_Ins = LogActionId FROM dbo.LogAction WITH(NOLOCK) WHERE SPName = 'OIC_LicenseeContactIns'
 	SELECT  @LogActionId_Upd = LogActionId FROM dbo.LogAction WITH(NOLOCK) WHERE SPName = 'OIC_LicenseeContactUpd'
 
-	CREATE TABLE #LogContact (Id BIGINT PRIMARY KEY, LogActionId INT, UserId INT, LogDate DATETIME, ContactId INT)
-	INSERT INTO  #LogContact (Id, LogActionId, UserId, LogDate, ContactId)
+	CREATE TABLE #LogContact (Id BIGINT PRIMARY KEY, LogActionId INT, UserId INT, ExtraInfo NVARCHAR(100), LogDate DATETIME, ContactId INT)
+	INSERT INTO  #LogContact (Id, LogActionId, UserId, ExtraInfo, LogDate, ContactId)
 	SELECT
-		A.Id, A.LogActionId, A.UserId, CONVERT(DATE, A.LogDate) AS LogDate,
+		A.Id, A.LogActionId, A.UserId, A.ExtraInfo, CONVERT(DATE, A.LogDate) AS LogDate,
 		d.c.value('@lcid','INT') AS ContactId -- ContactId
 	FROM (
-		SELECT u.Id, u.LogActionId, u.UserId, u.LogDate, CONVERT(XML, ud.Data) AS Data
+		SELECT u.Id, u.LogActionId, u.UserId, u.ExtraInfo, u.LogDate, CONVERT(XML, ud.Data) AS Data
 		FROM dbo.UserLog_RunSP u WITH(NOLOCK)
 			INNER JOIN dbo.UserLog_RunSP_Detail ud WITH(NOLOCK) ON u.Id = ud.Id
 		WHERE u.LogActionId IN (@LogActionId_Ins, @LogActionId_Upd)
@@ -109,18 +111,29 @@ BEGIN
 	CREATE NONCLUSTERED INDEX IX_ContactId ON #LogContact (ContactId, LogActionId)
 
 	;WITH CTE_Update AS (
-		SELECT u1.DisplayName, A.LogDate, A.ContactId FROM (
+		SELECT  
+		A.LogDate, A.ContactId,
+		CASE
+			WHEN A.UserId = -1 THEN A.ExtraInfo
+			ELSE u1.DisplayName
+		END AS DisplayName
+		FROM (
 			SELECT ROW_NUMBER() OVER(PARTITION BY ContactId ORDER BY Id DESC) AS RowNumber
-					, UserId, LogDate, ContactId
+					, UserId, ExtraInfo, LogDate, ContactId
 			FROM #LogContact
 			WHERE LogActionId = @LogActionId_Upd
 		) A
 		LEFT JOIN dbo.UserInfo u1 WITH(NOLOCK) ON A.UserId = u1.UserId
 		WHERE A.RowNumber = 1
 	), CTE_Create AS (
-		SELECT u2.DisplayName, B.LogDate, B.ContactId FROM (
+		SELECT B.LogDate, B.ContactId,
+		CASE
+			WHEN B.UserId = -1 THEN B.ExtraInfo
+			ELSE u2.DisplayName
+		END AS DisplayName
+		FROM (
 			SELECT ROW_NUMBER() OVER(PARTITION BY ContactId ORDER BY Id DESC) AS RowNumber
-					, UserId, LogDate, ContactId
+					, UserId, ExtraInfo, LogDate, ContactId
 			FROM #LogContact
 			WHERE LogActionId = @LogActionId_Ins
 		) B

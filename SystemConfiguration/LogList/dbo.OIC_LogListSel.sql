@@ -1,4 +1,6 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+USE [bodb_OIC]
+GO
 
 ALTER PROCEDURE [dbo].[OIC_LogListSel]
 	@UserId			INT,
@@ -23,8 +25,9 @@ AS
 		- 20171019@Scofield: Update log for update Amendment Notification [#84004]
 		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
 		- 20200914@Howard: Use linked server DBNAP [RedmineID: #141531]
-		- 20211006@Alex: Add new function: Type Of Status Product [RedmineID: #161508]
+		- 20211006@Alex: Add new function: Type Of Status Product [RedmineID: #161508] 
 		- 20211207@Kai: Enhancement of Type of Licensee [RedmineID: #163521]
+		- 20220214@Howard: Licensee Contact - support DoneBy from LAP [Redmine:#165286]
 
 	Param's Explanation:
 		- @ActionID: '1,2' -- List of LogActionID
@@ -56,29 +59,31 @@ BEGIN
 
 	DECLARE @Action TABLE (ActionID INT)
 
-	IF EXISTS (SELECT TOP 1 1 FROM @ModifyUser)
+	IF ISNULL(@ActionID, '') <> 'All'
 	BEGIN
-		IF ISNULL(@ActionID, '') <> 'All'
-		BEGIN
-			INSERT INTO @Action (ActionID)
-			SELECT DISTINCT CONVERT(INT, val) FROM dbo.strSplit(@ActionID, ',')
-		END
+		INSERT INTO @Action (ActionID)
+		SELECT DISTINCT CONVERT(INT, val) FROM dbo.strSplit(@ActionID, ',')
+	END
 		
-		INSERT INTO #LogList (LogID, LogDate, ActionID, OldAction, NewAction, DoneBy)
-		SELECT DISTINCT ul.Id, ul.LogDate, ul.LogActionId, uld.OldData, uld.Data, m.Name
-		FROM dbo.UserLog_RunSP ul WITH(NOLOCK)
-			INNER JOIN dbo.UserLog_RunSP_Detail uld WITH(NOLOCK) ON ul.Id = uld.Id
-			INNER JOIN @ModifyUser m ON ul.UserId = m.ID
-		WHERE
-			(@ActionID = 'All' OR ul.LogActionId IN (SELECT ActionID FROM @Action))
-			AND ul.LogDate BETWEEN @FDate AND @TDate
-			AND EXISTS (
-				SELECT TOP 1 1
-				FROM dbo.LogActionType lt WITH(NOLOCK)
-					INNER JOIN dbo.LogAction l WITH(NOLOCK) ON lt.LogActionTypeId = l.LogActionTypeId
-				WHERE l.[Enable] = 1 AND ul.LogActionId  = l.LogActionId
-			) 
+	INSERT INTO #LogList (LogID, LogDate, ActionID, OldAction, NewAction, DoneBy)
+	SELECT DISTINCT ul.Id, ul.LogDate, ul.LogActionId, uld.OldData, uld.Data, ISNULL(m.Name, ul.ExtraInfo)
+	FROM dbo.UserLog_RunSP ul WITH(NOLOCK)
+		INNER JOIN dbo.UserLog_RunSP_Detail uld WITH(NOLOCK) ON ul.Id = uld.Id
+		LEFT JOIN @ModifyUser m ON ul.UserId = m.ID
+	WHERE (m.ID IS NOT NULL  
+			OR (ul.UserId = -1 AND ul.ExtraInfo LIKE @DoneBy) -- from LAP
+		)  
+		AND (@ActionID = 'All' OR ul.LogActionId IN (SELECT ActionID FROM @Action))
+		AND ul.LogDate BETWEEN @FDate AND @TDate
+		AND EXISTS (
+			SELECT TOP 1 1
+			FROM dbo.LogActionType lt WITH(NOLOCK)
+				INNER JOIN dbo.LogAction l WITH(NOLOCK) ON lt.LogActionTypeId = l.LogActionTypeId
+			WHERE l.[Enable] = 1 AND ul.LogActionId  = l.LogActionId
+		) 
 
+	IF EXISTS (SELECT TOP 1 1 FROM #LogList)
+	BEGIN
 		-- Target: Client
 		IF EXISTS (SELECT TOP 1 1 FROM dbo.LogAction WITH(NOLOCK) WHERE LogActionTypeId = 1 AND (@ActionID = 'All' OR LogActionId IN (SELECT ActionID FROM @Action)))
 		BEGIN
@@ -147,7 +152,7 @@ BEGIN
 				CROSS APPLY A.[Target].nodes('r/lp/row') d(c)
 			WHERE d.c.value('@pn','VARCHAR(100)') LIKE @Target
 		END
-		
+	
 		-- Target: Type Of Licensee
 		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (3000, 3001, 3002)))
 		BEGIN
@@ -162,7 +167,7 @@ BEGIN
 				CROSS APPLY A.[Target].nodes('r') d(c)
 			WHERE d.c.value('@ltn','VARCHAR(100)') LIKE @Target
 		END
-		
+	
 		-- Target: Type Of Status Product
 		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (3015)))
 		BEGIN
@@ -177,7 +182,7 @@ BEGIN
 				CROSS APPLY A.[Target].nodes('r') d(c)
 			WHERE d.c.value('@pn','VARCHAR(100)') LIKE @Target
 		END
-		
+	
 		-- Target: Feature
 		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (3009, 3010, 3011, 500)))
 		BEGIN
@@ -219,54 +224,6 @@ BEGIN
 			WHERE d.c.value('@cn','VARCHAR(100)') LIKE @Target
 		END
 		
-		-- Target: User
-		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (2000, 2001, 2002, 3012, 3013)))
-		BEGIN
-			INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy)
-			SELECT DISTINCT A.LogID, A.LogDate, A.[Action], d.c.value('@udn','VARCHAR(100)'), A.DoneBy
-			FROM (
-				SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], CONVERT(XML, ISNULL(ISNULL(ll.NewAction, ll.OldAction), N'<r></r>')) AS [Target], ll.DoneBy
-				FROM #LogList ll
-					INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
-				WHERE la.LogActionId IN (2000, 3012)
-			) A
-				CROSS APPLY A.[Target].nodes('r') d(c)
-			WHERE d.c.value('@udn','VARCHAR(100)') LIKE @Target
-
-			INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy)
-			SELECT DISTINCT A.LogID, A.LogDate, A.[Action], u.DisplayName, A.DoneBy
-			FROM (
-				SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], CONVERT(XML, ISNULL(ISNULL(ll.NewAction, ll.OldAction), N'<r></r>')) AS [Target], ll.DoneBy
-				FROM #LogList ll
-					INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
-				WHERE la.LogActionId IN (2001, 3013, 3014)
-			) A
-				CROSS APPLY A.[Target].nodes('r') d(c)
-				INNER JOIN dbo.UserInfo u WITH(NOLOCK) ON d.c.value('@uid','VARCHAR(100)') = u.UserId
-			WHERE u.DisplayName LIKE @Target
-
-			-- get log update user password from NAP Admin --
-			INSERT INTO #LogList (LogID, LogDate, ActionID, OldAction, NewAction, DoneBy)
-			SELECT n.Id, n.LogDate, 2002, nd.Data, nd.OldData, m.Name
-			FROM DBNAP.bodb_NAPLOG.dbo.NAPLog_RUNSP n WITH(NOLOCK)
-				INNER JOIN DBNAP.bodb_NAPLOG.dbo.NAPLOG_RUNSP_Detail nd WITH(NOLOCK) ON n.Id = nd.ID
-				INNER JOIN @ModifyUser m ON n.UserId = m.ID
-			WHERE n.LogDate BETWEEN @FDate AND @TDate
-				AND n.ActionId = 3 AND n.siteID = 24 -- OIC /*89: local, 24: UAT, PRO*/
-
-			INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy, IsDetail)
-			SELECT DISTINCT A.LogID, A.LogDate, A.[Action], u.DisplayName, A.DoneBy, 0
-			FROM (
-				SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], CONVERT(XML, ISNULL(ISNULL(ll.NewAction, ll.OldAction), N'<r></r>')) AS [Target], ll.DoneBy
-				FROM #LogList ll
-					INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
-				WHERE la.LogActionId = 2002
-			) A
-				CROSS APPLY A.[Target].nodes('r') d(c)
-				INNER JOIN dbo.UserInfo u WITH(NOLOCK) ON d.c.value('@ui','VARCHAR(100)') = u.UserId
-			WHERE u.DisplayName LIKE @Target
-		END
-		
 		-- Target Notification
 		IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (4006, 4009)))			
 		BEGIN
@@ -279,6 +236,55 @@ BEGIN
 				WHERE la.LogActionId IN (4006, 4009)
 			) A			
 		END
+	END
+
+
+	-- Target: User
+	IF (EXISTS (SELECT TOP 1 1 FROM @ModifyUser) AND (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (2000, 2001, 2002, 3012, 3013))))
+	BEGIN
+		INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy)
+		SELECT DISTINCT A.LogID, A.LogDate, A.[Action], d.c.value('@udn','VARCHAR(100)'), A.DoneBy
+		FROM (
+			SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], CONVERT(XML, ISNULL(ISNULL(ll.NewAction, ll.OldAction), N'<r></r>')) AS [Target], ll.DoneBy
+			FROM #LogList ll
+				INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
+			WHERE la.LogActionId IN (2000, 3012)
+		) A
+			CROSS APPLY A.[Target].nodes('r') d(c)
+		WHERE d.c.value('@udn','VARCHAR(100)') LIKE @Target
+
+		INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy)
+		SELECT DISTINCT A.LogID, A.LogDate, A.[Action], u.DisplayName, A.DoneBy
+		FROM (
+			SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], CONVERT(XML, ISNULL(ISNULL(ll.NewAction, ll.OldAction), N'<r></r>')) AS [Target], ll.DoneBy
+			FROM #LogList ll
+				INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
+			WHERE la.LogActionId IN (2001, 3013, 3014)
+		) A
+			CROSS APPLY A.[Target].nodes('r') d(c)
+			INNER JOIN dbo.UserInfo u WITH(NOLOCK) ON d.c.value('@uid','VARCHAR(100)') = u.UserId
+		WHERE u.DisplayName LIKE @Target
+
+		-- get log update user password from NAP Admin --
+		INSERT INTO #LogList (LogID, LogDate, ActionID, OldAction, NewAction, DoneBy)
+		SELECT n.Id, n.LogDate, 2002, nd.Data, nd.OldData, m.Name
+		FROM DBNAP.bodb_NAPLOG.dbo.NAPLog_RUNSP n WITH(NOLOCK)
+			INNER JOIN DBNAP.bodb_NAPLOG.dbo.NAPLOG_RUNSP_Detail nd WITH(NOLOCK) ON n.Id = nd.ID
+			INNER JOIN @ModifyUser m ON n.UserId = m.ID
+		WHERE n.LogDate BETWEEN @FDate AND @TDate
+			AND n.ActionId = 3 AND n.siteID = 24 -- OIC /*89: local, 24: UAT, PRO*/
+
+		INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy, IsDetail)
+		SELECT DISTINCT A.LogID, A.LogDate, A.[Action], u.DisplayName, A.DoneBy, 0
+		FROM (
+			SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], CONVERT(XML, ISNULL(ISNULL(ll.NewAction, ll.OldAction), N'<r></r>')) AS [Target], ll.DoneBy
+			FROM #LogList ll
+				INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
+			WHERE la.LogActionId = 2002
+		) A
+			CROSS APPLY A.[Target].nodes('r') d(c)
+			INNER JOIN dbo.UserInfo u WITH(NOLOCK) ON d.c.value('@ui','VARCHAR(100)') = u.UserId
+		WHERE u.DisplayName LIKE @Target
 	END
 
 	SELECT @TotalRecords = COUNT(*) FROM #Result
