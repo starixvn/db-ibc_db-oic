@@ -874,11 +874,11 @@ BEGIN
 		SELECT	@LicenseeName = LicenseeName FROM dbo.Licensee WITH(NOLOCK) WHERE LicenseeId = @LicenseeId
 		SELECT	@LicenseeName_old = LicenseeName FROM dbo.Licensee WITH(NOLOCK) WHERE LicenseeId = @LicenseeId_old
 
-		SELECT	@Contact_Type = CASE WHEN @Contact_Type = N'1' THEN N'Group' ELSE N'Individual' END,
-				@Contact_Type_old = CASE WHEN @Contact_Type_old = N'1' THEN N'Group' ELSE N'Individual' END
+		SELECT	@Contact_Type = CASE WHEN @Contact_Type = N'1' THEN N'Group' WHEN @Contact_Type = N'0' THEN N'Individual' END,
+				@Contact_Type_old = CASE WHEN @Contact_Type_old = N'1' THEN N'Group' WHEN @Contact_Type_old = N'0'THEN N'Individual' END
 
-		SELECT	@LicenseeContact = CASE WHEN @LicenseeContact = N'1' THEN N'Yes' ELSE N'No' END,
-				@LicenseeContact_old = CASE WHEN @LicenseeContact_old = N'1' THEN N'Yes' ELSE N'No' END
+		SELECT	@LicenseeContact = CASE WHEN @LicenseeContact = N'1' THEN N'Yes' WHEN @LicenseeContact = N'0' THEN N'No' END,
+				@LicenseeContact_old = CASE WHEN @LicenseeContact_old = N'1' THEN N'Yes' WHEN @LicenseeContact_old = N'0'THEN N'No' END
 		
 		INSERT INTO @Result (ID, Field, NewValue, OldValue)
 		VALUES
