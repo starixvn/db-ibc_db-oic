@@ -35,8 +35,6 @@ BEGIN
 	FROM dbo.Licensee l WITH(NOLOCK)
 	WHERE l.RegisteredLicenseeName =  @SiteName
 
-	SELECT @ContactName = '%' + LTRIM(RTRIM(ISNULL(@ContactName, ''))) + '%'
-
 	SELECT	c.ContactID
 			,c.ContactType
 			,c.ContactName
@@ -119,7 +117,7 @@ BEGIN
 			  ) AS CcListInt
 			,c.IsMain
 	FROM dbo.Contact c WITH(NOLOCK)
-	WHERE c.LicenseeId = @LicenseeId AND c.IsLicenseeContact = 1 AND c.ContactName LIKE @ContactName
+	WHERE c.LicenseeId = @LicenseeId AND c.IsLicenseeContact = 1 AND c.ContactName LIKE '%' + LTRIM(RTRIM(ISNULL(@ContactName, ''))) + '%'
 	ORDER BY c.IsMain DESC, c.ContactName ASC
 
 END

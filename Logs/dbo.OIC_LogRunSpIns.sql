@@ -21,7 +21,6 @@ AS
 	
 	Revisions:
 		- 20161019@Percy: Support test version (xtest, xpre, UAT1, UAT2, UAT3, UAT4) [RedmineID: #64712]
-		- 20161020@Percy: Support test version (xtest, xpre, UAT1, UAT2, UAT3, UAT4) [RedmineID: #64712]
 		- 20220214@Howard: Support Licensee Contact [Redmine:#165286]
 
 	Param's Explanation:
