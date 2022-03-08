@@ -25,6 +25,7 @@ AS
 		- 20211115@Alex: Change Type Of Licensee [RedmindId: #163521]
 		- 20220117@Kai: New Licensee Contact function [Redmine:#165286]
 		- 20220504@Kai: Add Subsidiary for Licensee Contact [Redmine:#170641]
+		- 20220309@Kai: Copy contact list for licensees [RedmindId: #161538]
 		
 */
 BEGIN
@@ -781,7 +782,7 @@ BEGIN
 		VALUES
 			(1, N'Group name', @LicenseeGroupName, @LicenseeGroupName_old)
 	END
-	ELSE IF @LogActionId IN (100,101,102) -- Insert/Update/Delete Contact
+	ELSE IF @LogActionId IN (100,101,102,103) -- Insert/Update/Delete/Copy Contact
 	BEGIN
 		DECLARE
 			@LicenseeId INT,
