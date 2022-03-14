@@ -1,6 +1,6 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[OIC_ContactListSel]
-	@SelectedContact	NVARCHAR(1000)    = ''
+	@SelectedContact	VARCHAR(2200)    = ''
     
 AS
 /*
@@ -17,10 +17,15 @@ AS
 */
 BEGIN
     SET NOCOUNT ON
-    
+	
+    DECLARE @tblContactList TABLE(ContactId INT)
 	DECLARE @ToList		VARCHAR(1000)
 			,@CcList	VARCHAR(1000)
-
+			
+	INSERT INTO @tblContactList(ContactId)
+	SELECT CONVERT(INT, val) AS ContactId 
+	FROM dbo.strSplit(@SelectedContact, ',')
+	
     SELECT	lc.ContactID		
 			,lc.LicenseeId
 			,lc.ContactName
@@ -51,5 +56,5 @@ BEGIN
 			,lc.IsMain
 			,lc.IsLicenseeContact
     FROM	dbo.Contact lc WITH(NOLOCK)
-    WHERE	lc.ContactID IN (SELECT CONVERT(INT, val) AS ContactID FROM dbo.strSplit(@SelectedContact, ','))
+    WHERE	lc.ContactID IN (SELECT ContactID FROM @tblContactList)
 END

@@ -9,6 +9,9 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeCategoryListIns]
 	,@IP				VARCHAR(50)		= NULL
 	,@ErrCode			INT				= 0			OUTPUT
 	,@ErrMsg			VARCHAR(300)	= NULL		OUTPUT
+	,@LogId				INT							OUTPUT
+	,@CategoryAssigned	VARCHAR(1000)				OUTPUT
+
 AS  
 /*
     Created by: Kai
@@ -34,9 +37,6 @@ BEGIN
 		,@duration		INT
 		,@logSPData		NVARCHAR(MAX)
 		,@procName		VARCHAR(200)
-
-		,@tempStartRun	DATETIME
-		,@tempEndRun	DATETIME
 	
 	SET @startRun = GETDATE()
 	DECLARE @xml XML -- write log
@@ -68,7 +68,7 @@ BEGIN
 		INSERT INTO dbo.CategoryContact (ContactID, CategoryID, RecipientType)
 		SELECT c.ContactID, t.CategoryId, 1 -- Cc
 		FROM dbo.Contact c WITH(NOLOCK)
-			INNER JOIN @tblLicenseeCategoryAssigned t ON c.LicenseeID = t.LicenseeId AND c.IsMain = 1
+			INNER JOIN @tblLicenseeCategoryAssigned t ON c.LicenseeId = t.LicenseeId AND c.IsMain = 1
 
 	END TRY
 	BEGIN CATCH
@@ -77,49 +77,54 @@ BEGIN
 		RETURN
 	END CATCH
 
-	--Write log
-	DECLARE @LicenseeCategory TABLE (LicenseeId INT, CategoryId TINYINT)
-	DECLARE @LicenseeId INT
-
-	SELECT  @procName = OBJECT_NAME(@@PROCID)
-			,@tempEndRun = GETDATE()
-
-	WHILE 1=1
+	IF @@ERROR <> 0
 	BEGIN
-		SELECT @tempStartRun = GETDATE(), @LicenseeId = NULL
-		DELETE @LicenseeCategory
+		-- Rollback
+		DELETE FROM dbo.LicenseeCategoryAssigned WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @ReplicateSite AND CategoryId IN (SELECT CategoryId FROM @tblLicenseeCategoryAssigned)
 
-		SELECT TOP 1 @LicenseeId = LicenseeId FROM @tblLicenseeCategoryAssigned
-		IF @LicenseeId IS NULL
-			BREAK
-
-		DELETE @tblLicenseeCategoryAssigned OUTPUT DELETED.LicenseeId, DELETED.CategoryId INTO @LicenseeCategory WHERE LicenseeId = @LicenseeId
-
-		SET @xml = (SELECT	l.LicenseeId	AS '@lid'
-							,l.LicenseeName AS '@ln'
-							,(SELECT c.CategoryId		AS '@cid'
-							,c.CategoryName		AS '@cn'
-							FROM dbo.Category c WITH(NOLOCK)
-								INNER JOIN @LicenseeCategory lc ON c.CategoryId = lc.CategoryId
-							FOR XML PATH('row'), ROOT('c'), TYPE
-							)
-					FROM dbo.Licensee l WITH(NOLOCK)
-					WHERE l.LicenseeId = @LicenseeId
-					FOR XML PATH('r'), TYPE
-					)
-		SELECT @logSPData = CONVERT(NVARCHAR(MAX), @xml)
-
-		SELECT	@endRun		= GETDATE()  
-				,@duration	= DATEDIFF(MILLISECOND, @startRun, @tempEndRun) + DATEDIFF(MILLISECOND, @tempStartRun, @endRun)
-
-		EXEC dbo.OIC_LogRunSpIns
-			@UserId			= @UserId
-			,@SPName		= @procName
-			,@Language		= @Language
-			,@IP			= @IP
-			,@Data			= @logSPData
-			,@OldData		= NULL
-			,@Duration		= @Duration
+		DELETE cc
+		FROM dbo.CategoryContact cc WITH(ROWLOCK, UPDLOCK)
+			INNER JOIN dbo.Contact ct WITH(NOLOCK) ON cc.ContactId = ct.ContactId
+		WHERE ct.LicenseeId = @ReplicateSite AND ct.IsMain = 1
+			AND cc.CategoryId IN (SELECT CategoryId FROM @tblLicenseeCategoryAssigned)
+		
+		SELECT	@ErrCode = 101
+				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](1500, @Language) -- Fail to assign category(ies). Please try again
+		RETURN
+		
 	END
+
+	--Write log
+	SELECT  @procName = OBJECT_NAME(@@PROCID)
+	
+	SET @xml = (SELECT	l.LicenseeId	AS '@lid'
+						,l.LicenseeName AS '@ln'
+						,(SELECT c.CategoryId		AS '@cid'
+						,c.CategoryName		AS '@cn'
+						FROM dbo.Category c WITH(NOLOCK)
+							INNER JOIN @tblLicenseeCategoryAssigned lc ON c.CategoryId = lc.CategoryId
+						FOR XML PATH('row'), ROOT('c'), TYPE
+						)
+				FROM dbo.Licensee l WITH(NOLOCK)
+				WHERE l.LicenseeId = @ReplicateSite
+				FOR XML PATH('r'), TYPE
+				)
+	SELECT @logSPData = CONVERT(NVARCHAR(MAX), @xml)
+
+	SELECT	@endRun		= GETDATE()  
+			,@duration	= DATEDIFF(MILLISECOND, @startRun, @endRun)
+
+	EXEC dbo.OIC_LogRunSpIns
+		@UserId			= @UserId
+		,@SPName		= @procName
+		,@Language		= @Language
+		,@IP			= @IP
+		,@Data			= @logSPData
+		,@OldData		= NULL
+		,@Duration		= @Duration
+
+	SELECT @LogId = @@IDENTITY
+	SELECT @CategoryAssigned = (SELECT STUFF((SELECT ',' + CONVERT(VARCHAR(3), CategoryId) FROM @tblLicenseeCategoryAssigned FOR XML PATH('')), 1, 1, ''))
 END
 GO

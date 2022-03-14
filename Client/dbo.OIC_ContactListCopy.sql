@@ -31,10 +31,8 @@ AS
 */ 
 BEGIN  
 	SET NOCOUNT ON
-	SET XACT_ABORT ON
-
-	BEGIN TRAN
-	BEGIN TRY
+	DECLARE @LogId INT
+	DECLARE @CategoryAssigned VARCHAR(1000)
 
 	-- Assign Categories from orginal site to replicate site 
 	EXEC [dbo].[OIC_LicenseeCategoryListIns]  
@@ -46,10 +44,19 @@ BEGIN
 		,@IP				= @IP
 		,@ErrCode			= @ErrCode	OUTPUT
 		,@ErrMsg			= @ErrMsg	OUTPUT
+		,@LogId				= @LogId	OUTPUT
+		,@CategoryAssigned	= @CategoryAssigned OUTPUT
 
+	IF @ErrCode <> 0
+	BEGIN
+		SELECT	@ErrCode = 101, 
+				@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](503, @Language) -- Failed to copy contact. Please try again!
+		RETURN
+	END
+	
 	-- Copy list selected Contact from orginal site to replicate site 
 	EXEC [dbo].[OIC_ContactListIns]
-		 @SelectedContact   = @SelectedContact
+			@SelectedContact   = @SelectedContact
 		,@OriginalSite		= @OriginalSite
 		,@ReplicateSite		= @ReplicateSite
 
@@ -59,12 +66,28 @@ BEGIN
 		,@ErrCode			= @ErrCode	OUTPUT
 		,@ErrMsg			= @ErrMsg	OUTPUT
 
-	COMMIT
-	END TRY
-	BEGIN CATCH
-		ROLLBACK
+	IF @ErrCode <> 0
+	BEGIN
+		--Rollback step assign categories from original site to replicate site
+		DELETE FROM dbo.LicenseeCategoryAssigned WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @ReplicateSite AND CategoryId IN (SELECT val FROM dbo.strSplit(@CategoryAssigned,','))
+
+		DELETE cc
+		FROM dbo.CategoryContact cc WITH(ROWLOCK, UPDLOCK)
+			INNER JOIN dbo.Contact ct WITH(NOLOCK) ON cc.ContactId = ct.ContactId
+		WHERE ct.LicenseeId = @ReplicateSite AND ct.IsMain = 1
+			AND cc.CategoryId IN (SELECT val FROM dbo.strSplit(@CategoryAssigned,','))
+
+		DELETE FROM dbo.UserLog_RunSP WITH(ROWLOCK, UPDLOCK)
+		WHERE Id = @LogId
+
+		DELETE FROM dbo.UserLog_RunSP_Detail WITH(ROWLOCK, UPDLOCK)
+		WHERE Id = @LogId
+
 		SELECT	@ErrCode = 101, 
 				@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](503, @Language) -- Failed to copy contact. Please try again!
-	END CATCH
+		RETURN
+	END
+
 END
 GO

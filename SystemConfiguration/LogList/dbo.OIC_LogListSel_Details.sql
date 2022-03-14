@@ -902,7 +902,7 @@ BEGIN
 			(12, N'Remark', @Contact_Remark, @Contact_Remark_old),
 			(13, N'Category - List type', @Contact_Category, @Contact_Category_old)
 	END
-	ELSE IF @LogActionId IN (302,303,304) -- Insert/Delete Category/Insert via Add New Client - Client
+	ELSE IF @LogActionId IN (302,303,304,305) -- Insert/Delete Category/Insert via Add New Client/Insert via Copy Contacts - Client
 	BEGIN
 		DECLARE
 			@Licensee NVARCHAR(100),

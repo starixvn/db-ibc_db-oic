@@ -122,26 +122,21 @@ BEGIN
 	
 	IF @@ERROR <> 0
 	BEGIN
-		WHILE 1=1
-		BEGIN
-			SELECT @tmpCopyContactId = NULL
-
-			SELECT TOP 1 @tmpCopyContactId = ContactId FROM @tblCopyContactId
-			IF @tmpCopyContactId IS NULL
-				BREAK
-
-			DELETE @tblCopyContactId WHERE ContactId = @tmpCopyContactId
-
-			DELETE FROM dbo.Contact WITH(ROWLOCK, UPDLOCK)
-			WHERE ContactID = @tmpCopyContactId
-
-			DELETE FROM dbo.CategoryContact WITH(ROWLOCK, UPDLOCK)
-			WHERE ContactID = @tmpCopyContactId
-		
-			SELECT	@ErrCode = 101
-					,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](503, @Language) -- Failed to copy contact. Please try again!
+		-- Rollback
+		SELECT TOP 1 @tmpCopyContactId = ContactId FROM @tblCopyContactId
+		IF @tmpCopyContactId IS NULL
 			RETURN
-		END
+
+		DELETE FROM dbo.Contact WITH(ROWLOCK, UPDLOCK)
+		WHERE ContactID IN (SELECT ContactId FROM @tblCopyContactId)
+
+		DELETE FROM dbo.CategoryContact WITH(ROWLOCK, UPDLOCK)
+		WHERE ContactID IN (SELECT ContactId FROM @tblCopyContactId)
+		
+		SELECT	@ErrCode = 101
+				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](503, @Language) -- Failed to copy contact. Please try again!
+		RETURN
+		
 	END
 
 	--Write log
