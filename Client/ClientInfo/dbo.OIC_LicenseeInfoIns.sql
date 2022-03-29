@@ -68,6 +68,7 @@ AS
 		- 20210706@Mark: Don't write log if a client created without having Group info [RedmindId: #157501]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20211109@Alex: Change Type Of Licensee [RedmindId: #163521]
+		- 20220321@Kai: Enhance New Client [Redmine:#169959]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -534,7 +535,7 @@ BEGIN
 	
 	SELECT @location = LocationName FROM dbo.Location WITH(NOLOCK) WHERE LocationId = @LocationId
 
-	-- Write log
+	-- Write log add new client
 	SET @xml = (
 		SELECT	@LicenseeId					AS '@lid'
 				,t.TypeName					AS '@tn'
@@ -592,5 +593,78 @@ BEGIN
 		,@Data			= @logSPData
 		,@OldData		= NULL
 		,@Duration		= @Duration
+
+	DECLARE @LogId INT
+	SELECT @LogId = @@IDENTITY
+
+	-- Assign all categories for new client
+	EXEC dbo.OIC_LicenseeCategoryAssignNewLicensee
+		@LicenseeId = @LicenseeId
+		,@UserId	= @UserId
+		,@Language	= @Language
+		,@IP		= @IP
+		,@ErrCode	= @ErrCode
+		,@ErrMsg	= @ErrMsg
+
+	IF @ErrCode <> 0
+	BEGIN
+		SELECT	@ErrCode = @ErrCode
+				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](1500, @Language) -- Fail to assign category(ies). Please try again
+			
+		-- Rollback Step1:
+		DELETE FROM dbo.Licensee WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		
+		DELETE FROM dbo.UrlBackup WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		
+		DELETE FROM dbo.LicenseeCurrency WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		
+		DELETE FROM dbo.LicenseeLocationLimit WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		
+		DELETE FROM dbo.LicenseeLanguage  WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		
+		DELETE FROM dbo.LicenseeOddsType WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		
+		DELETE FROM dbo.LicenseeProperty  WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		
+		DELETE FROM dbo.LicenseeIntegrationMethod WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		-- END rollback Step1
+		
+		-- Rollback Step2:
+		DELETE 
+		FROM dbo.LicenseeProduct WITH(ROWLOCK,UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		
+		DELETE
+		FROM dbo.LicenseeFeature WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		-- END rollback Step2
+		
+		-- Rollback data Step3:
+		DELETE FROM dbo.LicenseeAccountInfo WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		
+		DELETE FROM dbo.UserLicensee  WITH(ROWLOCK, UPDLOCK)
+		WHERE LicenseeId = @LicenseeId
+		-- END rollback Step3
+		
+		-- Rollback log add new client
+		DELETE FROM dbo.UserLog_RunSP WITH(ROWLOCK, UPDLOCK)
+		WHERE Id = @LogId
+
+		DELETE FROM dbo.UserLog_RunSP_Detail WITH(ROWLOCK, UPDLOCK) 
+		WHERE Id = @LogId
+		-- END rollback log add new client
+
+		RETURN
+	END
+		
 END
 GO
