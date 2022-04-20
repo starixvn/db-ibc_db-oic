@@ -31,6 +31,7 @@ AS
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
 		- 20211116@Kai: Enhancement of Type of Licensee (Add Platform and IntegrationMethod for licensee) [RedmineID: #163521]
 		- 20211229@Kos: Hotfix - Upgrade SQL Server 2019 [RedmineID: #166701]
+		- 20220414@Kai: Enhance product filter [RedmineID: #171483]
 
 	Param's Explanation:
 		@SelectedFeature: multiple selection feature
@@ -177,11 +178,14 @@ BEGIN
 			ON	l.LicenseeStatusId = ls.LicenseeStatusId
 		INNER JOIN [dbo].[Platform] pf WITH(NOLOCK)
 			ON l.PlatformId = pf.PlatformId
+		LEFT JOIN #tblLicenseeFeature lf
+			ON l.LicenseeId = lf.LicenseeId
 	WHERE	l.TypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
 			AND l.LicenseeName LIKE ISNULL(@LicenseeName,'%') + '%'
 			AND (@LicenseeStatusIds = 'All' OR l.LicenseeStatusId IN (SELECT StatusId FROM @tblStatusId)) 
 			AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
 			AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
+			AND (@SelectedFeature = 'All' OR lf.IsFilled = 1)
 	GROUP BY l.LicenseeId
 			,l.LicenseeName
 			,ls.LicenseeStatusName
