@@ -6,6 +6,7 @@ GO
 ALTER PROCEDURE [dbo].[OIC_API_LicenseeContactIns]
 	 @SiteId				INT
 	,@SiteName			    NVARCHAR(50)
+	,@SubsidiaryList		VARCHAR(1000)
 	,@UserName				NVARCHAR(50)
 	,@ContactType			BIT
 	,@ContactName			NVARCHAR(50)
@@ -14,6 +15,7 @@ ALTER PROCEDURE [dbo].[OIC_API_LicenseeContactIns]
 	,@Email					VARCHAR(50)
 	,@Skype					VARCHAR(50)
 	,@Remark				NVARCHAR(300)	= NULL
+	,@Subsidiary			VARCHAR(50)		= NULL
 	,@SelectedCategories	XML
 	,@Language				VARCHAR(10)		= 'E'
 	,@IP					VARCHAR(50)		= NULL
@@ -28,6 +30,7 @@ AS
 	
 	Revisions:
 		- 20220214@Howard: Init [Redmine:#165286]
+		- 20220424@Howard: Support Subsidiary business [Redmine:#170641]
 
 	Param's Explanation:
 	- @SiteId: -1 - LAP
@@ -55,7 +58,13 @@ BEGIN
 				,@ErrMsg = 'SiteName does not exist.'
 		RETURN
 	END
-	
+
+	IF(',' + @SubsidiaryList + ',' NOT LIKE '%,' + ISNULl(@Subsidiary, @SiteName) + ',%') 
+	BEGIN
+			SELECT	@ErrCode = 103
+				,@ErrMsg = 'Subsidiary does not exist.'
+		RETURN
+	END
 
 	-- For write log
 	DECLARE 
@@ -80,6 +89,7 @@ BEGIN
 			,ContactSkype
 			,ContactType
 			,Remark
+			,Subsidiary
 			,IsLicenseeContact
 		)
 		VALUES(
@@ -91,6 +101,7 @@ BEGIN
 			,@Skype
 			,@ContactType
 			,@Remark
+			,@Subsidiary
 			,1
 		)
 	
@@ -153,6 +164,7 @@ BEGIN
 				,c.ContactSkype			AS '@lcs'
 				,c.ContactType			AS '@lcct'
 				,c.Remark				AS '@lcr'
+				,c.Subsidiary			AS '@lcsub'
 				,c.IsLicenseeContact	AS '@lc'
 				,@log_category
 		FROM dbo.Contact AS c WITH (NOLOCK)

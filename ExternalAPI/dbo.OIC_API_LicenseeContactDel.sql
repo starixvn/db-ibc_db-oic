@@ -4,14 +4,15 @@ USE [bodb_OIC]
 GO
 
 ALTER PROCEDURE [dbo].[OIC_API_LicenseeContactDel]
-	 @ContactId		INT
-	,@SiteId		INT
-	,@SiteName		NVARCHAR(50)
-	,@UserName		NVARCHAR(50)
-	,@Language		VARCHAR(10)		= 'E'
-	,@IP			VARCHAR(50)		= NULL
-	,@ErrCode		INT				= 0			OUTPUT
-	,@ErrMsg		VARCHAR(300)	= NULL		OUTPUT
+	 @ContactId			INT
+	,@SiteId			INT
+	,@SiteName			NVARCHAR(50)
+	,@SubsidiaryList	VARCHAR(1000)
+	,@UserName			NVARCHAR(50)
+	,@Language			VARCHAR(10)		= 'E'
+	,@IP				VARCHAR(50)		= NULL
+	,@ErrCode			INT				= 0			OUTPUT
+	,@ErrMsg			VARCHAR(300)	= NULL		OUTPUT
 AS
 /*
 	Created by: Howard
@@ -21,6 +22,7 @@ AS
 	
 	Revisions:
 		- 20220214@Howard: Init [Redmine:#165286]
+		- 20220424@Howard: Support Subsidiary business [Redmine:#170641]
 	
 	Param's Explanation:
 	- @SiteId: -1 - LAP
@@ -43,7 +45,8 @@ BEGIN
 		RETURN
 	END
 
-	IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.Contact c WITH(NOLOCK) WHERE c.ContactId = @ContactId AND c.LicenseeId = @LicenseeId AND c.IsLicenseeContact = 1)
+	IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.Contact c WITH(NOLOCK) WHERE c.ContactId = @ContactId AND c.LicenseeId = @LicenseeId AND c.IsLicenseeContact = 1
+						AND ',' + @SubsidiaryList + ',' LIKE '%,' + ISNULl(c.Subsidiary, @SiteName) + ',%')
 	BEGIN
 		SELECT	@ErrCode = 102
 				,@ErrMsg = 'Contact does not exist.'
@@ -87,6 +90,7 @@ BEGIN
 				,c.ContactLandline		AS '@lcll'
 				,c.ContactType			AS '@lcct'
 				,c.Remark				AS '@lcr'
+				,c.Subsidiary			AS '@lcsub'
 				,c.IsLicenseeContact	AS '@lc'
 				,@log_category
 		FROM dbo.Contact c WITH(NOLOCK)
