@@ -1,16 +1,17 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeCategoryListIns]   
-    @OriginalSite		INT
-	,@ReplicateSite		INT
+    @OriginalSite			INT
+	,@ReplicateSite			INT
+	,@SelectedCategories	VARCHAR(MAX) = ''
 
-	,@UserId			INT
-	,@Language			VARCHAR(10)		= 'E'
-	,@IP				VARCHAR(50)		= NULL
-	,@ErrCode			INT				= 0			OUTPUT
-	,@ErrMsg			VARCHAR(300)	= NULL		OUTPUT
-	,@LogId				INT							OUTPUT
-	,@CategoryAssigned	VARCHAR(1000)				OUTPUT
+	,@UserId				INT
+	,@Language				VARCHAR(10)		= 'E'
+	,@IP					VARCHAR(50)		= NULL
+	,@ErrCode				INT				= 0			OUTPUT
+	,@ErrMsg				VARCHAR(300)	= NULL		OUTPUT
+	,@LogId					INT							OUTPUT
+	,@CategoryAssigned		VARCHAR(1000)				OUTPUT
 
 AS  
 /*
@@ -49,6 +50,17 @@ BEGIN
 	SELECT @ReplicateSite as LicenseeId, lca.CategoryId
 	FROM dbo.LicenseeCategoryAssigned lca WITH(NOLOCK)
 	WHERE lca.LicenseeId = @OriginalSite
+
+	-- Check someone change original categories
+	IF EXISTS (SELECT TOP 1 1 FROM (
+		SELECT lca.CategoryId FROM @tblLicenseeCategoryAssigned lca
+		EXCEPT
+		SELECT CONVERT(tinyint,val) AS CategoryId FROM dbo.strSplit(@SelectedCategories,','))ca)
+	BEGIN
+		SELECT	@ErrCode = 104
+				,@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](504, @Language) -- Someone has changed the original categories, Please try again!
+		RETURN
+	END
 
 	DELETE t
 	FROM @tblLicenseeCategoryAssigned t

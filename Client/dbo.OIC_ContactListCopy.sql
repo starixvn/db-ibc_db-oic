@@ -1,15 +1,16 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_ContactListCopy]
-	@SelectedContact	NVARCHAR(MAX)    = ''
-    ,@OriginalSite		INT
-	,@ReplicateSite		INT
+	@SelectedContact		NVARCHAR(MAX)    = ''
+	,@SelectedCategories	NVARCHAR(MAX)    = ''
+    ,@OriginalSite			INT
+	,@ReplicateSite			INT
 
-	,@UserId			INT
-	,@Language			VARCHAR(10)		= 'E'
-	,@IP				VARCHAR(50)		= NULL
-	,@ErrCode			INT				= 0			OUTPUT
-	,@ErrMsg			VARCHAR(300)	= NULL		OUTPUT
+	,@UserId				INT
+	,@Language				VARCHAR(10)		= 'E'
+	,@IP					VARCHAR(50)		= NULL
+	,@ErrCode				INT				= 0			OUTPUT
+	,@ErrMsg				VARCHAR(300)	= NULL		OUTPUT
 AS  
 /*
     Created by: Kai
@@ -23,8 +24,8 @@ AS
     Param's Explanation:
 		*@SelectedContact: XML format
 			<r> 
-				<row cid="93" lid="21" lc="0" llct="1" llcn="Finance Team" lcp="Group" lcd="Finance Settlement" lce="oic_finapproval@pacificseainvests.com" lcs="finance"/>
-				<row cid="94" lid="21" lc="0" llct="1" llcn="Jeffrey" lcp="NA" lcd="CSD" lce="oic_Jeffrey@pacificseainvests.com" lcs="a"/>
+				<row cid="93" lid="21" lc="0" llct="1" llcn="Finance Team" lcp="Group" lcd="Finance Settlement" lce="oic_finapproval@pacificseainvests.com" lcs="finance ccl="categories name" tol="categories name"/>
+				<row cid="94" lid="21" lc="0" llct="1" llcn="Jeffrey" lcp="NA" lcd="CSD" lce="oic_Jeffrey@pacificseainvests.com" lcs="a" ccl="categories name" tol="categories name"/>
 			</r> 
 		*@OriginalSite: '321'
 		*@ReplicateSite: '123'
@@ -36,58 +37,52 @@ BEGIN
 
 	-- Assign Categories from orginal site to replicate site 
 	EXEC [dbo].[OIC_LicenseeCategoryListIns]  
-		@OriginalSite		= @OriginalSite
-		,@ReplicateSite		= @ReplicateSite
+		@OriginalSite			= @OriginalSite
+		,@ReplicateSite			= @ReplicateSite
+		,@SelectedCategories	= @SelectedCategories
 
-		,@UserId			= @UserId
-		,@Language			= @Language
-		,@IP				= @IP
-		,@ErrCode			= @ErrCode	OUTPUT
-		,@ErrMsg			= @ErrMsg	OUTPUT
-		,@LogId				= @LogId	OUTPUT
-		,@CategoryAssigned	= @CategoryAssigned OUTPUT
+		,@UserId				= @UserId
+		,@Language				= @Language
+		,@IP					= @IP
+		,@ErrCode				= @ErrCode	OUTPUT
+		,@ErrMsg				= @ErrMsg	OUTPUT
+		,@LogId					= @LogId	OUTPUT
+		,@CategoryAssigned		= @CategoryAssigned OUTPUT
 
-	IF @ErrCode <> 0
+	IF @ErrCode = 0
 	BEGIN
-		SELECT	@ErrCode = 101, 
-				@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](503, @Language) -- Failed to copy contact. Please try again!
-		RETURN
+		-- Copy list selected Contact from orginal site to replicate site 
+		EXEC [dbo].[OIC_ContactListIns]
+				@SelectedContact   = @SelectedContact
+			,@OriginalSite		= @OriginalSite
+			,@ReplicateSite		= @ReplicateSite
+
+			,@UserId			= @UserId
+			,@Language			= @Language
+			,@IP				= @IP
+			,@ErrCode			= @ErrCode	OUTPUT
+			,@ErrMsg			= @ErrMsg	OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			--Rollback step assign categories from original site to replicate site
+			DELETE FROM dbo.LicenseeCategoryAssigned WITH(ROWLOCK, UPDLOCK)
+			WHERE LicenseeId = @ReplicateSite AND CategoryId IN (SELECT val FROM dbo.strSplit(@CategoryAssigned,','))
+
+			DELETE cc
+			FROM dbo.CategoryContact cc WITH(ROWLOCK, UPDLOCK)
+				INNER JOIN dbo.Contact ct WITH(NOLOCK) ON cc.ContactId = ct.ContactId
+			WHERE ct.LicenseeId = @ReplicateSite AND ct.IsMain = 1
+				AND cc.CategoryId IN (SELECT val FROM dbo.strSplit(@CategoryAssigned,','))
+
+			DELETE FROM dbo.UserLog_RunSP WITH(ROWLOCK, UPDLOCK)
+			WHERE Id = @LogId
+
+			DELETE FROM dbo.UserLog_RunSP_Detail WITH(ROWLOCK, UPDLOCK)
+			WHERE Id = @LogId
+
+			RETURN
+		END
 	END
-	
-	-- Copy list selected Contact from orginal site to replicate site 
-	EXEC [dbo].[OIC_ContactListIns]
-			@SelectedContact   = @SelectedContact
-		,@OriginalSite		= @OriginalSite
-		,@ReplicateSite		= @ReplicateSite
-
-		,@UserId			= @UserId
-		,@Language			= @Language
-		,@IP				= @IP
-		,@ErrCode			= @ErrCode	OUTPUT
-		,@ErrMsg			= @ErrMsg	OUTPUT
-
-	IF @ErrCode <> 0
-	BEGIN
-		--Rollback step assign categories from original site to replicate site
-		DELETE FROM dbo.LicenseeCategoryAssigned WITH(ROWLOCK, UPDLOCK)
-		WHERE LicenseeId = @ReplicateSite AND CategoryId IN (SELECT val FROM dbo.strSplit(@CategoryAssigned,','))
-
-		DELETE cc
-		FROM dbo.CategoryContact cc WITH(ROWLOCK, UPDLOCK)
-			INNER JOIN dbo.Contact ct WITH(NOLOCK) ON cc.ContactId = ct.ContactId
-		WHERE ct.LicenseeId = @ReplicateSite AND ct.IsMain = 1
-			AND cc.CategoryId IN (SELECT val FROM dbo.strSplit(@CategoryAssigned,','))
-
-		DELETE FROM dbo.UserLog_RunSP WITH(ROWLOCK, UPDLOCK)
-		WHERE Id = @LogId
-
-		DELETE FROM dbo.UserLog_RunSP_Detail WITH(ROWLOCK, UPDLOCK)
-		WHERE Id = @LogId
-
-		SELECT	@ErrCode = 101, 
-				@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](503, @Language) -- Failed to copy contact. Please try again!
-		RETURN
-	END
-
 END
 GO

@@ -25,8 +25,8 @@ AS
     Param's Explanation:
 		*@SelectedContact: XML format
 			<r> 
-				<row cid="93" lid="21" lc="0" llct="1" llcn="Finance Team" lcp="Group" lcd="Finance Settlement" lce="oic_finapproval@pacificseainvests.com" lcs="finance"/>
-				<row cid="94" lid="21" lc="0" llct="1" llcn="Jeffrey" lcp="NA" lcd="CSD" lce="oic_Jeffrey@pacificseainvests.com" lcs="a"/>
+				<row cid="93" lid="21" lc="0" llct="1" llcn="Finance Team" lcp="Group" lcd="Finance Settlement" lce="oic_finapproval@pacificseainvests.com" lcs="finance"  ccl="categories name" tol="categories name"/>
+				<row cid="94" lid="21" lc="0" llct="1" llcn="Jeffrey" lcp="NA" lcd="CSD" lce="oic_Jeffrey@pacificseainvests.com" lcs="a"  ccl="categories name" tol="categories name"/>
 			</r> 
 		*@OriginalSite: '321'
 		*@ReplicateSite: '123'
@@ -51,8 +51,8 @@ BEGIN
 	DECLARE @tmpContactId INT
 	DECLARE @tmpCopyContactId INT
 	DECLARE @dataTmp XML
-	DECLARE @tblSelectedContact TABLE (ContactId INT,LicenseeId INT, IsLicenseeContact BIT, ContactType TINYINT, ContactName NVARCHAR(50), ContactPosition NVARCHAR(50), ContactDepartment NVARCHAR(50), ContactEmail NVARCHAR(50), ContactSkype NVARCHAR(50), ContactPhoneNumber NVARCHAR(50), ContactLandline NVARCHAR(50), Remark NVARCHAR(300))
-
+	DECLARE @tblSelectedContact TABLE (ContactId INT,LicenseeId INT, IsLicenseeContact BIT, ContactType TINYINT, ContactName NVARCHAR(50), ContactPosition NVARCHAR(50), ContactDepartment NVARCHAR(50), ContactEmail NVARCHAR(50), ContactSkype NVARCHAR(50), ContactPhoneNumber NVARCHAR(50), ContactLandline NVARCHAR(50), Remark NVARCHAR(300), ToList VARCHAR(MAX), CcList VARCHAR(MAX))
+	
 	--Copy Contacts from Original Site to Replicate Site
 	
 	SET @dataTmp = CONVERT(XML, @SelectedContact)
@@ -70,10 +70,56 @@ BEGIN
 		d.c.value('@lcs', 'NVARCHAR(50)') AS ContactSkype, -- contact skype
 		d.c.value('@lcpn', 'NVARCHAR(50)') AS ContactPhoneNumber, -- contact mobile phone
 		d.c.value('@lcll', 'NVARCHAR(50)') AS ContactLandline, -- contact landline
-		d.c.value('@lcr', 'NVARCHAR(600)') AS Remark-- contact remark
+		d.c.value('@lcr', 'NVARCHAR(600)') AS Remark, -- contact remark
+		d.c.value('@tol', 'VARCHAR(MAX)') AS ToList, -- ToList
+		d.c.value('@ccl', 'VARCHAR(MAX)') AS CcList -- CcList
 	FROM  @dataTmp.nodes('r/row') d(c)
-	
-	IF EXISTS(SELECT TOP 1 1 FROM (SELECT * FROM @tblSelectedContact EXCEPT SELECT ct.ContactId,ct.LicenseeId, ct.IsLicenseeContact, ct.ContactType, ct.ContactName, ct.ContactPosition, ct.ContactDepartment, ct.ContactEmail, ct.ContactSkype, ct.ContactPhoneNumber, ct.ContactLandline, ct.Remark FROM dbo.Contact ct WITH(NOLOCK) WHERE ct.LicenseeId = @OriginalSite) ct) 
+
+	IF EXISTS(SELECT TOP 1 1 FROM (
+			SELECT	slct.ContactId,
+					slct.LicenseeId,
+					slct.IsLicenseeContact,
+					slct.ContactType, 
+					slct.ContactName, 
+					slct.ContactPosition, 
+					slct.ContactDepartment, 
+					slct.ContactEmail, 
+					slct.ContactSkype, 
+					slct.ContactPhoneNumber, 
+					slct.ContactLandline, 
+					slct.Remark,
+					slct.ToList,
+					slct.CcList
+			FROM @tblSelectedContact slct
+			EXCEPT 
+			SELECT	ct.ContactId,
+					ct.LicenseeId, 
+					ct.IsLicenseeContact, 
+					ct.ContactType, 
+					ct.ContactName, 
+					ct.ContactPosition, 
+					ct.ContactDepartment, 
+					ct.ContactEmail, 
+					ct.ContactSkype, 
+					ct.ContactPhoneNumber, 
+					ct.ContactLandline, 
+					ct.Remark,
+					(SELECT STUFF ((SELECT ', ' + c.CategoryName
+					FROM dbo.CategoryContact cc WITH(NOLOCK)
+						INNER JOIN dbo.Category c WITH(NOLOCK) 
+							ON c.CategoryId = cc.CategoryID
+					WHERE cc.ContactID = ct.ContactID 
+							AND cc.RecipientType = 0 
+					FOR XML PATH(''), TYPE).value('.', 'VARCHAR(MAX)'),1,2,'')) AS ToList,
+					(SELECT STUFF ((SELECT ', ' + c.CategoryName
+					FROM dbo.CategoryContact cc WITH(NOLOCK)
+						INNER JOIN dbo.Category c WITH(NOLOCK) 
+							ON c.CategoryId = cc.CategoryID
+					WHERE cc.ContactID = ct.ContactID 
+							AND cc.RecipientType = 1
+					FOR XML PATH(''), TYPE).value('.', 'VARCHAR(MAX)'),1,2,'')) AS CcList
+			FROM dbo.Contact ct WITH(NOLOCK)
+			WHERE ct.LicenseeId = @OriginalSite) ct)
 	BEGIN
 		SELECT	@ErrCode = 103
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](502, @Language) -- Someone has changed the original contact list. Please try again
@@ -112,7 +158,7 @@ BEGIN
 
 		END TRY
 		BEGIN CATCH
-			SELECT	@ErrCode = 100
+			SELECT	@ErrCode = 101
 					,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](503, @Language) -- Failed to copy contact. Please try again!
 			RETURN
 		END CATCH

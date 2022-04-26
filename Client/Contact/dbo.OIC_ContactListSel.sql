@@ -37,24 +37,23 @@ BEGIN
 			,lc.ContactSkype		AS Skype
 			,lc.ContactLandline		AS Landline
 			,lc.Remark
-			,(SELECT ISNULL(@ToList,'') + c.CategoryName + ','  
+			,(SELECT STUFF ((SELECT ', ' + c.CategoryName
 				FROM dbo.CategoryContact cc WITH(NOLOCK)
 					INNER JOIN dbo.Category c WITH(NOLOCK) 
 						ON c.CategoryId = cc.CategoryID
 				WHERE cc.ContactID = lc.ContactID 
 						AND cc.RecipientType = 0 
-				FOR XML PATH('')
-			  ) AS ToList
-			,(SELECT ISNULL(@CcList,'') + c.CategoryName + ','  
+				FOR XML PATH('')),1,2,'')) AS ToList
+			,(SELECT STUFF ((SELECT ', ' + c.CategoryName
 				FROM dbo.CategoryContact cc WITH(NOLOCK)
 					INNER JOIN dbo.Category c WITH(NOLOCK) 
 						ON c.CategoryId = cc.CategoryID
 				WHERE cc.ContactID = lc.ContactID 
 						AND cc.RecipientType = 1
-			   FOR XML PATH('')
-			  ) AS CcList
+			   FOR XML PATH('')),1,2,'')) AS CcList
 			,lc.IsMain
 			,lc.IsLicenseeContact
-    FROM	dbo.Contact lc WITH(NOLOCK)
-    WHERE	lc.ContactID IN (SELECT ContactID FROM @tblContactList)
+    FROM @tblContactList cl
+	INNER JOIN dbo.Contact lc WITH(NOLOCK)
+    ON	lc.ContactID = cl.ContactId
 END
