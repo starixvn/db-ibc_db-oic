@@ -14,6 +14,6 @@ VALUES (103, 1, 'OIC_ContactListIns', 'Copy Contacts', NULL, NULL, 1, 1106), (10
 
 --Insert new message error
 INSERT INTO dbo.MessageError (MessageErrorId, MessageErrorGroupId, ContentEn)
-VALUES (502, 1, 'Someone has changed the original contact list. Please try again!'), (503, 1, 'Failed to copy contact. Please try again!')
+VALUES (502, 1, 'Someone has changed the original contact list. Please try again!'), (503, 1, 'Failed to copy contact. Please try again!'), (504, 1, 'Someone has changed the original categories, please check again!')
 
 GO
