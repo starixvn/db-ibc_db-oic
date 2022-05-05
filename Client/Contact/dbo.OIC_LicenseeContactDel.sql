@@ -17,6 +17,7 @@ AS
 	
 	Revisions:
 		- 20220218@Kai: New Licensee Contact function [Redmine:#165286]
+		- 20220505@Kai: Add Subsidiary for Licensee Contact [Redmine:#170641]
 	
 	Param's Explanation:
 	*
@@ -60,6 +61,7 @@ BEGIN
 				,c.ContactType			AS '@lcct'
 				,c.Remark				AS '@lcr'
 				,c.IsLicenseeContact	AS '@lc'
+				,c.Subsidiary			AS '@lcsub'
 				,@log_category
 		FROM dbo.Contact c WITH(NOLOCK)
 		WHERE c.ContactID = @ContactId
