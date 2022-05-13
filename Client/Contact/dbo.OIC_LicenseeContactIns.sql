@@ -5,6 +5,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeContactIns]
 	,@LicenseeId			INT
 	,@ContactType			BIT
 	,@IsLicenseeContact		BIT
+	,@IsMain				BIT
 	,@ContactName			NVARCHAR(50)
 	,@Position				NVARCHAR(50)
 	,@Department			NVARCHAR(50) 
@@ -29,6 +30,7 @@ AS
 	
 	Revisions:
 		- 20220117@Kai: New Licensee Contact function [Redmine:#165286]
+		- 20220513@Kai: Manage the main contact of licensee [Redmine:#172568]
 
 	Param's Explanation:
 	- @ContactType: 0 - Individual
@@ -57,6 +59,15 @@ BEGIN
 	SET @startRun = GETDATE()			
 	
 	BEGIN TRY
+		-- change all IsMain contact when insert new main contact
+		IF @IsMain = 1
+		BEGIN
+			UPDATE dbo.contact WITH(ROWLOCK, UPDLOCK)
+				SET IsMain = 0
+			WHERE IsMain = 1 AND LicenseeId = @LicenseeId
+		END
+		
+		-- insert contact
 		INSERT INTO dbo.Contact (
 			LicenseeID
 			,ContactName
@@ -69,6 +80,7 @@ BEGIN
 			,ContactType
 			,Remark
 			,IsLicenseeContact
+			,IsMain
 		)
 		VALUES(
 			@LicenseeId
@@ -82,6 +94,7 @@ BEGIN
 			,@ContactType
 			,@Remark
 			,@IsLicenseeContact
+			,@IsMain
 		)
 	
 	SET @ContactId = SCOPE_IDENTITY()
@@ -146,6 +159,7 @@ BEGIN
 				,c.ContactType			AS '@lcct'
 				,c.Remark				AS '@lcr'
 				,c.IsLicenseeContact	AS '@lc'
+				,c.IsMain				AS '@lcim'
 				,@log_category
 		FROM dbo.Contact AS c WITH (NOLOCK)
 		WHERE	c.ContactID = @ContactId
