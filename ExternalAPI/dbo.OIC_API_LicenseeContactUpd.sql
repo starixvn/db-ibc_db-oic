@@ -7,6 +7,7 @@ ALTER PROCEDURE [dbo].[OIC_API_LicenseeContactUpd]
 	 @SiteId				INT
 	,@ContactId				INT
 	,@SiteName			    NVARCHAR(50)
+	,@SubsidiaryList		VARCHAR(1000)
 	,@UserName				NVARCHAR(50)
 	,@ContactType			BIT
 	,@ContactName			NVARCHAR(50)
@@ -15,6 +16,7 @@ ALTER PROCEDURE [dbo].[OIC_API_LicenseeContactUpd]
 	,@Email					VARCHAR(50)
 	,@Skype					VARCHAR(50)
 	,@Remark				NVARCHAR(300)	= NULL
+	,@Subsidiary			VARCHAR(50)		= NULL
 	,@SelectedCategories	XML				= NULL 
 	,@Language				VARCHAR(10)		= 'E'
 	,@IP					VARCHAR(50)		= NULL
@@ -29,6 +31,7 @@ AS
 	
 	Revisions:
 		- 20220214@Howard: Init [Redmine:#165286]
+		- 20220424@Howard: Support Subsidiary business [Redmine:#170641]
 	
 	Param's Explanation:
 	- @SiteId: -1 - LAP
@@ -51,7 +54,15 @@ BEGIN
 		RETURN
 	END
 
-	IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.Contact c WITH(NOLOCK) WHERE c.ContactId = @ContactId AND c.LicenseeId = @LicenseeId AND c.IsLicenseeContact = 1)
+	IF(',' + @SubsidiaryList + ',' NOT LIKE '%,' + ISNULl(@Subsidiary, @SiteName) + ',%') 
+	BEGIN
+			SELECT	@ErrCode = 103
+				,@ErrMsg = 'Subsidiary does not exist.'
+		RETURN
+	END
+
+	IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.Contact c WITH(NOLOCK) WHERE c.ContactId = @ContactId AND c.LicenseeId = @LicenseeId AND c.IsLicenseeContact = 1 
+						AND ',' + @SubsidiaryList + ',' LIKE '%,' + ISNULl(c.Subsidiary, @SiteName) + ',%')
 	BEGIN
 		SELECT	@ErrCode = 102
 				,@ErrMsg = 'Contact does not exist.'
@@ -101,6 +112,7 @@ BEGIN
 				,c.ContactLandline		AS '@lcll'
 				,c.ContactType			AS '@lcct'
 				,c.Remark				AS '@lcr'
+				,c.Subsidiary			AS '@lcsub'
 				,c.IsLicenseeContact	AS '@lc'
 				,@log_category
 		FROM dbo.Contact AS c WITH (NOLOCK)
@@ -119,6 +131,7 @@ BEGIN
 				,ContactEmail		= @Email
 				,ContactSkype		= @Skype
 				,Remark				= @Remark
+				,Subsidiary			= @Subsidiary
 		WHERE ContactID = @ContactId AND LicenseeId = @LicenseeId
 		
 		IF @SelectedCategories IS NOT NULL
@@ -183,6 +196,7 @@ BEGIN
 				,c.ContactLandline		AS '@lcll'
 				,c.ContactType			AS '@lcct'
 				,c.Remark				AS '@lcr'
+				,c.Subsidiary			AS '@lcsub'
 				,c.IsLicenseeContact	AS '@lc'
 				,@log_category
 		FROM dbo.Contact AS c WITH (NOLOCK)

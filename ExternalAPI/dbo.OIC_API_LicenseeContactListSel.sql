@@ -4,11 +4,12 @@ USE [bodb_OIC]
 GO
 
 ALTER PROCEDURE [dbo].[OIC_API_LicenseeContactListSel]
-	 @SiteName		NVARCHAR(50)
-	,@ContactName	NVARCHAR(50) = NULL
-	,@Language		VARCHAR(50) = NULL
-	,@ErrCode		INT				= 0 OUTPUT
-	,@ErrMsg		VARCHAR(300)	= NULL OUTPUT
+	 @SiteName			NVARCHAR(50)
+	,@SubsidiaryList	VARCHAR(1000)
+	,@ContactName		NVARCHAR(50)	= NULL
+	,@Language			VARCHAR(50)		= NULL
+	,@ErrCode			INT				= 0 OUTPUT
+	,@ErrMsg			VARCHAR(300)	= NULL OUTPUT
 AS
 /*
 	Created by: Howard
@@ -18,6 +19,7 @@ AS
 	
 	Revisions:
 		- 20220214@Howard: Init [Redmine:#165286]
+		- 20220424@Howard: Support Subsidiary business [Redmine:#170641]
 
 	Param's Explanation:
 	*
@@ -116,8 +118,11 @@ BEGIN
 			   FOR XML PATH('')
 			  ) AS CcListInt
 			,c.IsMain
+			,c.Subsidiary
 	FROM dbo.Contact c WITH(NOLOCK)
-	WHERE c.LicenseeId = @LicenseeId AND c.IsLicenseeContact = 1 AND c.ContactName LIKE '%' + LTRIM(RTRIM(ISNULL(@ContactName, ''))) + '%'
+	WHERE c.LicenseeId = @LicenseeId AND c.IsLicenseeContact = 1 
+		AND c.ContactName LIKE '%' + LTRIM(RTRIM(ISNULL(@ContactName, ''))) + '%'
+		AND ',' + @SubsidiaryList + ',' LIKE '%,' + ISNULl(c.Subsidiary, @SiteName) + ',%'
 	ORDER BY c.IsMain DESC, c.ContactName ASC
 
 END

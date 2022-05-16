@@ -4,8 +4,9 @@ USE [bodb_OIC]
 GO
 
 ALTER PROCEDURE [dbo].[OIC_API_LicenseeContactSel]
-	 @ContactId		INT
-	,@SiteName		NVARCHAR(50)
+	 @ContactId			INT
+	,@SiteName			NVARCHAR(50)
+	,@SubsidiaryList	VARCHAR(1000)
 AS
 /*
 	Created by: Howard
@@ -15,6 +16,7 @@ AS
 	
 	Revisions:
 		- 20220214@Howard: Init [Redmine:#165286]
+		- 20220424@Howard: Support Subsidiary business [Redmine:#170641]
 
 	Param's Explanation:
 	*
@@ -36,10 +38,12 @@ BEGIN
 			,c.ContactEmail AS Email
 			,c.ContactSkype AS Skype
 			,c.Remark
+			,c.Subsidiary
 	FROM dbo.Contact c WITH(NOLOCK)
 		INNER JOIN dbo.Licensee l WITH(NOLOCK) 
 			ON	c.LicenseeID = l.LicenseeId
 	WHERE c.ContactID = @ContactId AND c.IsLicenseeContact = 1 AND l.RegisteredLicenseeName = @SiteName
+			AND ',' + @SubsidiaryList + ',' LIKE '%,' + ISNULl(c.Subsidiary, @SiteName) + ',%'
 	
 	SELECT  c.CategoryId
 			,c.CategoryName
