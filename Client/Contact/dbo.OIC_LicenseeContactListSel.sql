@@ -19,7 +19,8 @@ AS
 		- 20211109@Alex: Change Type Of Licensee [RedmindId: #163521]
 		- 20220117@Kai/Howard: New Licensee Contact function [Redmine:#165286]
 							   - Kai: Add Licensee Contact field
-							   - Howard: Support DoneBy from LAP 
+							   - Howard: Support DoneBy from LAP
+		- 20220504@Kai: Add Subsidiary for Licensee Contact [Redmine:#170641]
 
     Param's Explanation:
 */
@@ -38,9 +39,9 @@ BEGIN
     FROM	dbo.Contact c WITH(NOLOCK)
 		INNER JOIN dbo.Licensee l WITH(NOLOCK) 
 			ON	c.LicenseeID = l.LicenseeId
-    WHERE	l.TypeId IN (SELECT		u.TypeId 
-									FROM	dbo.UserLicenseeTypes u WITH(NOLOCK) 
-									WHERE	u.UserId = @UserId)
+    WHERE	l.TypeId IN (SELECT	u.TypeId 
+							FROM dbo.UserLicenseeTypes u WITH(NOLOCK) 
+							WHERE u.UserId = @UserId)
 			AND l.LicenseeName = @LicenseeName
 			AND c.ContactName LIKE @ContactName + '%'    
     
@@ -49,6 +50,7 @@ BEGIN
 			,lc.ContactID
 			,lc.ContactName
 			,lc.IsLicenseeContact
+			,lc.Subsidiary
 			,lc.ContactType 
 			,lc.ContactPosition		AS Position
 			,lc.ContactDepartment	AS Department
@@ -144,6 +146,7 @@ BEGIN
 	SELECT	r.ContactID
 			,ContactName
 			,r.IsLicenseeContact
+			,r.Subsidiary
 			,ContactType
 			,Position
 			,Department
