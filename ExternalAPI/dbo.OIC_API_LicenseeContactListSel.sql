@@ -5,7 +5,7 @@ GO
 
 ALTER PROCEDURE [dbo].[OIC_API_LicenseeContactListSel]
 	 @SiteName			NVARCHAR(50)
-	,@SubsidiaryList	VARCHAR(1000)
+	,@SubsidiaryList	VARCHAR(MAX)
 	,@ContactName		NVARCHAR(50)	= NULL
 	,@Language			VARCHAR(50)		= NULL
 	,@ErrCode			INT				= 0 OUTPUT

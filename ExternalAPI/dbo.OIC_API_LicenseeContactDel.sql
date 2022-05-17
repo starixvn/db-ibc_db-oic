@@ -7,7 +7,7 @@ ALTER PROCEDURE [dbo].[OIC_API_LicenseeContactDel]
 	 @ContactId			INT
 	,@SiteId			INT
 	,@SiteName			NVARCHAR(50)
-	,@SubsidiaryList	VARCHAR(1000)
+	,@SubsidiaryList	VARCHAR(MAX)
 	,@UserName			NVARCHAR(50)
 	,@Language			VARCHAR(10)		= 'E'
 	,@IP				VARCHAR(50)		= NULL

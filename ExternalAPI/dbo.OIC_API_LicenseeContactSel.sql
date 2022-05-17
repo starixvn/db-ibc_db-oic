@@ -6,7 +6,7 @@ GO
 ALTER PROCEDURE [dbo].[OIC_API_LicenseeContactSel]
 	 @ContactId			INT
 	,@SiteName			NVARCHAR(50)
-	,@SubsidiaryList	VARCHAR(1000)
+	,@SubsidiaryList	VARCHAR(MAX)
 AS
 /*
 	Created by: Howard
