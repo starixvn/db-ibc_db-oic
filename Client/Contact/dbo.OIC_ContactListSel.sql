@@ -23,8 +23,8 @@ BEGIN
 			,@CcList	VARCHAR(1000)
 			
 	INSERT INTO @tblContactList(ContactId)
-	SELECT CONVERT(INT, val) AS ContactId 
-	FROM dbo.strSplit(@SelectedContact, ',')
+	SELECT CONVERT(INT, value) AS ContactId 
+	FROM STRING_SPLIT(@SelectedContact, ',')
 	
     SELECT	lc.ContactID		
 			,lc.LicenseeId

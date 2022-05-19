@@ -2,7 +2,7 @@
 
 ALTER PROCEDURE [dbo].[OIC_ContactListCopy]
 	@SelectedContact		NVARCHAR(MAX)    = ''
-	,@SelectedCategories	NVARCHAR(MAX)    = ''
+	,@SelectedCategories	VARCHAR(MAX)    = ''
     ,@OriginalSite			INT
 	,@ReplicateSite			INT
 
@@ -67,13 +67,13 @@ BEGIN
 		BEGIN
 			--Rollback step assign categories from original site to replicate site
 			DELETE FROM dbo.LicenseeCategoryAssigned WITH(ROWLOCK, UPDLOCK)
-			WHERE LicenseeId = @ReplicateSite AND CategoryId IN (SELECT val FROM dbo.strSplit(@CategoryAssigned,','))
+			WHERE LicenseeId = @ReplicateSite AND CategoryId IN (SELECT value FROM STRING_SPLIT(@CategoryAssigned,','))
 
 			DELETE cc
 			FROM dbo.CategoryContact cc WITH(ROWLOCK, UPDLOCK)
 				INNER JOIN dbo.Contact ct WITH(NOLOCK) ON cc.ContactId = ct.ContactId
 			WHERE ct.LicenseeId = @ReplicateSite AND ct.IsMain = 1
-				AND cc.CategoryId IN (SELECT val FROM dbo.strSplit(@CategoryAssigned,','))
+				AND cc.CategoryId IN (SELECT value FROM STRING_SPLIT(@CategoryAssigned,','))
 
 			DELETE FROM dbo.UserLog_RunSP WITH(ROWLOCK, UPDLOCK)
 			WHERE Id = @LogId

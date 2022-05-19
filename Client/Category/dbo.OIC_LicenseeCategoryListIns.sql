@@ -55,7 +55,7 @@ BEGIN
 	IF EXISTS (SELECT TOP 1 1 FROM (
 		SELECT lca.CategoryId FROM @tblLicenseeCategoryAssigned lca
 		EXCEPT
-		SELECT CONVERT(tinyint,val) AS CategoryId FROM dbo.strSplit(@SelectedCategories,','))ca)
+		SELECT CONVERT(tinyint,value) AS CategoryId FROM STRING_SPLIT(@SelectedCategories,','))ca)
 	BEGIN
 		SELECT	@ErrCode = 104
 				,@ErrMsg =  [dbo].[f_Get_MsgNamebyMsgID](504, @Language) -- Someone has changed the original categories, Please try again!
