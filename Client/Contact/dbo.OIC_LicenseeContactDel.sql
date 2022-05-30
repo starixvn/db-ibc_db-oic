@@ -18,6 +18,7 @@ AS
 	Revisions:
 		- 20220218@Kai: New Licensee Contact function [Redmine:#165286]
 		- 20220505@Kai: Add Subsidiary for Licensee Contact [Redmine:#170641]
+		- 20220530@Kai: Manage the main contact of licensee [Redmine:#172568]
 	
 	Param's Explanation:
 	*
@@ -75,7 +76,12 @@ BEGIN
 		DELETE 
 		FROM dbo.Contact WITH(ROWLOCK, UPDLOCK)
 		WHERE	ContactID = @ContactId
-		
+
+		-- Remove all categories assigned contact
+		DELETE cct
+		FROM dbo.CategoryContact cct WITH(ROWLOCK, UPDLOCK)
+		WHERE cct.ContactId = @ContactId
+
 		IF @@ERROR <> 0
 		BEGIN
 			SELECT	@ErrCode = 100

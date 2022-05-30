@@ -26,6 +26,7 @@ AS
 		- 20220117@Kai: New Licensee Contact function [Redmine:#165286]
 		- 20220504@Kai: Add Subsidiary for Licensee Contact [Redmine:#170641]
 		- 20220309@Kai: Copy contact list for licensees [RedmindId: #161538]
+		- 20220513@Kai: Manage the main contact of licensee [Redmine:#172568]
 		
 */
 BEGIN
