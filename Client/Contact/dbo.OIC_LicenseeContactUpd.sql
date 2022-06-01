@@ -5,6 +5,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeContactUpd]
 	,@LicenseeId			INT
 	,@ContactType			BIT
 	,@IsLicenseeContact		BIT
+	,@IsMain				BIT
 	,@ContactName			NVARCHAR(50)
 	,@Position				NVARCHAR(50)
 	,@Department			NVARCHAR(50) 
@@ -31,6 +32,7 @@ AS
 	Revisions:
 		- 20220117@Kai: New Licensee Contact function [Redmine:#165286]
 		- 20220505@Kai: Add Subsidiary for Licensee Contact [Redmine:#170641]
+		- 20220513@Kai: Manage the main contact of licensee [Redmine:#172568]
 	
 	Param's Explanation:
 	- @SelectedCategories: NULL: no changing
@@ -83,6 +85,7 @@ BEGIN
 				,c.Remark				AS '@lcr'
 				,c.IsLicenseeContact	AS '@lc'
 				,c.Subsidiary			AS '@lcsub'
+				,c.IsMain				AS '@lcim'
 				,@log_category
 		FROM dbo.Contact AS c WITH (NOLOCK)
 		WHERE c.ContactID = @ContactId
@@ -92,10 +95,20 @@ BEGIN
 	SELECT @logSPOldData = CONVERT(NVARCHAR(MAX),@xml)
 	
 	BEGIN TRY
+		-- change all IsMain contact when update new main contact
+		IF @IsMain = 1
+		BEGIN
+			UPDATE dbo.contact WITH(ROWLOCK, UPDLOCK)
+				SET IsMain = 0
+			WHERE IsMain = 1 AND LicenseeId = @LicenseeId
+		END
+		
+		-- update lastest main contact
 		UPDATE	dbo.Contact WITH(ROWLOCK, UPDLOCK)
 			SET LicenseeID			= @LicenseeId
 				,ContactType		= @ContactType
 				,IsLicenseeContact	= @IsLicenseeContact
+				,IsMain				= @IsMain
 				,ContactName		= @ContactName
 				,ContactPosition	= @Position
 				,ContactDepartment	= @Department
@@ -169,6 +182,7 @@ BEGIN
 				,c.ContactType			AS '@lcct'
 				,c.Remark				AS '@lcr'
 				,c.IsLicenseeContact	AS '@lc'
+				,c.IsMain				AS '@lcim'
 				,c.Subsidiary			AS '@lcsub'
 				,@log_category
 		FROM dbo.Contact AS c WITH (NOLOCK)
