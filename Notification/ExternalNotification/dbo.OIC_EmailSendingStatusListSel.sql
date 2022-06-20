@@ -103,7 +103,7 @@ BEGIN
 			,msn.CountSend
 	FROM	MailRecordSiteName msn WITH(NOLOCK) INNER JOIN UserInfo ui WITH(NOLOCK)
 			ON msn.FromUserId = ui.UserId
-			INNER JOIN Licensee l
+			INNER JOIN Licensee l WITH(NOLOCK)
 			ON msn.ToRecipientId = l.LicenseeId
 			INNER JOIN #tblMail t
 			ON msn.Id = t.MailSiteNameId
