@@ -46,22 +46,22 @@ BEGIN
 		SET @SelectedStatuses = REPLACE(@SelectedStatuses, '9', '1,3');		
 		
 		INSERT INTO @tblStatus ([Status])
-		SELECT	val 
-		FROM	dbo.strSplit(@SelectedStatuses, ',')
+		SELECT	value 
+		FROM	STRING_SPLIT(@SelectedStatuses, ',')
 	END	
 	
 	IF @SelectedSenders <> 'All'
 	BEGIN
 		INSERT INTO @tblSender (Sender)
-		SELECT	val 
-		FROM	dbo.strSplit(@SelectedSenders, ',')
+		SELECT	value 
+		FROM	STRING_SPLIT(@SelectedSenders, ',')
 	END	
 	
 	IF @SelectedRecipients <> 'All'
 	BEGIN
 		INSERT INTO @tblRecipient (Recipient)
-		SELECT	val 
-		FROM	dbo.strSplit(@SelectedRecipients, ',')
+		SELECT	value 
+		FROM	STRING_SPLIT(@SelectedRecipients, ',')
 	END		
 	
 	INSERT INTO #tblMail (MailSiteNameId)
