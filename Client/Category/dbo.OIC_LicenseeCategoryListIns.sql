@@ -23,7 +23,8 @@ AS
     
     Revisions:
 		- 20220304@Kai: Copy contact list for licensees [RedmindId: #161538]
-    
+		- 20220803@Kai: Assign Categories to To List of main Contact [RedmindId: #175082]
+
     Param's Explanation:
 		*@OriginalSite: '321'
 		*@ReplicateSite: '123'
@@ -78,7 +79,7 @@ BEGIN
 			
 		--  Assign the categories to the client main's contact (Cc)
 		INSERT INTO dbo.CategoryContact (ContactID, CategoryID, RecipientType)
-		SELECT c.ContactID, t.CategoryId, 1 -- Cc
+		SELECT c.ContactID, t.CategoryId, 0 -- To
 		FROM dbo.Contact c WITH(NOLOCK)
 			INNER JOIN @tblLicenseeCategoryAssigned t ON c.LicenseeId = t.LicenseeId AND c.IsMain = 1
 
