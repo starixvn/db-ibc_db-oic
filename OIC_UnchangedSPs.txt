@@ -1,7 +1,2 @@
-Client\Contact\dbo.OIC_LicenseeContactDel.sql
-Client\Contact\dbo.OIC_LicenseeContactIns.sql
-Client\Contact\dbo.OIC_LicenseeContactUpd.sql
-ExternalAPI\dbo.OIC_API_LicenseeContactDel.sql
-ExternalAPI\dbo.OIC_API_LicenseeContactIns.sql
-ExternalAPI\dbo.OIC_API_LicenseeContactUpd.sql
-ExternalAPI\dbo.OIC_API_SystemNotificationIns
+Client\dbo.OIC_ContactListCopy.sql
+Client\Category\dbo.OIC_LicenseeCategoryManage.sql
