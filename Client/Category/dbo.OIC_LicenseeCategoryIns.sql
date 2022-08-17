@@ -1,5 +1,4 @@
-USE [bodb_OIC]
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeCategoryIns] 
 	@SelectedCategory	VARCHAR(500)
@@ -19,6 +18,7 @@ AS
 	Remark: Parent SP: OIC_LicenseeCategoryManage @ActionID = 1 -- Add
 
 	Revisions:
+		- 20220803@Kai: Assign Categories to To List of main Contact [RedmindId: #175082]
 
 	Param's Explanation:
 		*@SelectedLicensee: '1,2,3,4'
@@ -44,11 +44,11 @@ BEGIN
 
 	DECLARE @tblLicenseeCategoryAssigned TABLE(LicenseeId INT, CategoryId TINYINT)
 	INSERT INTO @tblLicenseeCategoryAssigned (LicenseeId, CategoryId)
-	SELECT LicenseeId, CONVERT(INT, s.val) AS CategoryId
+	SELECT LicenseeId, CONVERT(INT, s.value) AS CategoryId
 	FROM (
-		SELECT CONVERT(INT, val) AS LicenseeId FROM dbo.strSplit(@SelectedLicensee, ',')
+		SELECT CONVERT(INT, value) AS LicenseeId FROM STRING_SPLIT(@SelectedLicensee, ',')
 	) t
-		CROSS APPLY dbo.strSplit(@SelectedCategory,',') s
+		CROSS APPLY STRING_SPLIT(@SelectedCategory,',') s
 
 	DELETE t
 	FROM @tblLicenseeCategoryAssigned t
@@ -68,7 +68,7 @@ BEGIN
 			
 		--  Assign the categories to the client main's contact (Cc)
 		INSERT INTO dbo.CategoryContact (ContactID, CategoryID, RecipientType)
-		SELECT c.ContactID, t.CategoryId, 1 -- Cc
+		SELECT c.ContactID, t.CategoryId, 0 -- To
 		FROM dbo.Contact c WITH(NOLOCK)
 			INNER JOIN @tblLicenseeCategoryAssigned t ON c.LicenseeID = t.LicenseeId AND c.IsMain = 1
 	END TRY
@@ -123,8 +123,4 @@ BEGIN
 			,@Duration		= @Duration
 	END
 END
-GO
-GRANT EXECUTE ON [dbo].[OIC_LicenseeCategoryIns] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[OIC_LicenseeCategoryIns] TO [vnteam] AS [dbo]
 GO
