@@ -11,6 +11,7 @@ AS
 	
 	Revisions:
 	- 20211122@Kai: Enhancement of Type of Licensee [#163521]
+	- 20220825@Kai: Get RegisteredLicenseeName column data [RedmineID: #168502]
 	
 	Param's Explanation:
 	
@@ -23,6 +24,7 @@ BEGIN
 			,TypeName
 			,LicenseeId
 			,LicenseeName
+			,RegisteredLicenseeName
 	FROM	dbo.f_LicenseeBelongToLicenseeType (@UserId)
 	WHERE	LicenseeId IS NOT NULL
 	ORDER BY TypeId
