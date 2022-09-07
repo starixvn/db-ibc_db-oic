@@ -21,6 +21,7 @@ AS
 	Revisions:
 		- 20191210@Hogan: Create stored procedure OIC_EmailSendingStatusListSel [RedmineID: #120949]
 		- 20220615@Kai: Launched emails of a new licensee [RedmineID: #168502]
+		- 20220907@Kai: Enhance launched new product emails [RedmineID: #168502]
  */
 BEGIN
 	SET NOCOUNT ON
@@ -74,7 +75,7 @@ BEGIN
 				OR @SelectedRecipients = 'ALL')
 			AND (msn.[Status] IN (SELECT [Status] FROM @tblStatus)
 				OR @SelectedStatuses = 'ALL')
-			AND (msn.LicenseeId = 0)
+			AND (msn.[Type] = 0) -- 0:  Email Notification, 1: Internal Email Notification
 	
 	SELECT MailSiteNameId
 			,Sender

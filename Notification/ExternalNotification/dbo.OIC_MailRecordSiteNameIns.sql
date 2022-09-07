@@ -5,8 +5,9 @@ ALTER PROCEDURE [dbo].[OIC_MailRecordSiteNameIns]
 	,@Cc					NVARCHAR(1000)
 	,@Bcc					NVARCHAR(300)
 	,@Subject				NVARCHAR(300)
+	,@LicenseeIds			NVARCHAR(MAX)   = NULL
 	,@ToRecipientId			INT
-	,@LicenseeId			INT				= 0
+	,@Type					INT				= 0
 	,@Status				TINYINT			= 0
 	,@MailRecordId			INT				= 0
 	,@LatestSendTime		DATETIME		= NULL
@@ -29,11 +30,14 @@ AS
 		- 20191017@Hogan: Create stored procedure OIC_MailRecordSiteNameIns [RedmineID: #120949]
 		- 20200212@Hogan: Extend length of column CC in MailRecordSiteName table to 1000 [RedmineID: #128373]
 		- 20220615@Kai: Launched emails of a new licensee [RedmineID: #168502]
+		- 20220907@Kai: Enhance launched new product emails [RedmineID: #168502]
 
 	Param's Explanation:
-	@Status: 0: mail waiting for send process
-					1: email sent successfully
-					2: email sent failed	
+	@Status:	0: mail waiting for send process
+				1: email sent successfully
+				2: email sent failed	
+	@Type:	0: email notification
+			1: internal email notification
  */
 BEGIN
 	SET NOCOUNT ON;
@@ -50,10 +54,23 @@ BEGIN
 
     BEGIN TRY
 
-		INSERT INTO dbo.MailRecordSiteName ([To], Cc, Bcc,[Subject], [Status], MailRecordId, FromUserId, ToRecipientId, LicenseeId, LatestSendTime, CountSend, CreateTime) 
-		VALUES (@To, @Cc, @Bcc, @Subject, @Status, @MailRecordId, @UserId, @ToRecipientId, @LicenseeId, @LatestSendTime, @CountSend, GETDATE())
-		
+		IF @Type = 0 -- email notification
+		BEGIN
+			INSERT INTO dbo.MailRecordSiteName ([To], Cc, Bcc,[Subject], [Status], MailRecordId, FromUserId, ToRecipientId, [Type], LatestSendTime, CountSend, CreateTime) 
+			VALUES (@To, @Cc, @Bcc, @Subject, @Status, @MailRecordId, @UserId, @ToRecipientId, @Type, @LatestSendTime, @CountSend, GETDATE())
+		END
+		ELSE IF @Type = 1 -- internal email notification
+		BEGIN
+			INSERT INTO dbo.LicenseeMailRecord
+			SELECT value, @MailRecordId FROM STRING_SPLIT(@LicenseeIds,',')
+			WHERE NOT EXISTS (SELECT * FROM dbo.LicenseeMailRecord lmr WITH(NOLOCK) WHERE lmr.MailRecordId = @MailRecordId AND value = lmr.LicenseeId) 
+
+			INSERT INTO dbo.MailRecordSiteName ([To], Cc, Bcc,[Subject], [Status], MailRecordId, FromUserId, ToRecipientId, [Type], LatestSendTime, CountSend, CreateTime) 
+			VALUES (@To, @Cc, @Bcc, @Subject, @Status, @MailRecordId, @UserId, @ToRecipientId, @Type, @LatestSendTime, @CountSend, GETDATE())
+		END
+
 		SET @IdentityInserted = SCOPE_IDENTITY()
+
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = 110
@@ -70,9 +87,10 @@ BEGIN
 			,@MailRecordId		AS '@mi'
 			,@UserId			AS '@fu'
 			,@ToRecipientId		AS '@tr'
-			,@LicenseeId		AS '@lid'
+			,@LicenseeIds		AS '@lid'
 			,@LatestSendTime	AS '@lst'
 			,@CountSend			AS '@cs'
+			,@Type				AS '@type'
 	FOR XML PATH('r'), TYPE
 	)		
 		
