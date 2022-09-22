@@ -20,6 +20,7 @@ AS
 	
 	Revisions:
 		- 20220615@Kai: Launched emails of a new licensee [RedmineID: #168502]
+		- 20220907@Kai: Enhance launched new product emails [RedmineID: #168502]
  */
 BEGIN
 	SET NOCOUNT ON
@@ -64,16 +65,18 @@ BEGIN
 	END		
 	
 	INSERT INTO #tblMail (MailSiteNameId)
-	SELECT	msn.Id
-	FROM	MailRecordSiteName msn WITH(NOLOCK)
+	SELECT DISTINCT msn.Id
+	FROM	dbo.MailRecordSiteName msn WITH(NOLOCK)
+			INNER JOIN dbo.LicenseeMailRecord lmr WITH(NOLOCK)
+			ON msn.MailRecordId = lmr.MailRecordId
 	WHERE	msn.CreateTime BETWEEN @FromDate AND @ToDate
-			AND (msn.LicenseeId IN (SELECT Licensee FROM @tblLicensees)
+			AND (lmr.LicenseeId IN (SELECT Licensee FROM @tblLicensees)
 				OR @SelectedSiteNames = 'ALL')
 			AND (msn.ToRecipientId IN (SELECT Recipient FROM @tblRecipient)
 				OR @SelectedRecipients = 'ALL')
 			AND (msn.[Status] IN (SELECT [Status] FROM @tblStatus)
 				OR @SelectedStatuses = 'ALL')
-			AND (msn.LicenseeId != 0)
+			AND (msn.[Type] = 1) -- 0:  Email Notification, 1: Internal Email Notification
 	
 	SELECT MailSiteNameId
 			,Sender
