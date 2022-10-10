@@ -1,6 +1,4 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_OIC]
-GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeInfoSel]	
 	@LicenseeId		INT
@@ -24,6 +22,7 @@ AS
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20211001@Alex: Support Product Type on Client Product [RedmindId: #161508]
 		- 20211115@Alex: Change Type Of Licensee [RedmindId: #163521]
+		- 20221005@Kai: Support sending emails automatically [Redmine:#176447]
 		- 20221028@Kai: Extend size of OfferedCurrencies [RedmindId: #179694]
 	
 	Param's Explanation:
@@ -109,17 +108,12 @@ BEGIN
 				,l.LicenseeGroupId
 				,l.SoftLaunch
 				,l.FullLaunch
+				,l.RelaunchDate
+				,l.TerminatedDate
+				,l.SuspendedDate
 				,l.MainUrl
 				,l.APILinkageUrl
 				,@LicBackupLink				AS BackUpLink
-				,CASE WHEN c.ContactID IS NOT NULL THEN 1 ELSE 0 END AS HasMainContact
-				,c.ContactName
-				,c.ContactPosition			AS Position
-				,c.ContactDepartment		AS Department
-				,c.ContactEmail				AS Email
-				,c.ContactPhoneNumber		AS PhoneNumber
-				,c.ContactSkype				AS Skype
-				,c.Remark					AS MainContactRemark
 				,@OfferedCurrencies			AS OfferedCurrencies
 				,l.LicenseeLocationId
 				,@LicTargetMarket			AS TargetedMarket
@@ -131,15 +125,15 @@ BEGIN
 				,@IntegrationMethod			AS IntegrationMethod
 				,l.RestrictedLocationRemark
 				,l.Remark					AS LicenseeRemark
+				,l.TerminationRemark
 				,l.IsChineseMarketOnly		AS IsChineseMarketOnly
 				,l.IsReseller				AS IsReseller
 				,l.InvoiceBaseCurrency		AS InvoiceBaseCurrency
 				,l.InvoiceLanguage			AS InvoiceLanguage
 				,l.PlatformId				AS PlatformId
 				,l.TypeId					AS TypeId
-		FROM	dbo.Licensee l WITH(NOLOCK)
-			LEFT JOIN dbo.Contact c WITH(NOLOCK) 
-				ON	l.LicenseeId = c.LicenseeID AND c.IsMain = 1	
+
+		FROM	dbo.Licensee l WITH(NOLOCK)	
 		WHERE	l.LicenseeId = @LicenseeId
 	END
 	ELSE IF @Step = 2
