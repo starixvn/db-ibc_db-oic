@@ -24,6 +24,7 @@ AS
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20211001@Alex: Support Product Type on Client Product [RedmindId: #161508]
 		- 20211115@Alex: Change Type Of Licensee [RedmindId: #163521]
+		- 20221028@Kai: Extend size of OfferedCurrencies [RedmindId: #179694]
 	
 	Param's Explanation:
 		@Step: 1,2,3
@@ -33,7 +34,7 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @LicBackupLink			XML
-			,@OfferedCurrencies		VARCHAR(100)
+			,@OfferedCurrencies		VARCHAR(1000)
 			,@LicTargetMarket		VARCHAR(1000)
 			,@LicLanguage			XML
 			,@LicLanguageSB			XML

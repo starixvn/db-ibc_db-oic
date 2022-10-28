@@ -26,7 +26,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd]
 	,@Skype					VARCHAR(50)		= NULL
 	,@MainContactRemark		NVARCHAR(300)	= NULL
 	,@LocationId			INT				= NULL
-	,@CurrenciesOffered		VARCHAR(100)	= NULL
+	,@CurrenciesOffered		VARCHAR(1000)	= NULL
 	,@LicTargetMarket		VARCHAR(1000)	= NULL
 	,@LicLanguage			XML				= NULL
 	,@LicLanguageSB			XML				= NULL
@@ -74,6 +74,8 @@ AS
 		- 20210706@Mark: Don't write log if a client edited without having Group info [RedmindId: #157501]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20211109@Alex: Change Type Of Licensee [RedmindId: #163521]
+		- 20221028@Kai: Extend size of OfferedCurrencies [RedmindId: #179694]
+
 	Param's Explanation:
 	* @LicBackupLink
 		<root>
