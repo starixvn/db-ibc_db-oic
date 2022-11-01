@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns]
 	@UserId					INT
 	,@PlatformId			TINYINT
@@ -13,17 +13,12 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns]
 	,@IsChineseMarketOnly	BIT				= 0
 	,@SoftLaunch			DATETIME		= NULL
 	,@FullLaunch			DATETIME		= NULL
+	,@RelaunchDate			DATETIME		= NULL
+	,@SuspendedDate			DATETIME		= NULL
+	,@TerminatedDate		DATETIME		= NULL
 	,@MainUrl				VARCHAR(3000)	= NULL
 	,@APIUrl				VARCHAR(3000)	= NULL
 	,@LicBackUpLink			XML				= NULL
-	,@HasMainContact		BIT				= 0 -- has main contact info
-	,@MainContactName		NVARCHAR(50)	= NULL
-	,@Position				NVARCHAR(50)	= NULL
-	,@Department			NVARCHAR(50)	= NULL
-	,@Email					VARCHAR(50)		= NULL
-	,@PhoneNumber			VARCHAR(50)		= NULL
-	,@Skype					VARCHAR(50)		= NULL
-	,@MainContactRemark		NVARCHAR(300)	= NULL
 	,@LocationId			INT				= NULL
 	,@CurrenciesOffered		VARCHAR(100)	= NULL
 	,@LicTargetMarket		VARCHAR(1000)	= NULL
@@ -34,6 +29,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns]
 	,@LicRestrictCountry	VARCHAR(1000)	= NULL
 	,@RestrictCountryRemark	NVARCHAR(2000)	= NULL
 	,@Remark				NVARCHAR(300)	= NULL
+	,@TerminationRemark		NVARCHAR(300)	= NULL
 	,@LicProduct			XML				= NULL
 	,@LicFeature			XML				= NULL
 	,@AMUserId				INT				
@@ -69,6 +65,7 @@ AS
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20211109@Alex: Change Type Of Licensee [RedmindId: #163521]
 		- 20220321@Kai: Enhance New Client [Redmine:#169959]
+		- 20221005@Kai: Support sending emails automatically [Redmine:#176447]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -184,17 +181,12 @@ BEGIN
 		,@IsChineseMarketOnly		= @IsChineseMarketOnly
 		,@SoftLaunch				= @SoftLaunch
 		,@FullLaunch				= @FullLaunch
+		,@RelaunchDate				= @RelaunchDate
+		,@SuspendedDate				= @SuspendedDate
+		,@TerminatedDate			= @TerminatedDate
 		,@MainUrl					= @MainUrl
 		,@APIUrl					= @APIUrl
 		,@LicBackUpLink				= @LicBackUpLink
-		,@HasMainContact			= @HasMainContact -- has main contact info
-		,@MainContactName			= @MainContactName
-		,@Position					= @Position
-		,@Department				= @Department
-		,@Email						= @Email
-		,@PhoneNumber				= @PhoneNumber
-		,@Skype						= @Skype
-		,@MainContactRemark			= @MainContactRemark
 		,@LocationId				= @LocationId
 		,@CurrenciesOffered			= @CurrenciesOffered
 		,@LicTargetMarket			= @LicTargetMarket
@@ -205,6 +197,7 @@ BEGIN
 		,@LicRestrictCountry		= @LicRestrictCountry
 		,@RestrictCountryRemark		= @RestrictCountryRemark
 		,@Remark					= @Remark
+		,@TerminationRemark			= @TerminationRemark
 		,@InvoiceBaseCurrency		= @InvoiceBaseCurrency
 		,@InvoiceLanguage			= @InvoiceLanguage
 		
@@ -390,20 +383,6 @@ BEGIN
 							WHERE	lu.LicenseeId = @LicenseeId
 							FOR XML PATH('row'), ROOT('bk')		
 						)
-						
-	SET @log_maincontact = (SELECT	c.ContactID			AS '@cid'
-									,c.ContactName		AS '@cn'
-									,c.ContactPosition	AS '@cp'
-									,c.ContactDepartment AS '@cd'
-									,c.ContactEmail		AS '@ce'
-									,c.ContactSkype		AS '@cs'
-									,c.ContactPhoneNumber	AS '@cpn'
-									,c.IsMain			AS '@cim'
-									,c.Remark			AS '@crm'
-							FROM	dbo.Contact AS c WITH (NOLOCK)
-							WHERE	licenseeid = @LicenseeId AND c.IsMain = 1
-							FOR XML PATH('row'), ROOT('lc')	
-						)
 	
 	SET @log_currency = (
 							SELECT	c.ExchangeId AS '@cid'
@@ -425,6 +404,7 @@ BEGIN
 							WHERE	ll.LicenseeId = @LicenseeId
 							FOR XML PATH('row'), ROOT('tm')	
 						)
+
 	SET @log_restrictedLocation = (
 							SELECT lo.LocationId AS '@rlid'
 									,lo.LocationName AS '@rln'
@@ -489,6 +469,7 @@ BEGIN
 							WHERE	licenseeid = @LicenseeId
 							FOR XML PATH('row'), ROOT('ls')	
 						)
+
 	SET @log_product = (	SELECT	p.ProductId AS '@lpid'
 									,p.ProductName AS '@lpn'
 									,p.[Order] AS '@lpod'
@@ -500,6 +481,7 @@ BEGIN
 							WHERE	lp.LicenseeId = @LicenseeId
 							FOR XML PATH('row'), ROOT('lp')	
 						)
+
 	SET @log_feature = (	SELECT	f.FeatureId AS '@lfid'
 									,f.FeatureName AS '@lfn'
 									,lf.LaunchDate AS '@lfl'
@@ -510,6 +492,7 @@ BEGIN
 							WHERE	lf.LicenseeId = @LicenseeId
 							FOR XML PATH('row'), ROOT('lf')	
 						)
+
 	SET @log_account = (	SELECT	la.AccountId AS '@laid'
 									,la.UserName AS '@lan'
 									,la.UserPwd AS '@lap'
@@ -520,8 +503,6 @@ BEGIN
 							WHERE la.LicenseeId = @LicenseeId
 							FOR XML PATH('row'), ROOT('la')	
 						)
-						
-	
 	
 	DECLARE @pmn NVARCHAR(100), @amn NVARCHAR(100), @location NVARCHAR(50)
 	
@@ -547,10 +528,14 @@ BEGIN
 				,g.Name						AS '@gn'
 				,l.SoftLaunch				AS '@sl'
 				,l.FullLaunch				AS '@fl'
+				,l.RelaunchDate				AS '@rld'
+				,l.SuspendedDate			AS '@sd'
+				,l.TerminatedDate			AS '@td'
 				,l.MainUrl					AS '@mu'
 				,l.APILinkageUrl			AS '@au'
 				,l.RestrictedLocationRemark	AS '@rlr'
 				,l.Remark					AS '@rm'
+				,l.TerminationRemark		AS '@trm'
 				,l.IsChineseMarketOnly		AS '@icm'
 				,l.IsReseller				AS '@res'
 				,l.InternalURL				AS '@iu'
@@ -560,7 +545,6 @@ BEGIN
 				,l.InvoiceBaseCurrency		AS '@ibc'
 				,l.InvoiceLanguage			AS '@il'
 				,@log_backupLink
-				,@log_maincontact
 				,@log_currency
 				,@log_Language
 				,@log_LanguageSB

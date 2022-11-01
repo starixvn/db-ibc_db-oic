@@ -27,6 +27,7 @@ AS
 		- 20220504@Kai: Add Subsidiary for Licensee Contact [Redmine:#170641]
 		- 20220309@Kai: Copy contact list for licensees [RedmindId: #161538]
 		- 20220513@Kai: Manage the main contact of licensee [Redmine:#172568]
+		- 20221006@Kai: Support sending emails automatically [Redmine:#176447]
 		
 */
 BEGIN
@@ -49,16 +50,12 @@ BEGIN
 			@ClientGroup NVARCHAR(100),
 			@SoftLaunch NVARCHAR(10), -- datetime format: mm/dd/yyyy
 			@FullLaunch NVARCHAR(10), -- datetime format: mm/dd/yyyy
+			@RelaunchDate NVARCHAR(10), -- datetime format: mm/dd/yyyy
+			@SuspendedDate NVARCHAR(10), -- datetime format: mm/dd/yyyy
+			@TerminatedDate NVARCHAR(10), -- datetime format: mm/dd/yyyy
 			@MainUrl NVARCHAR(MAX),
 			@BackupUrl NVARCHAR(MAX), -- list of backup link
 			@APIUrl NVARCHAR(MAX),
-			@ContactName NVARCHAR(100),
-			@ContactPosition NVARCHAR(100),
-			@ContactDepartment NVARCHAR(100),
-			@ContactEmail NVARCHAR(50),
-			@ContactMobile NVARCHAR(50),
-			@ContactSkype NVARCHAR(50),
-			@ContactRemark NVARCHAR(600),
 			@OfferedCurrencies NVARCHAR(MAX), -- list of currencies
 			@SBOfferedLanguages NVARCHAR(MAX), -- list of sportbook languagues
 			@ClientLocation NVARCHAR(50),
@@ -81,6 +78,7 @@ BEGIN
 			@RestrictedCountry NVARCHAR(MAX), -- list of restricted countries
 			@RestrictedCountry_Exception NVARCHAR(2000),
 			@Remark NVARCHAR(3000),
+			@TerminationRemark NVARCHAR(3000),
 			@Products NVARCHAR(MAX), -- list of products
 			@Features NVARCHAR(MAX), -- list of features
 			@AM NVARCHAR(100),
@@ -110,16 +108,12 @@ BEGIN
 			@ClientGroup_old NVARCHAR(100),
 			@SoftLaunch_old NVARCHAR(10), -- datetime format: mm/dd/yyyy
 			@FullLaunch_old NVARCHAR(10), -- datetime format: mm/dd/yyyy
+			@RelaunchDate_old NVARCHAR(10), -- datetime format: mm/dd/yyyy
+			@SuspendedDate_old NVARCHAR(10), -- datetime format: mm/dd/yyyy
+			@TerminatedDate_old NVARCHAR(10), -- datetime format: mm/dd/yyyy
 			@MainUrl_old NVARCHAR(MAX),
 			@BackupUrl_old NVARCHAR(MAX), -- list of backup link
 			@APIUrl_old NVARCHAR(MAX),
-			@ContactName_old NVARCHAR(100),
-			@ContactPosition_old NVARCHAR(100),
-			@ContactDepartment_old NVARCHAR(100),
-			@ContactEmail_old NVARCHAR(50),
-			@ContactMobile_old NVARCHAR(50),
-			@ContactSkype_old NVARCHAR(50),
-			@ContactRemark_old NVARCHAR(600),
 			@OfferedCurrencies_old NVARCHAR(MAX), -- list of currencies
 			@SBOfferedLanguages_old NVARCHAR(MAX), -- list of sportbook languagues
 			@ClientLocation_old NVARCHAR(50),
@@ -142,6 +136,7 @@ BEGIN
 			@RestrictedCountry_old NVARCHAR(MAX), -- list of restricted countries
 			@RestrictedCountry_Exception_old NVARCHAR(2000),
 			@Remark_old NVARCHAR(3000),
+			@TerminationRemark_old NVARCHAR(3000),
 			@Products_old NVARCHAR(MAX), -- list of products
 			@Features_old NVARCHAR(MAX), -- list of features
 			@AM_old NVARCHAR(100),
@@ -173,10 +168,14 @@ BEGIN
 			@ClientGroup = d.c.value('@gn', 'NVARCHAR(100)'), -- client group
 			@SoftLaunch = d.c.value('@sl', 'DATE'), -- soft launch
 			@FullLaunch = d.c.value('@fl', 'DATE'), -- full launch
+			@RelaunchDate = d.c.value('@rld', 'DATE'), -- relaunch date
+			@SuspendedDate = d.c.value('@sd', 'DATE'), -- suspended date
+			@TerminatedDate = d.c.value('@td', 'DATE'), -- terminated date
 			@MainUrl = d.c.value('@mu', 'NVARCHAR(MAX)'), -- main domain url
 			@APIUrl = d.c.value('@au', 'NVARCHAR(MAX)'), -- api url
 			@RestrictedCountry_Exception = d.c.value('@rlr', 'NVARCHAR(2000)'), -- add exception for client country restrict list
 			@Remark = d.c.value('@rm', 'NVARCHAR(600)'), -- remark
+			@TerminationRemark = d.c.value('@trm', 'NVARCHAR(600)'), -- termination remark
 			@ClientLocation = d.c.value('@lc', 'NVARCHAR(50)'), -- location
 			@PM = d.c.value('@pmn', 'NVARCHAR(50)'), -- project manager
 			@AM = d.c.value('@amn', 'NVARCHAR(50)'), -- account manager
@@ -195,10 +194,14 @@ BEGIN
 			@ClientGroup_old = od.c.value('@gn', 'NVARCHAR(100)'), -- client group
 			@SoftLaunch_old = od.c.value('@sl', 'DATE'), -- soft launch
 			@FullLaunch_old = od.c.value('@fl', 'DATE'), -- full launch
+			@RelaunchDate_old = od.c.value('@rld', 'DATE'), -- relaunch date
+			@SuspendedDate_old = od.c.value('@sd', 'DATE'), -- suspended date
+			@TerminatedDate_old = od.c.value('@td', 'DATE'), -- terminated date
 			@MainUrl_old = od.c.value('@mu', 'NVARCHAR(MAX)'), -- main domain url
 			@APIUrl_old = od.c.value('@au', 'NVARCHAR(MAX)'), -- api url
 			@RestrictedCountry_Exception_old = od.c.value('@rlr', 'NVARCHAR(2000)'), -- add exception for client country restrict list
 			@Remark_old = od.c.value('@rm', 'NVARCHAR(600)'), -- remark
+			@TerminationRemark_old = od.c.value('@trm', 'NVARCHAR(600)'), -- termination remark
 			@ClientLocation_old = od.c.value('@lc', 'NVARCHAR(50)'), -- location
 			@PM_old = od.c.value('@pmn', 'NVARCHAR(50)'), -- project manager
 			@AM_old = od.c.value('@amn', 'NVARCHAR(50)'), -- account manager
@@ -272,36 +275,6 @@ BEGIN
 		) 
 		SELECT	@BackupUrl = (SELECT STUFF((SELECT '<br/>' + Url FROM CTE1 FOR XML PATH('')), 1, 11, '')),
 				@BackupUrl_old = (SELECT STUFF((SELECT '<br/>' + Url_old FROM CTE2 FOR XML PATH('')), 1, 11, ''))
-
-		-- Main Contact Info
-		SELECT
-			@ContactName = d.c.value('@cn', 'NVARCHAR(100)'), -- name
-			@ContactPosition = d.c.value('@cp', 'NVARCHAR(100)'), -- position
-			@ContactDepartment = d.c.value('@cd', 'NVARCHAR(100)'), -- department
-			@ContactEmail = d.c.value('@ce', 'NVARCHAR(50)'), -- email
-			@ContactSkype = d.c.value('@cs', 'NVARCHAR(50)'), -- skype
-			@ContactMobile = d.c.value('@cpn', 'NVARCHAR(50)'), -- contact number
-			@ContactRemark = d.c.value('@crm', 'NVARCHAR(600)'), -- remark
-
-			@ContactName_old = od.c.value('@cn', 'NVARCHAR(100)'), -- name
-			@ContactPosition_old = od.c.value('@cp', 'NVARCHAR(100)'), -- position
-			@ContactDepartment_old = od.c.value('@cd', 'NVARCHAR(100)'), -- department
-			@ContactEmail_old = od.c.value('@ce', 'NVARCHAR(50)'), -- email
-			@ContactSkype_old = od.c.value('@cs', 'NVARCHAR(50)'), -- skype
-			@ContactMobile_old = od.c.value('@cpn', 'NVARCHAR(50)'), -- contact number
-			@ContactRemark_old = od.c.value('@crm', 'NVARCHAR(600)') -- remark
-		FROM (
-			SELECT
-				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE Data END AS Data,
-				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<row />') ELSE OldData END AS OldData
-			FROM (
-				SELECT CONVERT(XML, Data).query('/r/lc/row') AS Data, CONVERT(XML, OldData).query('/r/lc/row') AS OldData
-				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
-				WHERE Id = @ActionID
-			) B
-		) A
-			OUTER APPLY A.Data.nodes('row') d(c)
-			OUTER APPLY A.OldData.nodes('row') od(c)
 
 		-- Offered Currency
 		;WITH CTE_Currency AS (
@@ -693,45 +666,42 @@ BEGIN
 		INSERT INTO @Result(ID, Field, NewValue, OldValue)
 		VALUES
 			(1, N'Type of licensee', @TypeOfLicensee, @TypeOfLicensee_old),
-			(1, N'Platform', @Platform, @Platform_old),
-			(1, N'Integration Method', @IntegrationMethods, @IntegrationMethods_old),
-			(2, N'Registered Site name', @RegisteredSitename, @RegisteredSitename_old),
-			(2, N'Site name', @Sitename, @Sitename_old),
-			(3, N'Company name', @CompanyName, @CompanyName_old),
-			(4, N'Client Status', @ClientStatus, @ClientStatus_old),
-			(5, N'China Market Only', @IsChineseMarketOnly, @IsChineseMarketOnly_old),
-			(6, N'Reseller', @Reseller, @Reseller_old),
-			(7, N'Soft Launch', @SoftLaunch, @SoftLaunch_old),
-			(8, N'Full Launch', @FullLaunch, @FullLaunch_old),
-			(9, N'Main domain URL', @MainUrl, @MainUrl_old),
-			(10, N'Backup Domain URL', @BackupUrl, @BackupUrl_old),
-			(11, N'API URL', @APIUrl, @APIUrl_old),
-			(12, N'Main Contact - Name', @ContactName, @ContactName_old),
-			(13, N'Main Contact - Position', @ContactPosition, @ContactPosition_old),
-			(14, N'Main Contact - Department', @ContactDepartment, @ContactDepartment_old),
-			(15, N'Main Contact - Email', @ContactEmail, @ContactEmail_old),
-			(16, N'Main Contact - Mobile Number', @ContactMobile, @ContactMobile_old),
-			(17, N'Main Contact - Skype username', @ContactSkype, @ContactSkype_old),
-			(18, N'Main Contact - Remark', @ContactRemark, @ContactRemark_old),
-			(19, N'Offered currencies', @OfferedCurrencies, @OfferedCurrencies_old),
-			(20, N'Sportsbook offered languages', @SBOfferedLanguages, @SBOfferedLanguages_old),
-			(21, N'Client Location', @ClientLocation, @ClientLocation_old),
-			(22, N'Client targeted market', @ClientTargetMarket, @ClientTargetMarket_old),
-			(23, N'Preferred communication language', @CommunicationLanguages, @CommunicationLanguages_old),
-			(24, N'Odds Type', @OddsTypes, @OddsTypes_old),
-			(25, N'Unas service', @UnasService, @UnasService_old),
-			(26, N'Unas service - Username', @UnasService_Username, @UnasService_Username_old),
-			(27, N'Unas service - Password', @UnasService_Password, @UnasService_Password_old),
-			(28, N'Mobile betting service', @MobileService, @MobileService_old),
-			(29, N'Mobile betting service - WAP site URL', @MobileService_WAP, @MobileService_WAP_old),
-			(30, N'Mobile betting service - Smartphone site URL', @MobileService_Smartphone, @MobileService_Smartphone_old),
-			(31, N'BA Agreement', @BAAgreement, @BAAgreement_old),
-			(32, N'BA Agreement - Group', @BAAgreement_Group, @BAAgreement_Group_old),
-			(33, N'BA Agreement - BA Joined date', @BAAgreement_JoinDate, @BAAgreement_JoinDate_old),
-			(34, N'Affiliate Agreement', @Affiliate, @Affiliate_old),
-			(35, N'Client country restrict list', @RestrictedCountry, @RestrictedCountry_old),
-			(36, N'Add exception for client country restrict list', @RestrictedCountry_Exception, @RestrictedCountry_Exception_old),
-			(37, N'Remark', @Remark, @Remark_old),
+			(2, N'Platform', @Platform, @Platform_old),
+			(3, N'Integration Method', @IntegrationMethods, @IntegrationMethods_old),
+			(4, N'Registered Site name', @RegisteredSitename, @RegisteredSitename_old),
+			(5, N'Site name', @Sitename, @Sitename_old),
+			(6, N'Company name', @CompanyName, @CompanyName_old),
+			(7, N'Client Status', @ClientStatus, @ClientStatus_old),
+			(8, N'China Market Only', @IsChineseMarketOnly, @IsChineseMarketOnly_old),
+			(9, N'Reseller', @Reseller, @Reseller_old),
+			(10, N'Soft Launch', @SoftLaunch, @SoftLaunch_old),
+			(11, N'Full Launch', @FullLaunch, @FullLaunch_old),
+			(12, N'Relaunch Date', @RelaunchDate, @RelaunchDate_old),
+			(13, N'Suspended Date', @SuspendedDate, @SuspendedDate_old),
+			(14, N'Terminated Date', @TerminatedDate, @TerminatedDate_old),
+			(15, N'Main domain URL', @MainUrl, @MainUrl_old),
+			(16, N'Backup Domain URL', @BackupUrl, @BackupUrl_old),
+			(17, N'API URL', @APIUrl, @APIUrl_old),
+			(18, N'Additional information for the launch notification email', @Remark, @Remark_old),
+			(19, N'Additional information for Terminated/ Suspended licensee notification email', @TerminationRemark, @TerminationRemark_old),
+			(20, N'Offered currencies', @OfferedCurrencies, @OfferedCurrencies_old),
+			(21, N'Sportsbook offered languages', @SBOfferedLanguages, @SBOfferedLanguages_old),
+			(22, N'Client Location', @ClientLocation, @ClientLocation_old),
+			(23, N'Client targeted market', @ClientTargetMarket, @ClientTargetMarket_old),
+			(24, N'Preferred communication language', @CommunicationLanguages, @CommunicationLanguages_old),
+			(25, N'Odds Type', @OddsTypes, @OddsTypes_old),
+			(26, N'Unas service', @UnasService, @UnasService_old),
+			(27, N'Unas service - Username', @UnasService_Username, @UnasService_Username_old),
+			(28, N'Unas service - Password', @UnasService_Password, @UnasService_Password_old),
+			(29, N'Mobile betting service', @MobileService, @MobileService_old),
+			(30, N'Mobile betting service - WAP site URL', @MobileService_WAP, @MobileService_WAP_old),
+			(31, N'Mobile betting service - Smartphone site URL', @MobileService_Smartphone, @MobileService_Smartphone_old),
+			(32, N'BA Agreement', @BAAgreement, @BAAgreement_old),
+			(33, N'BA Agreement - Group', @BAAgreement_Group, @BAAgreement_Group_old),
+			(34, N'BA Agreement - BA Joined date', @BAAgreement_JoinDate, @BAAgreement_JoinDate_old),
+			(35, N'Affiliate Agreement', @Affiliate, @Affiliate_old),
+			(36, N'Client country restrict list', @RestrictedCountry, @RestrictedCountry_old),
+			(37, N'Add exception for client country restrict list', @RestrictedCountry_Exception, @RestrictedCountry_Exception_old),
 			(38, N'Products - Launch - Termination', @Products, @Products_old),
 			(39, N'Features - Launch - Termination', @Features, @Features_old),
 			(40, N'Client Account Manager', @AM, @AM_old),

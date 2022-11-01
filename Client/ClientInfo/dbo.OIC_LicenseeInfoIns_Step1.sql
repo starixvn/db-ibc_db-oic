@@ -1,6 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="1"></info>*/
-USE [bodb_OIC]
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns_Step1]
 	@UserId					INT
@@ -16,17 +14,12 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns_Step1]
 	,@IsChineseMarketOnly	BIT				= 0
 	,@SoftLaunch			DATETIME		= NULL
 	,@FullLaunch			DATETIME		= NULL
+	,@RelaunchDate			DATETIME		= NULL
+	,@SuspendedDate			DATETIME		= NULL
+	,@TerminatedDate		DATETIME		= NULL
 	,@MainUrl				VARCHAR(3000)	= NULL
 	,@APIUrl				VARCHAR(3000)	= NULL
 	,@LicBackUpLink			XML				= NULL
-	,@HasMainContact		BIT				= 0 -- has main contact info
-	,@MainContactName		NVARCHAR(50)	= NULL
-	,@Position				NVARCHAR(50)	= NULL
-	,@Department			NVARCHAR(50)	= NULL
-	,@Email					VARCHAR(50)		= NULL
-	,@PhoneNumber			VARCHAR(50)		= NULL
-	,@Skype					VARCHAR(50)		= NULL
-	,@MainContactRemark		NVARCHAR(300)	= NULL
 	,@LocationId			INT				= NULL
 	,@CurrenciesOffered		VARCHAR(100)	= NULL
 	,@LicTargetMarket		VARCHAR(1000)	= NULL
@@ -37,6 +30,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns_Step1]
 	,@LicRestrictCountry	VARCHAR(1000)	= NULL
 	,@RestrictCountryRemark	NVARCHAR(2000)	= NULL
 	,@Remark				NVARCHAR(300)	= NULL
+	,@TerminationRemark		NVARCHAR(300)	= NULL
 	,@InvoiceBaseCurrency	VARCHAR(4)
 	,@InvoiceLanguage		NVARCHAR(50)
 	
@@ -63,6 +57,7 @@ AS
 		- 20200110@Hogan: Add Group into Client functions [RedmindId: #126855]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20211110@Alex: Change Type Of Licensee [RedmindId: #163521]
+		- 20221005@Kai: Support sending emails automatically [Redmine:#176447]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -107,11 +102,15 @@ BEGIN
 			,LicenseeGroupId
 			,SoftLaunch
 			,FullLaunch
+			,RelaunchDate
+			,SuspendedDate
+			,TerminatedDate
 			,MainUrl
 			,APILinkageUrl
 			,LicenseeLocationId
 			,RestrictedLocationRemark
 			,Remark
+			,TerminationRemark
 			,IsChineseMarketOnly
 			,IsReseller
 			,InvoiceBaseCurrency
@@ -127,11 +126,15 @@ BEGIN
 			,@LicenseeGroupId
 			,@SoftLaunch
 			,@FullLaunch
+			,@RelaunchDate
+			,@SuspendedDate
+			,@TerminatedDate
 			,@MainUrl
 			,@APIUrl
 			,@LocationId
 			,@RestrictCountryRemark
 			,@Remark
+			,@TerminationRemark
 			,@IsChineseMarketOnly
 			,@IsReseller
 			,@InvoiceBaseCurrency
@@ -162,39 +165,6 @@ BEGIN
 		IF @@ERROR <> 0
 		BEGIN
 			SELECT @ErrCode = 101
-			RETURN
-		END
-	END
-	
-	-- Insert Main Contact
-	IF @HasMainContact = 1
-	BEGIN
-		INSERT INTO dbo.Contact (
-				LicenseeID
-				,ContactName
-				,ContactPosition
-				,ContactDepartment
-				,ContactEmail
-				,ContactSkype
-				,ContactPhoneNumber
-				,ContactType
-				,Remark
-				,IsMain
-		)
-		SELECT @LicenseeId
-				,@MainContactName
-				,@Position
-				,@Department
-				,@Email
-				,@Skype
-				,@PhoneNumber
-				,0
-				,@MainContactRemark
-				,1
-		
-		IF @@ERROR <> 0
-		BEGIN
-			SELECT @ErrCode = 102
 			RETURN
 		END
 	END

@@ -1,6 +1,4 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_OIC]
-GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd_Step1]
 	@TypeId					TINYINT
@@ -15,19 +13,14 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd_Step1]
 	,@IsChineseMarketOnly	BIT				= 0
 	,@SoftLaunch			DATETIME		= NULL
 	,@FullLaunch			DATETIME		= NULL
+	,@RelaunchDate			DATETIME		= NULL
+	,@SuspendedDate			DATETIME		= NULL
+	,@TerminatedDate		DATETIME		= NULL
 	,@MainUrl				VARCHAR(3000)	= NULL
 	,@APIUrl				VARCHAR(3000)	= NULL
 	,@LicBackUpLink			XML				= NULL
-	,@HasMainContact		BIT				= 0 -- has main contact info
-	,@MainContactName		NVARCHAR(50)	= NULL
-	,@Position				NVARCHAR(50)	= NULL
-	,@Department			NVARCHAR(50)	= NULL
-	,@Email					VARCHAR(50)		= NULL
-	,@PhoneNumber			VARCHAR(50)		= NULL
-	,@Skype					VARCHAR(50)		= NULL
-	,@MainContactRemark		NVARCHAR(300)	= NULL
 	,@LocationId			INT				= NULL
-	,@CurrenciesOffered		VARCHAR(100)	= NULL
+	,@CurrenciesOffered		VARCHAR(1000)	= NULL
 	,@LicTargetMarket		VARCHAR(1000)	= NULL
 	,@LicLanguage			XML				= NULL
 	,@LicLanguageSB			XML				= NULL
@@ -36,6 +29,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd_Step1]
 	,@LicRestrictCountry	VARCHAR(1000)	= NULL
 	,@RestrictCountryRemark	NVARCHAR(500)	= NULL
 	,@Remark				NVARCHAR(300)	= NULL
+	,@TerminationRemark		NVARCHAR(300)	= NULL
 	,@InvoiceBaseCurrency	VARCHAR(4)
 	,@InvoiceLanguage		NVARCHAR(50)
 	
@@ -63,6 +57,8 @@ AS
 		- 20200203@Hogan: Add Licensee Group [RedmineID: #126855]
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20211110@Alex: Change Type Of Licensee [RedmindId: #163521]
+		- 20221005@Kai: Support sending emails automatically [Redmine:#176447]
+		- 20221028@Kai: Extend size of OfferedCurrencies [RedmindId: #179694]
 		
 	Param's Explanation:
 	* @LicBackupLink
@@ -126,11 +122,15 @@ BEGIN
 				,LicenseeGroupId			= @LicenseeGroupId
 				,SoftLaunch					= @SoftLaunch
 				,FullLaunch					= @FullLaunch
+				,RelaunchDate				= @RelaunchDate
+				,SuspendedDate				= @SuspendedDate
+				,TerminatedDate				= @TerminatedDate
 				,MainUrl					= @MainUrl
 				,APILinkageUrl				= @APIUrl
 				,LicenseeLocationId			= @LocationId
 				,RestrictedLocationRemark	= @RestrictCountryRemark
 				,Remark						= @Remark
+				,TerminationRemark			= @TerminationRemark
 				,TypeId						= @TypeId
 				,PlatformId 				= @PlatformId
 				,IsChineseMarketOnly		= @IsChineseMarketOnly
@@ -162,53 +162,6 @@ BEGIN
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = 102
-		RETURN
-	END CATCH	
-		
-	-- Update main contact
-	IF @HasMainContact = 1
-	BEGIN TRY
-		SELECT	@MainContactId = ContactID
-		FROM	dbo.Contact WITH(NOLOCK)
-		WHERE	LicenseeID = @LicenseeId
-				AND IsMain = 1
-		
-		IF @@ROWCOUNT = 0 
-			INSERT INTO dbo.Contact(
-					LicenseeID
-					,ContactName
-					,ContactPosition
-					,ContactDepartment
-					,ContactEmail
-					,ContactSkype
-					,ContactPhoneNumber
-					,ContactType
-					,Remark
-					,IsMain
-				)
-			SELECT	@LicenseeId
-					,@MainContactName
-					,@Position
-					,@Department
-					,@Email
-					,@Skype
-					,@PhoneNumber
-					,0 -- individual
-					,@MainContactRemark
-					,1
-		ELSE
-			UPDATE	dbo.Contact
-				SET	ContactName			= @MainContactName
-					,ContactPosition	= @Position
-					,ContactDepartment	= @Department
-					,ContactEmail		= @Email
-					,ContactSkype		= @Skype
-					,ContactPhoneNumber = @PhoneNumber
-					,Remark				= @MainContactRemark
-			WHERE	ContactID = @MainContactId
-	END TRY
-	BEGIN CATCH
-		SELECT @ErrCode = 103
 		RETURN
 	END CATCH	
 			
