@@ -22,6 +22,7 @@ AS
 	Revisions:
 		- 20160513@Percy: Add field Order into Product table [RedmineID: #56935]
 		- 20211004@Alex: Support Product Type on Client Product [RedmineID: #161508]
+		- 20221104@Cody: Support to order Client product [RedmineID: #171988]
 		
  */
 BEGIN
@@ -57,9 +58,19 @@ BEGIN
 		
 	SELECT @logSPOlddata = CONVERT(NVARCHAR(MAX), @xml)
 	
+	DECLARE @Order	INT
+	
 	BEGIN TRY
+		SELECT @Order = MAX([Order]) FROM dbo.Product WITH (NOLOCK)
 		UPDATE	dbo.Product WITH(ROWLOCK, UPDLOCK)
-			SET	ProductName = @ProductName, MainProductId = @MainProductId, ProductTypeId = @ProductTypeId
+			SET	ProductName = @ProductName
+				,[Order] = CASE 
+								WHEN [Order] = @Order 
+								THEN [Order] 
+								ELSE @Order + 10 
+						   END
+				,MainProductId = @MainProductId
+				,ProductTypeId = @ProductTypeId
 		WHERE	ProductId = @ProductId	
 	END TRY
 	BEGIN CATCH
