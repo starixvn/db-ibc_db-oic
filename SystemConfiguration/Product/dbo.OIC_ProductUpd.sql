@@ -1,6 +1,4 @@
 ﻿/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_OIC]
-GO
 
 ALTER PROCEDURE [dbo].[OIC_ProductUpd]
 	@ProductTypeId			TINYINT
@@ -13,6 +11,7 @@ ALTER PROCEDURE [dbo].[OIC_ProductUpd]
 	,@ErrCode				INT				= 0			OUTPUT
 	,@ErrMsg				VARCHAR(300)	= NULL		OUTPUT
 AS
+
 /*
 	Created by: Kathy
 	Date: 201501001
@@ -25,6 +24,7 @@ AS
 		- 20221104@Cody: Support to order Client product [RedmineID: #171988]
 		
  */
+ 
 BEGIN
 	SET NOCOUNT ON
 	
@@ -58,20 +58,21 @@ BEGIN
 		
 	SELECT @logSPOlddata = CONVERT(NVARCHAR(MAX), @xml)
 	
-	DECLARE @Order	INT
+	DECLARE @Order	SMALLINT
 	
 	BEGIN TRY
-		SELECT @Order = MAX([Order]) FROM dbo.Product WITH (NOLOCK)
+		SELECT @Order = MAX([Order]) FROM dbo.Product WITH(NOLOCK)
+		
 		UPDATE	dbo.Product WITH(ROWLOCK, UPDLOCK)
 			SET	ProductName = @ProductName
 				,[Order] = CASE 
-								WHEN [Order] = @Order 
+								WHEN [Order] = @Order OR ProductTypeId = @ProductTypeId
 								THEN [Order] 
 								ELSE @Order + 10 
 						   END
 				,MainProductId = @MainProductId
 				,ProductTypeId = @ProductTypeId
-		WHERE	ProductId = @ProductId	
+		WHERE ProductId = @ProductId	
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = 101
@@ -88,7 +89,7 @@ BEGIN
 		FOR XML PATH('r'), TYPE
 		)		
 		
-	SELECT @logSPData = CONVERT(NVARCHAR(MAX),@xml)
+	SELECT @logSPData = CONVERT(NVARCHAR(MAX), @xml)
 		,@endRun	= GETDATE()  
 		,@duration	= DATEDIFF(MILLISECOND, @startRun, @endRun)   
 		,@procName	= OBJECT_NAME(@@PROCID)

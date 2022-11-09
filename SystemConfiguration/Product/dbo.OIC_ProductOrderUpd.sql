@@ -1,12 +1,6 @@
-USE [bodb_OIC]
-GO
-/****** Object:  StoredProcedure [dbo].[OIC_ProductOrd]    Script Date: 11/7/2022 4:52:38 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
-ALTER PROCEDURE [dbo].[OIC_ProductOrd]
+ALTER PROCEDURE [dbo].[OIC_ProductOrderUpd]
 	@ProductId				TINYINT
 	,@ProductIdForSwap		TINYINT
 	,@UserId				INT
@@ -15,6 +9,7 @@ ALTER PROCEDURE [dbo].[OIC_ProductOrd]
 	,@ErrCode				INT				= 0			OUTPUT
 	,@ErrMsg				VARCHAR(300)	= NULL		OUTPUT
 AS
+
 /*
 	Created by: Cody
 	Date: 20221107
@@ -22,10 +17,16 @@ AS
 	DB: DBOIC.bodb_OIC
 
 	Revisions:
-		- 20221107@Cody: Init SP [RedmindId: #171988]
+		- 20221107@Cody: Init SP [RedmineId: #171988]
+		
+	Param's Explanation:
+	* @ProductId: Original ProductId
+	* @ProductIdForSwap: ProductId selected to swap the order with the original product
  */
+ 
 BEGIN
 	SET NOCOUNT ON
+	
 	-- For write log
 	DECLARE 
 		@startRun		DATETIME
@@ -51,7 +52,7 @@ BEGIN
 	
 	-- Change order
 	BEGIN TRY
-		DECLARE @Order INT, @OrderForSwap INT
+		DECLARE @Order SMALLINT, @OrderForSwap SMALLINT
 		
 		SET @Order = (SELECT [Order] FROM dbo.Product WITH(NOLOCK) WHERE ProductId = @ProductId)
 		SET @OrderForSwap = (SELECT [Order] FROM dbo.Product WITH(NOLOCK) WHERE ProductId = @ProductIdForSwap)
@@ -79,7 +80,7 @@ BEGIN
 		FOR XML PATH('row'), ROOT('r')
 		)
 		
-	SELECT @logSPData = CONVERT(NVARCHAR(MAX),@xml)
+	SELECT @logSPData = CONVERT(NVARCHAR(MAX), @xml)
 		,@endRun	= GETDATE()  
 		,@duration	= DATEDIFF(MILLISECOND, @startRun, @endRun)   
 		,@procName	= OBJECT_NAME(@@PROCID)
@@ -92,5 +93,5 @@ BEGIN
 		,@Data			= @logSPData
 		,@OldData		= @logSPOlddata
 		,@Duration		= @Duration
-	
 END
+GO

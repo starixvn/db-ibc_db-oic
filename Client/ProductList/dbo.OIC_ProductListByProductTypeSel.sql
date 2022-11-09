@@ -2,6 +2,7 @@
 
 ALTER PROCEDURE [dbo].[OIC_ProductListByProductType]
 AS
+
 /*
 	Created by: Alex
 	Date: 2021-09-19
@@ -13,8 +14,8 @@ AS
 		- 20221108@Cody: Sort products of the same type by ProductType.Order and Product.Order [RedmineId: #171988]
 
 	Param's Explanation:
-	
  */
+ 
 BEGIN
 	SET NOCOUNT ON
 
