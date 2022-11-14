@@ -52,10 +52,20 @@ BEGIN
 	
 	-- Change order
 	BEGIN TRY
-		DECLARE @Order SMALLINT, @OrderForSwap SMALLINT
+		DECLARE @Order 					SMALLINT
+				,@OrderForSwap 			SMALLINT
+				,@ProductTypeId 		TINYINT
+				,@ProductTypeIdForSwap 	TINYINT
 		
-		SET @Order = (SELECT [Order] FROM dbo.Product WITH(NOLOCK) WHERE ProductId = @ProductId)
-		SET @OrderForSwap = (SELECT [Order] FROM dbo.Product WITH(NOLOCK) WHERE ProductId = @ProductIdForSwap)
+		SELECT @Order = [Order], @ProductTypeId = ProductTypeId FROM dbo.Product WITH(NOLOCK) WHERE ProductId = @ProductId
+		SELECT @OrderForSwap = [Order], @ProductTypeIdForSwap = ProductTypeId FROM dbo.Product WITH(NOLOCK) WHERE ProductId = @ProductIdForSwap
+		
+		IF @Order IS NULL OR @OrderForSwap IS NULL OR (@ProductTypeId <> @ProductTypeIdForSwap)
+			BEGIN
+				SELECT @ErrCode = 101
+						,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](30030, @Language) -- Fail to change client product order. Please try again.
+				RETURN
+			END
 		
 		UPDATE	dbo.Product WITH(ROWLOCK, UPDLOCK)
 			SET	[Order] = CASE 
