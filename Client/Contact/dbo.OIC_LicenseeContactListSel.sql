@@ -1,29 +1,34 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[OIC_LicenseeContactListSel]
     @UserId        INT
-    ,@LicenseeName NVARCHAR(50)
+    ,@LicenseeName NVARCHAR(50)	   = ''
     ,@ContactName  NVARCHAR(50)    = ''
+	,@ContactEmail VARCHAR(50)	   = ''
     
     ,@PageSize			INT = 10
 	,@PageIndex			INT	= 0 
 	,@TotalRecords		INT = 0 OUTPUT
 AS
+
 /*
     Created by: Kathy
     Date: 2015-02-04
-    Task: Licensee contact list [Redmine:#29610]
+    Task: Licensee contact list [RedmineId:#29610]
     DB: DBOIC/BODB_OIC 
     
     Revisions:
-		- 20160920@Percy: Add new return field: Change History [RedmineID: #]
-		- 20211109@Alex: Change Type Of Licensee [RedmindId: #163521]
-		- 20220117@Kai/Howard: New Licensee Contact function [Redmine:#165286]
+		- 20160920@Percy: Add new return field: Change History [RedmineId: #]
+		- 20211109@Alex: Change Type Of Licensee [RedmineId: #163521]
+		- 20220117@Kai/Howard: New Licensee Contact function [RedmineId:#165286]
 							   - Kai: Add Licensee Contact field
 							   - Howard: Support DoneBy from LAP
-		- 20220504@Kai: Add Subsidiary for Licensee Contact [Redmine:#170641]
+		- 20220504@Kai: Add Subsidiary for Licensee Contact [RedmineId:#170641]
+		- 20221121@Cody: Enhance Contact list to search licensee by a specific email [RedmineId:#175038]
 
     Param's Explanation:
 */
+
 BEGIN
     SET NOCOUNT ON
     
@@ -38,17 +43,19 @@ BEGIN
     SELECT	c.ContactID    
     FROM	dbo.Contact c WITH(NOLOCK)
 		INNER JOIN dbo.Licensee l WITH(NOLOCK) 
-			ON	c.LicenseeID = l.LicenseeId
+			ON	c.LicenseeId = l.LicenseeId
     WHERE	l.TypeId IN (SELECT	u.TypeId 
 							FROM dbo.UserLicenseeTypes u WITH(NOLOCK) 
 							WHERE u.UserId = @UserId)
-			AND l.LicenseeName = @LicenseeName
-			AND c.ContactName LIKE @ContactName + '%'    
+			AND (@LicenseeName = '' OR l.LicenseeName = @LicenseeName)
+			AND (@ContactEmail = '' OR c.ContactEmail = @ContactEmail)
+			AND c.ContactName LIKE @ContactName + '%'
     
     -- General info
-    SELECT ROW_NUMBER() OVER (ORDER BY lc.IsMain DESC, lc.ContactName) AS RowNumber
+    SELECT ROW_NUMBER() OVER (ORDER BY l.LicenseeName, lc.IsMain DESC, lc.ContactName) AS RowNumber
 			,lc.ContactID
 			,lc.ContactName
+			,l.LicenseeName
 			,lc.IsLicenseeContact
 			,lc.Subsidiary
 			,lc.ContactType 
@@ -78,6 +85,8 @@ BEGIN
 			 ,lc.IsMain
     INTO	#tblResult
     FROM	dbo.Contact lc WITH(NOLOCK)
+		INNER JOIN dbo.Licensee l WITH(NOLOCK)
+			ON lc.LicenseeId = l.LicenseeId
     WHERE	lc.ContactID IN (SELECT ContactID FROM @tblContactList)
     
 	SELECT @PageIndex	= @PageIndex ,
@@ -145,6 +154,7 @@ BEGIN
 	
 	SELECT	r.ContactID
 			,ContactName
+			,r.LicenseeName
 			,r.IsLicenseeContact
 			,r.Subsidiary
 			,ContactType
@@ -165,6 +175,7 @@ BEGIN
 		LEFT JOIN CTE_Update u ON r.ContactID = u.ContactId
 		LEFT JOIN CTE_Create c ON r.ContactID = c.ContactId
 	WHERE	RowNumber BETWEEN @RowStart AND @RowEnd
+	ORDER BY r.LicenseeName, r.IsMain DESC, r.ContactName
     
 	DROP TABLE #tblResult
 	DROP TABLE #LogContact
