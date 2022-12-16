@@ -47,18 +47,20 @@ BEGIN
 		RETURN
 	END		
 	
+	DECLARE @Order SMALLINT, @ProductTypeName NVARCHAR(50), @MainProductName NVARCHAR(50)
+	
 	SET @xml = (
-		SELECT	ProductId		AS '@pi'
-				,ProductName	AS '@pn'
-				,[Order]		AS '@od'
-		FROM	dbo.Product WITH(NOLOCK)
-		WHERE	ProductId = @ProductId
+		SELECT	p.ProductId		AS '@pi'
+				,p.ProductName	AS '@pn'
+				,p.[Order]		AS '@od'
+				,(SELECT pt.ProductTypeName FROM dbo.ProductType pt WITH(NOLOCK) WHERE pt.Id = p.ProductTypeId) AS '@ptn'
+				,(SELECT mp.ProductName FROM dbo.Product mp WITH(NOLOCK) WHERE mp.ProductId = p.MainProductId)	AS '@mpn'
+		FROM	dbo.Product p WITH(NOLOCK)
+		WHERE	p.ProductId = @ProductId
 		FOR XML PATH('r'), TYPE
 		)		
 		
 	SELECT @logSPOlddata = CONVERT(NVARCHAR(MAX), @xml)
-	
-	DECLARE @Order	SMALLINT
 	
 	BEGIN TRY
 		SELECT @Order = MAX([Order]) FROM dbo.Product WITH(NOLOCK)
@@ -80,10 +82,15 @@ BEGIN
 		RETURN
 	END CATCH
 	
+	SELECT @ProductTypeName = ProductTypeName FROM ProductType WITH(NOLOCK) WHERE Id = @ProductTypeId;
+	SELECT @MainProductName = ProductName FROM Product WITH(NOLOCK) WHERE ProductId = @MainProductId;
+	
 	SET @xml = (
 		SELECT	ProductId		AS '@pi'
 				,ProductName	AS '@pn'
 				,[Order]		AS '@od'
+				,@ProductTypeName 	AS '@ptn'
+				,@MainProductName	AS '@mpn'
 		FROM	dbo.Product WITH(NOLOCK)
 		WHERE	ProductId = @ProductId
 		FOR XML PATH('r'), TYPE
