@@ -2,6 +2,7 @@
 
 ALTER PROCEDURE [dbo].[OIC_ProductListByProductType]
 AS
+
 /*
 	Created by: Alex
 	Date: 2021-09-19
@@ -10,10 +11,11 @@ AS
 
 	Revisions:
 		- 20210921@Alex: Get Grouped product data [Redmine:#161508]
+		- 20221108@Cody: Sort products of the same type by ProductType.Order and Product.Order [RedmineId: #171988]
 
 	Param's Explanation:
-	
  */
+ 
 BEGIN
 	SET NOCOUNT ON
 
@@ -25,6 +27,6 @@ BEGIN
 		LEFT JOIN dbo.Product p WITH(NOLOCK)
 			   ON pt.Id = p.ProductTypeId
 	WHERE p.[Active] = 1
-	ORDER BY pt.[Id]
+	ORDER BY pt.[Order], p.[Order]
 END
 GO
