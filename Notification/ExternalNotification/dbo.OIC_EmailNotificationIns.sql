@@ -9,6 +9,7 @@ ALTER PROCEDURE [dbo].[OIC_EmailNotificationIns]
 	,@SubjectEn				NVARCHAR(300)
 	,@ContentEn				NVARCHAR(MAX)	= ''
 	,@ContentCh				NVARCHAR(MAX)	= ''
+	,@ContentVi				NVARCHAR(MAX)	= ''
 	,@ContentCs				NVARCHAR(MAX)
 	,@MailCCList			XML				= NULL
 	
@@ -29,6 +30,7 @@ AS
 		- 20170302@Percy: Expand length of Content [RedmineID: #70322]
 		- 20180914@Scofield: Change content display orders of the languages [#100984]
 		- 20211122@Kai: Enhancement of Type of Licensee [#163521]
+		- 20221202@Cody: Support Vietnamese content in the email notification [RedmineId: #180044]
 	
 	Param's Explanation:
 		@MailCCList format:
@@ -66,6 +68,7 @@ BEGIN
 		(
 				ContentEn
 				,ContentCh
+				,ContentVi
 				,ContentCs
 				,MessageTypeId
 				,Creator
@@ -75,6 +78,7 @@ BEGIN
 		)
 		SELECT	@ContentEn
 				,@ContentCh
+				,@ContentVi
 				,@ContentCs
 				,60 -- email
 				,@UserId
