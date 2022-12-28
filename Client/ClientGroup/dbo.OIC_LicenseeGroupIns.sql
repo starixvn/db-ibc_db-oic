@@ -4,6 +4,7 @@ GO
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeGroupIns] 
 	@Name					NVARCHAR(100)
+	,@ParentId				INT				= NULL
 	,@UserId				INT
 	,@Language				VARCHAR(10)		= 'E'
 	,@IP					VARCHAR(50)		= NULL
@@ -18,6 +19,7 @@ AS
 	
 	Revisions:
 		- 20200110@Hogan: Create stored procedure OIC_LicenseeGroupIns [RedmineID: #126855]
+		- 20221206@Cody: Enhance Client group [RedmineId: #174401]
  */
 BEGIN
 	SET NOCOUNT ON
@@ -35,6 +37,13 @@ BEGIN
 
 	SET @startRun = GETDATE()
 
+	IF (@ParentId IS NOT NULL) AND (SELECT COUNT(Id) FROM dbo.LicenseeGroup WITH (NOLOCK) WHERE Id = @ParentId) = 0
+	BEGIN
+		SELECT	@ErrCode = 102
+				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40018, @Language) -- Unable to create because data is out of date. Please try again!
+		RETURN
+	END
+
 	IF EXISTS (SELECT TOP 1 1 FROM dbo.LicenseeGroup WITH(NOLOCK) WHERE Name = @Name)
 	BEGIN
 		SELECT	@ErrCode = 100
@@ -43,7 +52,7 @@ BEGIN
 	END
 
 	BEGIN TRY
-		INSERT INTO dbo.LicenseeGroup (Name) VALUES (@Name)
+		INSERT INTO dbo.LicenseeGroup (Name, ParentId) VALUES (@Name, @ParentId)
 
 		SET @Id = SCOPE_IDENTITY()
 	
@@ -54,9 +63,16 @@ BEGIN
 		RETURN
 	END CATCH
 
+	DECLARE @ParentName NVARCHAR(100) = NULL
+	
+	SELECT @ParentName = Name
+	FROM dbo.LicenseeGroup WITH(NOLOCK)
+	WHERE Id = @ParentId
+
 	SET @xml = (
-		SELECT	@Id		AS '@lgi'
-				,@Name	AS '@lgn'
+		SELECT	@Id    AS '@lgi'
+				,@Name AS '@lgn'
+				,@ParentName AS '@lgp'
 		FOR XML PATH('r'), TYPE
 		)
 

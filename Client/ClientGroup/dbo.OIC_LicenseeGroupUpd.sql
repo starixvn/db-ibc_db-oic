@@ -5,6 +5,7 @@ GO
 ALTER PROCEDURE [dbo].[OIC_LicenseeGroupUpd] 
 	@Id						INT
 	,@Name					NVARCHAR(100)
+	,@ParentId				INT				= NULL
 	,@UserId				INT
 	,@Language				VARCHAR(10)		= 'E'
 	,@IP					VARCHAR(50)		= NULL
@@ -19,10 +20,13 @@ AS
 	
 	Revisions:
 		- 20200110@Hogan: Create stored procedure OIC_LicenseeGroupUpd [RedmineID: #126855]
+		- 20221206@Cody: Enhance Client group [RedmineId: #174401]
  */
 
 BEGIN
 	SET NOCOUNT ON
+
+	DECLARE @tblLicenseeGroupId TABLE (Id INT)
 
 	-- For write log
 	DECLARE 
@@ -36,27 +40,55 @@ BEGIN
 
 	SET @startRun = GETDATE()
 	
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.LicenseeGroup WITH(NOLOCK) WHERE Name = @Name)
+	IF EXISTS (SELECT TOP 1 1 FROM dbo.LicenseeGroup WITH(NOLOCK) WHERE Name = @Name AND Id <> @Id)
 	BEGIN
 		SELECT	@ErrCode = 100
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40011, @Language) -- The licensee group name is already used. Please try another name.
 		RETURN
 	END
 
+	;WITH cteLicenseeGroupId
+	AS 
+	(
+		SELECT Id
+		FROM LicenseeGroup WITH(NOLOCK)
+		WHERE Id = @Id
+		UNION ALL
+		SELECT lp.Id
+		FROM LicenseeGroup lp WITH(NOLOCK)
+			INNER JOIN cteLicenseeGroupId c
+				ON lp.ParentId = c.Id
+	)
+	INSERT INTO @tblLicenseeGroupId (Id)		
+	SELECT Id
+	FROM cteLicenseeGroupId WITH(NOLOCK)
+
+	IF (@ParentId IS NOT NULL) 
+		AND ((EXISTS (SELECT TOP 1 1 FROM @tblLicenseeGroupId WHERE Id = @ParentId))
+		OR ((SELECT COUNT(Id) FROM dbo.LicenseeGroup WITH (NOLOCK) WHERE Id = @ParentId) = 0))
+	BEGIN
+		SELECT	@ErrCode = 102
+				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40019, @Language) -- Unable to edit because data is out of date. Please try again!
+		RETURN
+	END
+
 	-- get old data
+	
 	SET @xml = (
-		SELECT	Id		AS '@lgi'
-				,Name	AS '@lgn'
-		FROM	dbo.LicenseeGroup WITH(NOLOCK)
-		WHERE	Id = @Id
+		SELECT  g.Id	AS '@lgi' 
+				,g.Name AS '@lgn'
+				,(SELECT pg.Name FROM dbo.LicenseeGroup pg WITH(NOLOCK) WHERE pg.Id = g.ParentId) AS '@lgp'
+		FROM	dbo.LicenseeGroup g WITH(NOLOCK)
+		WHERE	g.Id = @Id
 		FOR XML PATH('r'), TYPE
-		)	
+		)
 		
 	SELECT @logSPOlddata = CONVERT(NVARCHAR(MAX), @xml)
 
 	BEGIN TRY
 		UPDATE	dbo.LicenseeGroup WITH(ROWLOCK, UPDLOCK)
 			SET	Name = @Name
+				,ParentId = @ParentId
 		WHERE	Id = @Id	
 	END TRY
 	BEGIN CATCH
@@ -64,10 +96,17 @@ BEGIN
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40012, @Language) -- Fail to edit group of licensee. Please try again.	
 		RETURN
 	END CATCH
-
+	
+	DECLARE @ParentName NVARCHAR(100) = NULL
+	
+	SELECT @ParentName = Name
+	FROM dbo.LicenseeGroup WITH(NOLOCK)
+	WHERE Id = @ParentId
+	
 	SET @xml = (
-		SELECT	Id		AS '@lgi'
-				,Name	AS '@lgn'
+		SELECT	Id    AS '@lgi'
+				,Name AS '@lgn'
+				,@ParentName AS '@lgp'
 		FROM	dbo.LicenseeGroup WITH(NOLOCK)
 		WHERE	Id = @Id
 		FOR XML PATH('r'), TYPE

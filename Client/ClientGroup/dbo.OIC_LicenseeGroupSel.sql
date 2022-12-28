@@ -13,6 +13,7 @@ AS
 	
 	Revisions:
 		- 20200110@Hogan: Create stored procedure OIC_LicenseeGroupSel [RedmineID: #126855]
+		- 20221206@Cody: Enhance Client group [RedmineId: 174401]
  */
 
 BEGIN
@@ -20,7 +21,8 @@ BEGIN
 	
 	SELECT	Id
 			,Name
-	FROM dbo.LicenseeGroup WITH(NOLOCK)  
+			,ParentId
+	FROM dbo.LicenseeGroup WITH(NOLOCK)
 END
 
 GO

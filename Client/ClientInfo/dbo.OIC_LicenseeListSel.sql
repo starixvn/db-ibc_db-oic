@@ -41,6 +41,7 @@ AS
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
 		- 20211112@Kai: Enhancement of Type of Licensee (Add Platform and IntegrationMethod for licensee) [RedmineID: #163521]
 		- 20211229@Kos: Hotfix - Upgrade SQL Server 2019 [RedmineID: #166701]
+		- 20221209@Cody: Enhance Client group [RedmineId: #174401]
 
 	Param's Explanation:
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
@@ -79,6 +80,7 @@ BEGIN
 	CREATE TABLE #tblResult	(
 			RowNumber				INT
 			,LicenseeId				INT
+			,LicenseeGroupId		INT
 			,LicenseeName			NVARCHAR(50)
 			,RegisteredLicenseeName NVARCHAR(50)
 			,LicenseeStatusId		INT
@@ -195,6 +197,7 @@ BEGIN
 	(
 			RowNumber
 			,LicenseeId
+			,LicenseeGroupId
 			,LicenseeName
 			,RegisteredLicenseeName
 			,LicenseeStatusId
@@ -213,6 +216,7 @@ BEGIN
 		 
 	SELECT	ROW_NUMBER() OVER(ORDER BY LicenseeName) AS RowNumber
 			,l.LicenseeId
+			,l.LicenseeGroupId
 			,l.LicenseeName
 			,l.RegisteredLicenseeName
 			,ls.LicenseeStatusId
@@ -256,6 +260,7 @@ BEGIN
 
 	SELECT	t.LicenseeId
 			,t.LicenseeName
+			,t.LicenseeGroupId
 			,t.RegisteredLicenseeName
 			,t.LicenseeStatusName
 			,t.LicenseeTypeId
