@@ -37,14 +37,14 @@ BEGIN
 
 	SET @startRun = GETDATE()
 
-	IF (@ParentId IS NOT NULL) AND (SELECT COUNT(Id) FROM dbo.LicenseeGroup WITH (NOLOCK) WHERE Id = @ParentId) = 0
+	IF (@ParentId IS NOT NULL) AND (NOT EXISTS(SELECT TOP(1) 1 FROM dbo.LicenseeGroup WITH (NOLOCK) WHERE Id = @ParentId))
 	BEGIN
 		SELECT	@ErrCode = 102
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40018, @Language) -- Unable to create because data is out of date. Please try again!
 		RETURN
 	END
 
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.LicenseeGroup WITH(NOLOCK) WHERE Name = @Name)
+	IF EXISTS (SELECT TOP(1) 1 FROM dbo.LicenseeGroup WITH(NOLOCK) WHERE Name = @Name)
 	BEGIN
 		SELECT	@ErrCode = 100
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40016, @Language) -- The licensee group name is already used. Please try another name.

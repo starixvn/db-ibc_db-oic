@@ -40,7 +40,7 @@ BEGIN
 
 	SET @startRun = GETDATE()
 	
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.LicenseeGroup WITH(NOLOCK) WHERE Name = @Name AND Id <> @Id)
+	IF EXISTS (SELECT TOP(1) 1 FROM dbo.LicenseeGroup WITH(NOLOCK) WHERE Name = @Name AND Id <> @Id)
 	BEGIN
 		SELECT	@ErrCode = 100
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40011, @Language) -- The licensee group name is already used. Please try another name.
@@ -63,9 +63,9 @@ BEGIN
 	SELECT Id
 	FROM cteLicenseeGroupId WITH(NOLOCK)
 
-	IF (@ParentId IS NOT NULL) 
-		AND ((EXISTS (SELECT TOP 1 1 FROM @tblLicenseeGroupId WHERE Id = @ParentId))
-		OR ((SELECT COUNT(Id) FROM dbo.LicenseeGroup WITH (NOLOCK) WHERE Id = @ParentId) = 0))
+	IF ((@ParentId IS NOT NULL) AND (NOT EXISTS(SELECT TOP(1) 1 FROM dbo.LicenseeGroup WITH(NOLOCK) WHERE Id = @ParentId)))
+	   OR (NOT EXISTS(SELECT TOP(1) 1 FROM dbo.LicenseeGroup WITH(NOLOCK) WHERE Id = @Id))
+	   OR (EXISTS (SELECT TOP(1) 1 FROM @tblLicenseeGroupId WHERE Id = @ParentId))
 	BEGIN
 		SELECT	@ErrCode = 102
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40019, @Language) -- Unable to edit because data is out of date. Please try again!
@@ -75,10 +75,12 @@ BEGIN
 	-- get old data
 	
 	SET @xml = (
-		SELECT  g.Id	AS '@lgi' 
-				,g.Name AS '@lgn'
-				,(SELECT pg.Name FROM dbo.LicenseeGroup pg WITH(NOLOCK) WHERE pg.Id = g.ParentId) AS '@lgp'
+		SELECT  g.Id	 AS '@lgi' 
+				,g.Name  AS '@lgn'
+				,pg.Name AS '@lgp'
 		FROM	dbo.LicenseeGroup g WITH(NOLOCK)
+			LEFT JOIN dbo.LicenseeGroup pg WITH(NOLOCK)
+				ON g.ParentId = pg.Id
 		WHERE	g.Id = @Id
 		FOR XML PATH('r'), TYPE
 		)

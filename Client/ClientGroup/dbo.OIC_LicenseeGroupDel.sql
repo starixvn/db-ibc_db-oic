@@ -39,22 +39,24 @@ BEGIN
 	SET @startRun = GETDATE()
 	
 	SET @xml = (
-		SELECT  g.Id	AS '@lgi' 
-				,g.Name AS '@lgn'
-				,(SELECT pg.Name FROM dbo.LicenseeGroup pg WITH(NOLOCK) WHERE pg.Id = g.ParentId) AS '@lgp'
+		SELECT  g.Id	 AS '@lgi' 
+				,g.Name  AS '@lgn'
+				,pg.Name AS '@lgp'
 		FROM	dbo.LicenseeGroup g WITH(NOLOCK)
+			LEFT JOIN dbo.LicenseeGroup pg WITH(NOLOCK)
+				ON g.ParentId = pg.Id
 		WHERE	g.Id = @Id
 		FOR XML PATH('r'), TYPE
 		)
 	
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.LicenseeGroup WITH(NOLOCK) WHERE ParentId = @Id)
+	IF EXISTS (SELECT TOP(1) 1 FROM dbo.LicenseeGroup WITH(NOLOCK) WHERE ParentId = @Id)
 	BEGIN
-		SELECT	@ErrCode = 102
+		SELECT	@ErrCode = 103
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40020, @Language) -- Unable to delete the Client Group because it's containing one or more Client Group(s)
 		RETURN
 	END
 	
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.Licensee WITH(NOLOCK) WHERE LicenseeGroupId = @Id)
+	IF EXISTS (SELECT TOP(1) 1 FROM dbo.Licensee WITH(NOLOCK) WHERE LicenseeGroupId = @Id)
 	BEGIN
 		SELECT	@ErrCode = 100
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40014, @Language) -- Unable to delete the group of licensee because one or many assigned client(s) or user(s) exist(s)
