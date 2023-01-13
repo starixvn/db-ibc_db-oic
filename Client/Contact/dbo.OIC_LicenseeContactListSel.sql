@@ -25,6 +25,7 @@ AS
 							   - Howard: Support DoneBy from LAP
 		- 20220504@Kai: Add Subsidiary for Licensee Contact [RedmineId:#170641]
 		- 20221121@Cody: Enhance Contact list to search licensee by a specific email [RedmineId:#175038]
+		- 20230113@Kai: Fix issue don't show value Created and Last Updated [RedmineId:#182879]
 
     Param's Explanation:
 */
@@ -100,21 +101,22 @@ BEGIN
 	END
 
 	-- Get log latest update contact --
-	DECLARE @LogActionId_Ins INT, @LogActionId_Upd INT
+	DECLARE @LogActionId_Ins INT, @LogActionId_Upd INT, @LogActionId_CopyIns INT
 
 	SELECT  @LogActionId_Ins = LogActionId FROM dbo.LogAction WITH(NOLOCK) WHERE SPName = 'OIC_LicenseeContactIns'
+	SELECT  @LogActionId_CopyIns = LogActionId FROM dbo.LogAction WITH(NOLOCK) WHERE SPName = 'OIC_ContactListIns'
 	SELECT  @LogActionId_Upd = LogActionId FROM dbo.LogAction WITH(NOLOCK) WHERE SPName = 'OIC_LicenseeContactUpd'
 
 	CREATE TABLE #LogContact (Id BIGINT PRIMARY KEY, LogActionId INT, UserId INT, ExtraInfo NVARCHAR(100), LogDate DATETIME, ContactId INT)
 	INSERT INTO  #LogContact (Id, LogActionId, UserId, ExtraInfo, LogDate, ContactId)
 	SELECT
-		A.Id, A.LogActionId, A.UserId, A.ExtraInfo, CONVERT(DATE, A.LogDate) AS LogDate,
+		A.Id, A.LogActionId, A.UserId, A.ExtraInfo, A.LogDate,
 		d.c.value('@lcid','INT') AS ContactId -- ContactId
 	FROM (
 		SELECT u.Id, u.LogActionId, u.UserId, u.ExtraInfo, u.LogDate, CONVERT(XML, ud.Data) AS Data
 		FROM dbo.UserLog_RunSP u WITH(NOLOCK)
 			INNER JOIN dbo.UserLog_RunSP_Detail ud WITH(NOLOCK) ON u.Id = ud.Id
-		WHERE u.LogActionId IN (@LogActionId_Ins, @LogActionId_Upd)
+		WHERE u.LogActionId IN (@LogActionId_Ins, @LogActionId_Upd, @LogActionId_CopyIns)
 	) AS A
 	CROSS APPLY A.Data.nodes('r') d(c)
 	-- End get log --
@@ -146,7 +148,7 @@ BEGIN
 			SELECT ROW_NUMBER() OVER(PARTITION BY ContactId ORDER BY Id DESC) AS RowNumber
 					, UserId, ExtraInfo, LogDate, ContactId
 			FROM #LogContact
-			WHERE LogActionId = @LogActionId_Ins
+			WHERE LogActionId = @LogActionId_Ins OR LogActionId = @LogActionId_CopyIns
 		) B
 		LEFT JOIN dbo.UserInfo u2 WITH(NOLOCK) ON B.UserId = u2.UserId
 		WHERE B.RowNumber = 1
@@ -168,8 +170,8 @@ BEGIN
 			,ToList
 			,CcList
 			,IsMain
-			,CONVERT(VARCHAR(10), c.LogDate, 101) AS CreatedDate
-			,CONVERT(VARCHAR(10), u.LogDate, 101) AS UpdatedDate
+			,c.LogDate AS Created
+			,u.LogDate AS Updated
 			,ISNULL(u.DisplayName, c.DisplayName) AS [By]
 	FROM	#tblResult r
 		LEFT JOIN CTE_Update u ON r.ContactID = u.ContactId
