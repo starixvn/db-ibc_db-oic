@@ -101,11 +101,13 @@ BEGIN
 	END
 
 	-- Get log latest update contact --
-	DECLARE @LogActionId_Ins INT, @LogActionId_Upd INT, @LogActionId_CopyIns INT
+	DECLARE @LogActionId_Ins INT, @LogActionId_Upd INT, @LogActionId_CopyIns INT, @LogActionId_NewClient INT, @LogActionId_UpdClient INT
 
 	SELECT  @LogActionId_Ins = LogActionId FROM dbo.LogAction WITH(NOLOCK) WHERE SPName = 'OIC_LicenseeContactIns'
 	SELECT  @LogActionId_CopyIns = LogActionId FROM dbo.LogAction WITH(NOLOCK) WHERE SPName = 'OIC_ContactListIns'
 	SELECT  @LogActionId_Upd = LogActionId FROM dbo.LogAction WITH(NOLOCK) WHERE SPName = 'OIC_LicenseeContactUpd'
+	SELECT  @LogActionId_NewClient = LogActionId FROM dbo.LogAction WITH(NOLOCK) WHERE SPName = 'OIC_LicenseeInfoIns'
+	SELECT  @LogActionId_UpdClient = LogActionId FROM dbo.LogAction WITH(NOLOCK) WHERE SPName = 'OIC_LicenseeInfoUpd'
 
 	CREATE TABLE #LogContact (Id BIGINT PRIMARY KEY, LogActionId INT, UserId INT, ExtraInfo NVARCHAR(100), LogDate DATETIME, ContactId INT)
 	INSERT INTO  #LogContact (Id, LogActionId, UserId, ExtraInfo, LogDate, ContactId)
@@ -119,6 +121,18 @@ BEGIN
 		WHERE u.LogActionId IN (@LogActionId_Ins, @LogActionId_Upd, @LogActionId_CopyIns)
 	) AS A
 	CROSS APPLY A.Data.nodes('r') d(c)
+
+	INSERT INTO  #LogContact (Id, LogActionId, UserId, ExtraInfo, LogDate, ContactId)
+	SELECT
+		A.Id, A.LogActionId, A.UserId, A.ExtraInfo, A.LogDate,
+		d.c.value('@cid','INT') AS ContactId -- ContactId
+	FROM (
+		SELECT u.Id, u.LogActionId, u.UserId, u.ExtraInfo, u.LogDate, CONVERT(XML, ud.Data).query('/r/lc/row') AS Data
+		FROM dbo.UserLog_RunSP u WITH(NOLOCK)
+			INNER JOIN dbo.UserLog_RunSP_Detail ud WITH(NOLOCK) ON u.Id = ud.Id
+		WHERE u.LogActionId IN (@LogActionId_NewClient, @LogActionId_UpdClient)
+	) AS A
+	CROSS APPLY A.Data.nodes('row') d(c)
 	-- End get log --
 
 	CREATE NONCLUSTERED INDEX IX_ContactId ON #LogContact (ContactId, LogActionId)
@@ -148,7 +162,7 @@ BEGIN
 			SELECT ROW_NUMBER() OVER(PARTITION BY ContactId ORDER BY Id DESC) AS RowNumber
 					, UserId, ExtraInfo, LogDate, ContactId
 			FROM #LogContact
-			WHERE LogActionId = @LogActionId_Ins OR LogActionId = @LogActionId_CopyIns
+			WHERE LogActionId IN (@LogActionId_Ins, @LogActionId_CopyIns, @LogActionId_NewClient, @LogActionId_UpdClient)
 		) B
 		LEFT JOIN dbo.UserInfo u2 WITH(NOLOCK) ON B.UserId = u2.UserId
 		WHERE B.RowNumber = 1
