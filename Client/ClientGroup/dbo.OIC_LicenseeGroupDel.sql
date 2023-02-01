@@ -18,6 +18,7 @@ AS
 	
 	Revisions:
 		- 20200110@Hogan: Create stored procedure OIC_LicenseeGroupDel [RedmineID: #126855]
+		- 20221206@Cody: Enhance Client group [RedmineId: #174401]
  */
 
 BEGIN
@@ -33,14 +34,29 @@ BEGIN
 		,@procName		VARCHAR(200)
 	
 	DECLARE @Name NVARCHAR(100)
+	        ,@ParentName NVARCHAR(100) = NULL
 
 	SET @startRun = GETDATE()
-
-	SELECT	@Name = Name
-	FROM	dbo.LicenseeGroup WITH(NOLOCK)
-	WHERE	Id = @Id
 	
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.Licensee WITH(NOLOCK) WHERE LicenseeGroupId = @Id)
+	SET @xml = (
+		SELECT  g.Id	 AS '@lgi' 
+				,g.Name  AS '@lgn'
+				,pg.Name AS '@lgp'
+		FROM	dbo.LicenseeGroup g WITH(NOLOCK)
+			LEFT JOIN dbo.LicenseeGroup pg WITH(NOLOCK)
+				ON g.ParentId = pg.Id
+		WHERE	g.Id = @Id
+		FOR XML PATH('r'), TYPE
+		)
+	
+	IF EXISTS (SELECT TOP(1) 1 FROM dbo.LicenseeGroup WITH(NOLOCK) WHERE ParentId = @Id)
+	BEGIN
+		SELECT	@ErrCode = 103
+				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40020, @Language) -- Unable to delete the Client Group because it's containing one or more Client Group(s)
+		RETURN
+	END
+	
+	IF EXISTS (SELECT TOP(1) 1 FROM dbo.Licensee WITH(NOLOCK) WHERE LicenseeGroupId = @Id)
 	BEGIN
 		SELECT	@ErrCode = 100
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40014, @Language) -- Unable to delete the group of licensee because one or many assigned client(s) or user(s) exist(s)
@@ -57,12 +73,6 @@ BEGIN
 				,@ErrMsg = [dbo].[f_Get_MsgNamebyMsgID](40015, @Language) -- Fail to delete group of licensee. Please try again.
 		RETURN
 	END CATCH
-
-	SET @xml = (
-		SELECT	@Id		AS '@lgi'
-				,@Name	AS '@lgn'
-		FOR XML PATH('r'), TYPE
-		)
 
 	SELECT @logSPData	= CONVERT(NVARCHAR(MAX), @xml)
 		,@endRun		= GETDATE()

@@ -28,6 +28,7 @@ AS
 		- 20220309@Kai: Copy contact list for licensees [RedmindId: #161538]
 		- 20220513@Kai: Manage the main contact of licensee [Redmine:#172568]
 		- 20221006@Kai: Support sending emails automatically [Redmine:#176447]
+		- 20221206@Cody: Enhance Client group [RedmineId: 174401]
 		
 */
 BEGIN
@@ -728,14 +729,18 @@ BEGIN
 		DECLARE
 			@LicenseeGroupId INT,
 			@LicenseeGroupName NVARCHAR(100),
+			@LicenseeUpperGroupName NVARCHAR(100),
 
 			@LicenseeGroupId_old INT,
-			@LicenseeGroupName_old NVARCHAR(100)
+			@LicenseeGroupName_old NVARCHAR(100),
+			@LicenseeUpperGroupName_old NVARCHAR(100)
 
 		SELECT
 			@LicenseeGroupName = d.c.value('@lgn', 'NVARCHAR(100)'), -- Client Group
+			@LicenseeUpperGroupName = d.c.value('@lgp', 'NVARCHAR(100)'), -- Client Upper Group
 
-			@LicenseeGroupName_old = od.c.value('@lgn', 'NVARCHAR(100)') -- Client Group
+			@LicenseeGroupName_old = od.c.value('@lgn', 'NVARCHAR(100)'), -- Client Group
+			@LicenseeUpperGroupName_old = od.c.value('@lgp', 'NVARCHAR(100)') -- Client Upper Group
 		FROM (
 			SELECT
 				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE Data END AS Data,
@@ -751,7 +756,8 @@ BEGIN
 
 		INSERT INTO @Result (ID, Field, NewValue, OldValue)
 		VALUES
-			(1, N'Group name', @LicenseeGroupName, @LicenseeGroupName_old)
+			(1, N'Group name', @LicenseeGroupName, @LicenseeGroupName_old),
+			(2, N'Upper Group', @LicenseeUpperGroupName, @LicenseeUpperGroupName_old)
 	END
 	ELSE IF @LogActionId IN (100,101,102,103) -- Insert/Update/Delete/Copy Contact
 	BEGIN
