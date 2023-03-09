@@ -21,6 +21,7 @@ AS
 	Revisions:
 		- 20220615@Kai: Launched emails of a new licensee [RedmineID: #168502]
 		- 20220907@Kai: Enhance launched new product emails [RedmineID: #168502]
+	    - 20230223@Cody: Enhance email sending status function to resend the failed emails [RedmineId: #156775]
  */
 BEGIN
 	SET NOCOUNT ON
@@ -90,6 +91,7 @@ BEGIN
 			,CreateTime
 			,LatestSendTime
 			,CountSend
+			,UpdatedTime
 	FROM
 	(
 	SELECT	ROW_NUMBER() OVER(ORDER BY msn.Id DESC ,msn.CreateTime DESC) AS RowNumber
@@ -105,6 +107,7 @@ BEGIN
 			,msn.CreateTime
 			,LatestSendTime = CASE WHEN msn.[Status] = 4 THEN msn.LatestSendTime ELSE NULL END
 			,msn.CountSend
+			,msn.UpdatedTime
 	FROM	MailRecordSiteName msn WITH(NOLOCK) 
 			INNER JOIN UserInfo ui WITH(NOLOCK)
 				ON msn.FromUserId = ui.UserId
