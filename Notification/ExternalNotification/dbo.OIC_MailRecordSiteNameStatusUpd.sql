@@ -20,6 +20,7 @@ AS
 	Revisions:  
 		- 20191023@Hogan: Create stored procedure OIC_MailRecordSiteNameUpd [RedmineID: #120949]
 		- 20230223@Cody: Enhance email sending status function to resend the failed emails [RedmineId: #156775]
+		- 20230313@Kai: Enhance try catch deal to throw exceptions when have errors [RedmineId: #184690]
 						
 	Param's Explanation:
 	@Status: 0: waiting
@@ -66,8 +67,8 @@ BEGIN
 	END TRY
 	BEGIN CATCH
 		SELECT	@Errcode = 100,
-				@ErrMsg = dbo.f_Get_MsgNamebyMsgID (40008, @Language)
-		RETURN
+				@ErrMsg = dbo.f_Get_MsgNamebyMsgID (40008, @Language);
+		THROW;
 	END CATCH
 
 	SET @xml = (
