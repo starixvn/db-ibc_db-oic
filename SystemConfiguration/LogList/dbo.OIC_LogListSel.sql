@@ -1,6 +1,4 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_OIC]
-GO
 
 ALTER PROCEDURE [dbo].[OIC_LogListSel]
 	@UserId			INT,
@@ -9,11 +7,13 @@ ALTER PROCEDURE [dbo].[OIC_LogListSel]
 	@ActionID		VARCHAR(MAX) = 'All', -- All
 	@Target			VARCHAR(50) = '', -- All
 	@DoneBy			VARCHAR(50) = '', -- All
+	@PasswordUpdate	VARCHAR(MAX) = '',
 		
 	@PageSize		INT = 10,
 	@PageIndex		INT	= 1,
 	@TotalRecords	INT = 0 OUTPUT
 AS
+
 /*
 	Creator: Percy
 	Date: 2016-09-26
@@ -28,15 +28,31 @@ AS
 		- 20211006@Alex: Add new function: Type Of Status Product [RedmineID: #161508] 
 		- 20211207@Kai: Enhancement of Type of Licensee [RedmineID: #163521]
 		- 20220214@Howard: Licensee Contact - support DoneBy from LAP [Redmine:#165286]
+		- 20230719@Cody: Migrate bodb_OIC to db054/db055 - [RedmineId: #191392]
 
 	Param's Explanation:
 		- @ActionID: '1,2' -- List of LogActionID
+		- @PasswordUpdate:
+			<root>
+				<UserPasswordUpdate>
+					<LogId>1</LogId>
+					<UserId>sa</UserId>
+					<LogDate>8/31/2022 11:42:29 PM</LogDate>
+					<ActionId>2002</ActionId>
+					<OldData><r ui="8" p="abc"/></OldData>
+					<Data><r ui="8" p="abc1"/></Data>
+				</UserPasswordUpdate>
+			</root>
 */
+
 BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @FDate DATETIME, @TDate DATETIME -- prevent bad parameter sniffing
 	SELECT  @FDate = @FromDate, @TDate = @ToDate
+	
+	DECLARE @XMLUserPasswordUpdLogList XML
+	DECLARE @UserPasswordUpd TABLE (LogID INT, UserID INT, LogDate DATETIME, ActionID INT, OldAction NVARCHAR(MAX), NewAction NVARCHAR(MAX))
 
 	SELECT  @ActionID = ISNULL(@ActionID, ''), @Target = ISNULL(@Target, ''), @DoneBy = ISNULL(@DoneBy, '')
 	SELECT  @Target = LTRIM(RTRIM(@Target)), @DoneBy = LTRIM(RTRIM(@DoneBy))
@@ -266,13 +282,24 @@ BEGIN
 		WHERE u.DisplayName LIKE @Target
 
 		-- get log update user password from NAP Admin --
+		IF @PasswordUpdate IS NOT NULL AND @PasswordUpdate <> ''
+		BEGIN
+			SELECT @XMLUserPasswordUpdLogList = @PasswordUpdate
+			
+			INSERT INTO @UserPasswordUpd (LogID, UserID, LogDate, ActionID, OldAction, NewAction)
+			SELECT row.value('(LogId)[1]','INT') AS LogID
+					,row.value('(UserId)[1]','INT') AS UserID
+					,row.value('(LogDate)[1]', 'DATETIME') AS LogDate
+					,row.value('(ActionId)[1]','INT') AS ActionID
+					,row.value('(OldData)[1]','NVARCHAR(MAX)') AS OldAction
+					,row.value('(Data)[1]','NVARCHAR(MAX)') AS NewAction
+			FROM @XMLUserPasswordUpdLogList.nodes('/root/UserPasswordUpdate') AS T(row)
+		END
+		
 		INSERT INTO #LogList (LogID, LogDate, ActionID, OldAction, NewAction, DoneBy)
-		SELECT n.Id, n.LogDate, 2002, nd.Data, nd.OldData, m.Name
-		FROM DBNAP.bodb_NAPLOG.dbo.NAPLog_RUNSP n WITH(NOLOCK)
-			INNER JOIN DBNAP.bodb_NAPLOG.dbo.NAPLOG_RUNSP_Detail nd WITH(NOLOCK) ON n.Id = nd.ID
-			INNER JOIN @ModifyUser m ON n.UserId = m.ID
-		WHERE n.LogDate BETWEEN @FDate AND @TDate
-			AND n.ActionId = 3 AND n.siteID = 24 -- OIC /*89: local, 24: UAT, PRO*/
+		SELECT up.LogID, up.LogDate, up.ActionID, up.OldAction, up.NewAction, m.Name
+		FROM @UserPasswordUpd up
+			INNER JOIN @ModifyUser m ON up.UserID = m.ID
 
 		INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy, IsDetail)
 		SELECT DISTINCT A.LogID, A.LogDate, A.[Action], u.DisplayName, A.DoneBy, 0
