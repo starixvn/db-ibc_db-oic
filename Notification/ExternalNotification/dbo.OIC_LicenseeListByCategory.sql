@@ -10,6 +10,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeListByCategory]
 	,@SelectedIntegrationMethod		VARCHAR(50) = 'All'
 	,@UserId						INT
 	,@MarketType					INT		= -1 -- All
+	,@FeatureId						TINYINT	= 0 -- All
 	,@ProductId						TINYINT	= 0 -- All
 	,@ExcludeTerminationProduct		BIT		= 0
    
@@ -29,6 +30,7 @@ AS
 		- 20210203@Mark: Add more Product option for Email Notification [RedmineID: #148733]
 		- 20210729@Hogan: Enhance Site Name in Send mail notification function [Redmine: #159206]
 		- 20211116@Kai: Enhancement of Type of Licensee [RedmineID: #163521]
+		- 20230821@Loki: Feature filter on New Email Notification[RedmineID: #191100]
     
     Param's Explanation:
 		
@@ -40,6 +42,7 @@ BEGIN
 	DECLARE @tblLicenseeType	TABLE (LicenseeTypeId TINYINT)
 	DECLARE @tblPlatform	TABLE (PlatformId TINYINT)
 	DECLARE @tblIntegrationMethod	TABLE (IntegrationMethodId TINYINT)
+	DECLARE @currentDate DATE = CAST(GETDATE() AS DATE)
 
 	IF @SelectedLicenseeType = 'All'
 	BEGIN
@@ -100,12 +103,22 @@ BEGIN
 			OR l.IsChineseMarketOnly = @MarketType
 		)
 		AND (
+			@FeatureId = 0
+			OR EXISTS (
+				SELECT 1
+				FROM dbo.LicenseeFeature lf WITH(NOLOCK)
+				WHERE lf.FeatureId = @FeatureId
+					AND lf.LicenseeId = l.LicenseeId
+					AND (lf.TerminationDate IS NULL OR lf.TerminationDate > @currentDate)
+			)
+		)
+		AND (
 			@ProductId = 0
 			OR EXISTS (SELECT 1
-						FROM dbo.licenseeproduct AS lp WITH(nolock)
-						WHERE lp.productid = @ProductId
-							AND lp.licenseeid = l.licenseeid
-							AND (@ExcludeTerminationProduct = 0 OR (lp.TerminationDate IS NULL OR lp.TerminationDate > CAST(GETDATE() AS DATE))))
+						FROM dbo.LicenseeProduct AS lp WITH(NOLOCK)
+						WHERE lp.ProductId = @ProductId
+							AND lp.LicenseeId = l.LicenseeId
+							AND (@ExcludeTerminationProduct = 0 OR (lp.TerminationDate IS NULL OR lp.TerminationDate > @currentDate)))
 		)
 		AND (
 			l.LicenseeStatusId = 3 -- Active
