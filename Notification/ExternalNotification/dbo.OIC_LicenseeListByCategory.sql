@@ -32,6 +32,7 @@ AS
 		- 20211116@Kai: Enhancement of Type of Licensee [RedmineID: #163521]
 		- 20230821@Loki: Feature filter on New Email Notification[RedmineID: #191100]
 		- 20231229@Cody: Get LicenseeTypeId [RedmineID: 198195]
+		- 20240111@Cody: Get RegisteredLicenseeName [RedmineID: #198455]
     
     Param's Explanation:
 		
@@ -87,7 +88,11 @@ BEGIN
 		SELECT CONVERT(TINYINT, val) FROM dbo.strSplit(@SelectedIntegrationMethod, ',')
 	END
 
-	SELECT l.LicenseeId, l.LicenseeName, ls.LicenseeStatusName, l.TypeId AS LicenseeTypeId
+	SELECT l.LicenseeId,
+		   l.LicenseeName,
+		   ls.LicenseeStatusName,
+		   l.TypeId AS LicenseeTypeId,
+		   l.RegisteredLicenseeName
 	FROM dbo.Licensee l WITH(NOLOCK)
 		INNER JOIN dbo.LicenseeStatus ls WITH(NOLOCK) ON ls.LicenseeStatusId = l.LicenseeStatusId
 		INNER JOIN dbo.UserLicenseeTypes ult WITH(NOLOCK) ON ult.TypeId = l.TypeId
@@ -128,6 +133,6 @@ BEGIN
 		AND l.TypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
 		AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
 		AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
-	GROUP BY l.LicenseeId, l.LicenseeName, ls.LicenseeStatusName, l.TypeId
+	GROUP BY l.LicenseeId, l.LicenseeName, ls.LicenseeStatusName, l.TypeId, l.RegisteredLicenseeName
 END
 GO
