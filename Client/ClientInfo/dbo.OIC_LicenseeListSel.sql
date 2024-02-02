@@ -42,7 +42,7 @@ AS
 		- 20211112@Kai: Enhancement of Type of Licensee (Add Platform and IntegrationMethod for licensee) [RedmineID: #163521]
 		- 20211229@Kos: Hotfix - Upgrade SQL Server 2019 [RedmineID: #166701]
 		- 20221209@Cody: Enhance Client group [RedmineId: #174401]
-		- 20240112@Cody: Supports filtering by RegisteredLicenseeName [RedmindId: #198455]
+		- 20240112@Cody: Supports filtering by RegisteredLicenseeName [RedmineId: #198455]
 
 	Param's Explanation:
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
