@@ -11,6 +11,7 @@ AS
 	Revisions:   
 		- 20180919@Alan: Get Mailing List From OIC [88509]
 		- 20181009@Alan: Exclude Status Soft Launch and Dont add CcList from EmailConfiguration [102917]
+		- 20240221@Kai: Switch to use the new TOL structure [201068]
 */
 
 BEGIN 
@@ -55,15 +56,15 @@ SET NOCOUNT ON
 				SELECT ult.Email
 				FROM dbo.UserLicensee ul WITH (NOLOCK)
 					INNER JOIN dbo.UserInfo ui WITH (NOLOCK) ON ul.UserId = ui.UserId
-					INNER JOIN dbo.UserLicenseeType ult WITH (NOLOCK) ON ui.UserId = ult.UserId AND L.LicenseeTypeId = ult.LicenseeTypeId
+					INNER JOIN dbo.UserLicenseeTypes ult WITH (NOLOCK) ON ui.UserId = ult.UserId AND L.TypeId = ult.TypeId
 				WHERE ui.PositionId = 6
 					AND L.LicenseeId = ul.LicenseeId
 
 				UNION
 				SELECT ult.Email
 				FROM dbo.UserInfo ui WITH (NOLOCK)
-					INNER JOIN dbo.UserLicenseeType ult WITH (NOLOCK) ON ui.UserId = ult.UserId
-				WHERE ui.PositionId = 3 AND L.LicenseeTypeId = ult.LicenseeTypeId
+					INNER JOIN dbo.UserLicenseeTypes ult WITH (NOLOCK) ON ui.UserId = ult.UserId
+				WHERE ui.PositionId = 3 AND L.TypeId = ult.TypeId
 			) AS T
 			ORDER BY T.ContactEmail
 			FOR XML PATH ('')) AS CcList (ContactEmail)
