@@ -28,6 +28,7 @@ AS
 	Revisions:
 		- 20210908@Hogan: Extend size of column LicenseeTypeName to VARCHAR(40) [RedmineID: #161343]
 		- 20211122@Kai: Enhancement of Type of Licensee [#163521]
+		- 20230201@Cody: Remove redundant messages [#198455]
 	
 	Param's Explanation:
 		@SortBy:	0: Message Type ASC
@@ -104,28 +105,6 @@ BEGIN
 	
 	SET @TotalRecords = @@rowcount
 	
-	-- for new user
-	;WITH cteMessage 
-	AS
-	(
-		SELECT	m.MessageId, m.MessageTypeId
-		FROM	dbo.Message m WITH(NOLOCK)
-			INNER JOIN dbo.MessageLicenseeType ml WITH(NOLOCK)
-				ON m.MessageId = ml.MessageId
-		WHERE	m.MessageTypeId IN (SELECT MessageTypeId FROM @tblMessageType WHERE MessageTypeId IN (40,41))				
-				AND m.CreateTime BETWEEN @FromDate AND @ToDate
-				AND (m.Creator IN (SELECT UserId FROM @tblSender) 
-					OR @Sender = 'All'
-					)	
-		GROUP BY m.MessageId, m.MessageTypeId		
-	)
-	INSERT INTO #tblMessage (MessageId, MessageTypeId)		
-	SELECT	MessageId, MessageTypeId
-	FROM	cteMessage c
-	WHERE	MessageId NOT IN (SELECT MessageId FROM #tblMessage)
-	
-	SET @TotalRecords = @TotalRecords + @@rowcount
-	
 	-------------------------------	
 	-- match delay-new, match delay-done, personal
 	INSERT INTO #tblMessage (MessageId, MessageTypeId)		
@@ -150,32 +129,6 @@ BEGIN
 				
 	SET @TotalRecords = @TotalRecords + @@rowcount
 			
-	-- for new user
-	;WITH cteMessageLicenseeType
-	AS
-	(
-		SELECT	m.MessageId, m.MessageTypeId
-		FROM	dbo.Message m WITH(NOLOCK)
-			INNER JOIN dbo.MessageLicenseeType ml WITH(NOLOCK)
-				ON m.MessageId = ml.MessageId
-		WHERE	(m.MessageTypeId = @MessageTypeId 
-					OR @MessageTypeId = 0)
-				AND m.MessageTypeId IN (SELECT MessageTypeId FROM @tblMessageType )				
-				AND m.CreateTime BETWEEN @FromDate AND @ToDate
-				AND (m.Creator IN (SELECT UserId FROM @tblSender) 
-					OR @Sender = 'All'
-					)			
-				AND ml.TypeId IN (SELECT TypeId FROM dbo.f_LicenseeTypeBelongToUser (@UserId))
-		GROUP BY m.MessageId, m.MessageTypeId
-	)
-	
-	INSERT INTO #tblMessage (MessageId, MessageTypeId)		
-	SELECT	MessageId, MessageTypeId
-	FROM	cteMessageLicenseeType c
-	WHERE	MessageId NOT IN (SELECT MessageId FROM #tblMessage)
-		
-	SET @TotalRecords = @TotalRecords + @@rowcount
-	
 	-- get tolist if messagetype is personal. match- delay
 	;WITH ctePersonalMessage
 	AS(

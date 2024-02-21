@@ -42,6 +42,7 @@ AS
 		- 20211112@Kai: Enhancement of Type of Licensee (Add Platform and IntegrationMethod for licensee) [RedmineID: #163521]
 		- 20211229@Kos: Hotfix - Upgrade SQL Server 2019 [RedmineID: #166701]
 		- 20221209@Cody: Enhance Client group [RedmineId: #174401]
+		- 20240112@Cody: Supports filtering by RegisteredLicenseeName [RedmineId: #198455]
 
 	Param's Explanation:
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
@@ -53,6 +54,7 @@ AS
 	* @AMUser: dropdown(select 0(All) or 1 AMUser)
 	* @PMUser: dropdown(select 0(All) or 1 PMUser)
 	* @PageIndex: 0 - the first page
+	* @LicenseeName: LicenseeName or RegisteredLicenseeName
 */
 
 BEGIN
@@ -238,7 +240,7 @@ BEGIN
 			ON	c.LicenseeID = l.LicenseeId 
 				AND c.IsMain = 1
 			
-	WHERE	l.LicenseeName LIKE ISNULL(@LicenseeName,'%') + '%'
+	WHERE	(l.LicenseeName LIKE ISNULL(@LicenseeName,'%') + '%' OR l.RegisteredLicenseeName LIKE ISNULL(@LicenseeName,'%') + '%')
 			AND l.TypeId IN (SELECT LicenseeTypeId FROM @tblLicenseeType)
 			AND l.PlatformId IN (SELECT PlatformId FROM @tblPlatform)
 			AND (@LicenseeStatusIds = 'All' OR ls.LicenseeStatusId IN (SELECT StatusId FROM @tblStatusId))
