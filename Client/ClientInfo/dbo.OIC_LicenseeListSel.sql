@@ -43,6 +43,7 @@ AS
 		- 20211229@Kos: Hotfix - Upgrade SQL Server 2019 [RedmineID: #166701]
 		- 20221209@Cody: Enhance Client group [RedmineId: #174401]
 		- 20240112@Cody: Supports filtering by RegisteredLicenseeName [RedmineId: #198455]
+		- 20240227@Kai: Enhance - Get all by AM/PM user [RedmineId: #197581]
 
 	Param's Explanation:
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
@@ -246,8 +247,8 @@ BEGIN
 			AND (@LicenseeStatusIds = 'All' OR ls.LicenseeStatusId IN (SELECT StatusId FROM @tblStatusId))
 			AND (@SelectedProduct = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeProduct))
 			AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
-			AND l.LicenseeId IN (SELECT LicenseeId FROM  @tblLicenseePM)
-			AND l.LicenseeId IN (SELECT LicenseeId FROM  @tblLicenseeAM)
+			AND (@PMUserId = 0 OR l.LicenseeId IN (SELECT LicenseeId FROM  @tblLicenseePM))
+			AND (@AMUserId = 0 OR l.LicenseeId IN (SELECT LicenseeId FROM  @tblLicenseeAM))
 			AND (@ResellerType = -1 OR l.IsReseller = @ResellerType)
 			AND (@MarketType = -1 OR @MarketType = l.IsChineseMarketOnly)
 			AND (@SelectedOddsType = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeOddsType))

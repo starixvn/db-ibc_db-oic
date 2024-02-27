@@ -1,7 +1,7 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeTypeAssignmentList] 
-	@DisplayName			NVARCHAR(50)	= '%'
+	@DisplayName			NVARCHAR(50)	= NULL
 	,@SelectedPosition		VARCHAR(100)	= 'All'
 	,@SelectedLicenseeType	VARCHAR(100)	= 'All'
 	,@UserSite				VARCHAR(MAX)	= ''  
@@ -17,6 +17,7 @@ AS
 		- 20180925@Helen: DB052.bodb_NAP Migration to DBCust - [Redmine:100493]
 		- 20211116@Alex: Change Type Of Licensee [RedmineID: #163521]
 		- 20230719@Cody: Migrate bodb_OIC to db054/db055 - [RedmineId: #191392]
+		- 20240305@Kai: Get all when @DisplayName is NULL [Redmine:#197581]
 	
 	Parameters:	
 		- @SelectedPosition: All - All position
@@ -64,7 +65,7 @@ BEGIN
 			ON ui.PositionId = p.PositionId
 		LEFT JOIN UserLicenseeTypes ul
 			ON us.UserId = ul.UserId
-	WHERE	ISNULL(ui.DisplayName,us.DisplayName) LIKE ISNULL(@DisplayName,us.DisplayName) + '%'
+	WHERE	(@DisplayName IS NULL OR ISNULL(ui.DisplayName,us.DisplayName) LIKE @DisplayName + '%')
 			AND (@SelectedPosition = 'All' 
 				OR (EXISTS (SELECT val FROM dbo.strSplit(@SelectedPosition,',') WHERE (val = 0 AND p.PositionId IS NULL) OR val = p.PositionId)) 
 				)

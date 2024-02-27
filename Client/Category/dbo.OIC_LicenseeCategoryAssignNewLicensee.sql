@@ -1,8 +1,8 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeCategoryAssignNewLicensee] 
-	@LicenseeId			INT
-	
+	 @LicenseeId		INT
+	,@ExtraInfo			NVARCHAR(200)
 	,@UserId			INT
 	,@Language			VARCHAR(10)		= 'E'
 	,@IP				VARCHAR(50)		= NULL
@@ -18,6 +18,7 @@ AS
 
 	Revisions:
 		- 20220318@Kai: Enhance New Client [Redmine:#169959]
+		- 20240229@Kai: Support write logs with ExtraInfo [Redmine:#197581]
 	
 */
 BEGIN
@@ -96,4 +97,5 @@ BEGIN
 		,@Data			= @logSPData
 		,@OldData		= NULL
 		,@Duration		= @Duration
+		,@ExtraInfo		= @ExtraInfo
 END

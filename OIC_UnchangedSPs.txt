@@ -1,2 +1,2 @@
-Client\dbo.OIC_ContactListCopy.sql
-Client\Category\dbo.OIC_LicenseeCategoryManage.sql
+Client\ClientInfo\dbo.OIC_LicenseeInfoUpd.sql
+Client\ClientInfo\dbo.OIC_LicenseeInfoIns.sql
