@@ -1,7 +1,7 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_API_LicenseeIns] 
-	 @SiteId				SMALLINT
+	 @SourceId				SMALLINT
 	,@SiteName				NVARCHAR(50)
 	,@RegisteredSiteName	NVARCHAR(50)
 	,@TypeId				TINYINT
@@ -35,7 +35,6 @@ BEGIN
 		 @LicenseeId			INT
 		,@LicenseeGroupId		INT
 		,@OfferedCurrencyIds	VARCHAR(100)
-		,@OddsTypeIds			VARCHAR(100)
 		,@AMUserId				INT
 		,@PMUserId				INT
 
@@ -54,7 +53,7 @@ BEGIN
 
 	SET @startRun = GETDATE()
 	SET @ExtraInfo = CASE 
-		WHEN @SiteId = -2 THEN 'Site Builder'
+		WHEN @SourceId = -2 THEN 'Site Builder'
 		ELSE NULL
 	END
 
@@ -122,12 +121,8 @@ BEGIN
 	FROM dbo.Currency c WITH(NOLOCK)
 	WHERE c.Code IN (SELECT s.value FROM STRING_SPLIT(@OfferedCurrencies, ',') s )
 
-	SELECT @OddsTypeIds = STRING_AGG(ot.OddsTypeId, ',')
-	FROM dbo.OddsType ot WITH(NOLOCK)
-	WHERE ot.OddsTypeName IN (SELECT s.value FROM STRING_SPLIT(@OddsTypes, ',') s )
-
 	EXEC dbo.OIC_LicenseeInfoIns_Step1
-		 @UserId					= @SiteId
+		 @UserId					= @SourceId
 		,@PlatformId				= @PlatformId
 		,@TypeId					= @TypeId
 		,@IntegrationMethods		= @IntegrationMethods
@@ -136,7 +131,7 @@ BEGIN
 		,@LicenseeStatusId			= @StatusId
 		,@LicenseeGroupId			= @LicenseeGroupId
 		,@CurrenciesOffered			= @OfferedCurrencyIds
-		,@LicOddsType				= @OddsTypeIds
+		,@LicOddsType				= @OddsTypes
 		,@InvoiceBaseCurrency		= NULL
 		,@InvoiceLanguage			= NULL
 		
@@ -199,7 +194,7 @@ BEGIN
 	WHERE ui.DisplayName = @PMUserName
 
 	EXEC dbo.OIC_LicenseeInfoIns_Step3
-		 @UserId			= @SiteId
+		 @UserId			= @SourceId
 		,@LicenseeId		= @LicenseeId
 		,@AMUserId			= @AMUserId
 		,@PMUserId			= @PMUserId
@@ -343,7 +338,7 @@ BEGIN
 
 
 	EXEC dbo.OIC_LogRunSpIns
-		 @UserId		= @SiteId
+		 @UserId		= @SourceId
 		,@SPName		= @procName
 		,@Language		= @Language
 		,@IP			= @IP
@@ -359,7 +354,7 @@ BEGIN
 	EXEC dbo.OIC_LicenseeCategoryAssignNewLicensee
 		 @LicenseeId	= @LicenseeId
 		,@ExtraInfo		= @ExtraInfo
-		,@UserId		= @SiteId
+		,@UserId		= @SourceId
 		,@Language		= @Language
 		,@IP			= @IP
 		,@ErrCode		= @ErrCode
