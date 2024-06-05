@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 
 USE [bodb_OIC]
 GO
@@ -24,6 +24,7 @@ AS
 		- 20180123@Scofield: #89901 - Enhance Result Notification function : sorting records
 		- 20211229@Howard: #166703 - Datetime and time are incompatible in the add operator
 		- 20211230@Howard: #164893 - Enhance Resettlement - return SessionID
+		- 20240604@Hogan: #205897 - support export by range date
 	Param's Explanation:		
  */
 BEGIN
@@ -70,7 +71,7 @@ BEGIN
 	SELECT tmp.MessageID, tmp.SubjectEn, tmp.SubjectCh, tmp.SubjectCs, tmp.ContentEn, tmp.ContentCh, tmp.ContentCs, tmp.EventDate, tmp.DataFilePath, tmp.SessionID, tmp.IsRead,
 		(SELECT MAX(RowNumber) FROM tempMessage) AS TotalRecords
 	FROM tempMessage tmp
-	WHERE tmp.RowNumber BETWEEN @RowStart AND @RowEnd
+	WHERE (tmp.RowNumber BETWEEN @RowStart AND @RowEnd) OR (@PageIndex = -1)
 	ORDER BY tmp.EventDate DESC
 	
 	-- Select Results
