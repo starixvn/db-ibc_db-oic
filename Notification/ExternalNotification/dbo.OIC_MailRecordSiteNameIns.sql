@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_MailRecordSiteNameIns]
 	@To						NVARCHAR(1000)
@@ -12,7 +12,8 @@ ALTER PROCEDURE [dbo].[OIC_MailRecordSiteNameIns]
 	,@MailRecordId			INT				= 0
 	,@LatestSendTime		DATETIME		= NULL
 	,@CountSend				INT				= 0
-	
+	,@LicenseeTypeMail		TINYINT			= 0
+
 	,@UserId				INT
 	,@Language				VARCHAR(10)		= 'E'
 	,@IP					VARCHAR(50)		= NULL
@@ -31,6 +32,7 @@ AS
 		- 20200212@Hogan: Extend length of column CC in MailRecordSiteName table to 1000 [RedmineID: #128373]
 		- 20220615@Kai: Launched emails of a new licensee [RedmineID: #168502]
 		- 20220907@Kai: Enhance launched new product emails [RedmineID: #168502]
+		- 20240808@Cody: Change recipient emails for Jollysports group [RedmineID: #207804]
 
 	Param's Explanation:
 	@Status:	0: mail waiting for send process
@@ -38,6 +40,11 @@ AS
 				2: email sent failed	
 	@Type:	0: email notification
 			1: internal email notification
+	@LicenseeTypeMail (LicenseeTypeId):	0: Default
+										1: Boping
+										2: Oneworks
+										3: Zelianta
+										4: JollySports 
  */
 BEGIN
 	SET NOCOUNT ON;
@@ -56,8 +63,8 @@ BEGIN
 
 		IF @Type = 0 -- email notification
 		BEGIN
-			INSERT INTO dbo.MailRecordSiteName ([To], Cc, Bcc,[Subject], [Status], MailRecordId, FromUserId, ToRecipientId, [Type], LatestSendTime, CountSend, CreateTime) 
-			VALUES (@To, @Cc, @Bcc, @Subject, @Status, @MailRecordId, @UserId, @ToRecipientId, @Type, @LatestSendTime, @CountSend, GETDATE())
+			INSERT INTO dbo.MailRecordSiteName ([To], Cc, Bcc,[Subject], [Status], MailRecordId, FromUserId, ToRecipientId, [Type], LatestSendTime, CountSend, CreateTime, LicenseeTypeMail) 
+			VALUES (@To, @Cc, @Bcc, @Subject, @Status, @MailRecordId, @UserId, @ToRecipientId, @Type, @LatestSendTime, @CountSend, GETDATE(), @LicenseeTypeMail)
 		END
 		ELSE IF @Type = 1 -- internal email notification
 		BEGIN
@@ -65,8 +72,8 @@ BEGIN
 			SELECT value, @MailRecordId FROM STRING_SPLIT(@LicenseeIds,',')
 			WHERE NOT EXISTS (SELECT * FROM dbo.LicenseeMailRecord lmr WITH(NOLOCK) WHERE lmr.MailRecordId = @MailRecordId AND value = lmr.LicenseeId) 
 
-			INSERT INTO dbo.MailRecordSiteName ([To], Cc, Bcc,[Subject], [Status], MailRecordId, FromUserId, ToRecipientId, [Type], LatestSendTime, CountSend, CreateTime) 
-			VALUES (@To, @Cc, @Bcc, @Subject, @Status, @MailRecordId, @UserId, @ToRecipientId, @Type, @LatestSendTime, @CountSend, GETDATE())
+			INSERT INTO dbo.MailRecordSiteName ([To], Cc, Bcc,[Subject], [Status], MailRecordId, FromUserId, ToRecipientId, [Type], LatestSendTime, CountSend, CreateTime, LicenseeTypeMail) 
+			VALUES (@To, @Cc, @Bcc, @Subject, @Status, @MailRecordId, @UserId, @ToRecipientId, @Type, @LatestSendTime, @CountSend, GETDATE(), @LicenseeTypeMail)
 		END
 
 		SET @IdentityInserted = SCOPE_IDENTITY()
@@ -91,6 +98,7 @@ BEGIN
 			,@LatestSendTime	AS '@lst'
 			,@CountSend			AS '@cs'
 			,@Type				AS '@type'
+			,@LicenseeTypeMail  AS '@ltm'
 	FOR XML PATH('r'), TYPE
 	)		
 		

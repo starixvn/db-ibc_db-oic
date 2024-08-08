@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_MailRecordSiteNameByStatusSel]
 	@Status			TINYINT
@@ -13,6 +13,7 @@ AS
 		- 20191024@Hogan: Create stored procedure OIC_MailRecordSiteNameByStatusSel [RedmineID: #120949]
 		- 20230310@Kai: Get data UpdatedTime column [RedmineID: #184690]
 		- 20231227@Cody: Get LicenseeTypeId [RedmineID: #198195]
+		- 20240708@Cody: Change the solution to get LicenseeTypeId [RedmineId: #207804]
  */ 
 BEGIN
 	SET NOCOUNT ON
@@ -28,10 +29,8 @@ BEGIN
 			,msn.CountSend
 			,msn.CreateTime
 			,msn.UpdatedTime
-			,l.TypeId			AS LicenseeTypeId
+			,msn.LicenseeTypeMail
 	FROM dbo.MailRecordSiteName msn WITH(NOLOCK)
-		LEFT JOIN dbo.Licensee l WITH(NOLOCK)
-			ON msn.[Type] = 0 AND msn.ToRecipientId = l.LicenseeId
 	WHERE msn.[Status] = @Status
 	ORDER BY msn.ID DESC
 END
