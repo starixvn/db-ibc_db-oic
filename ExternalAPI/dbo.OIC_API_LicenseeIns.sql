@@ -49,7 +49,7 @@ BEGIN
 		,@log_currency				XML
 		,@log_integrationMethod		XML
 		,@log_oddsType				XML
-		,@ExtraInfo					NVARCHAR(200)
+		,@ExtraInfo					NVARCHAR(100)
 
 	SET @startRun = GETDATE()
 	SET @ExtraInfo = CASE 

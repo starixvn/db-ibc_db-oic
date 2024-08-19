@@ -2,8 +2,8 @@
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeCategoryAssignNewLicensee] 
 	 @LicenseeId		INT
-	,@ExtraInfo			NVARCHAR(200)
 	,@UserId			INT
+	,@ExtraInfo			NVARCHAR(100)	= NULL
 	,@Language			VARCHAR(10)		= 'E'
 	,@IP				VARCHAR(50)		= NULL
 	,@ErrCode			INT				= 0			OUTPUT
