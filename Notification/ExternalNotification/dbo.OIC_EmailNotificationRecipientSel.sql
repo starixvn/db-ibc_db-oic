@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_EmailNotificationRecipientSel] 
 	@CategoryId				TINYINT
@@ -16,6 +16,7 @@ AS
 		- 20160226@Percy: Add field AddCC [Redmine: #52857]
 		- 20200518@hogan: Support sending mail for upcoming licensees [RedmineID: #133714]
 		- 20231220@Cody: Get RegisteredLicenseeName [RedmineID: #198455]
+		- 20240807@Cody: Get LicenseeTypeId [RedmineID: #207804]
 	
 	Param's Explanation:
 	
@@ -32,20 +33,21 @@ BEGIN
 			,@RowNumber		INT			 = 0
 			,@seq			INT			 = 1
 			,@LicenseeId	INT
-			,@LicenseeName	NVARCHAR(50)
+			,@LicenseeName  NVARCHAR(50)
 			,@RegisteredLicenseeName NVARCHAR(50)
+			,@LicenseeTypeId	TINYINT
 			
-	DECLARE @tblResult TABLE (LicenseeId INT, LicenseeName NVARCHAR(50), RegisteredLicenseeName NVARCHAR(50), ToList VARCHAR(MAX), CcList VARCHAR(MAX), AddtoCcList VARCHAR(MAX), BccList VARCHAR(MAX))
-	DECLARE @tblLicensee TABLE (seq INT IDENTITY(1,1), LicenseeId INT, LicenseeName NVARCHAR(50), RegisteredLicenseeName NVARCHAR(50))
+	DECLARE @tblResult TABLE (LicenseeId INT, LicenseeName NVARCHAR(50), RegisteredLicenseeName NVARCHAR(50), LicenseeTypeId TINYINT, ToList VARCHAR(MAX), CcList VARCHAR(MAX), AddtoCcList VARCHAR(MAX), BccList VARCHAR(MAX))
+	DECLARE @tblLicensee TABLE (seq INT IDENTITY(1,1), LicenseeId INT, LicenseeName NVARCHAR(50), RegisteredLicenseeName NVARCHAR(50), LicenseeTypeId TINYINT)
 	
-	INSERT INTO @tblLicensee (LicenseeId, LicenseeName, RegisteredLicenseeName)
-	SELECT	f.LicenseeId, f.LicenseeName, f.RegisteredLicenseeName
+	INSERT INTO @tblLicensee (LicenseeId, LicenseeName, RegisteredLicenseeName, LicenseeTypeId)
+	SELECT	f.LicenseeId, f.LicenseeName, f.RegisteredLicenseeName, f.TypeId
 	FROM	dbo.f_LicenseeBelongToUser(@userId) f
 		INNER JOIN dbo.LicenseeCategoryAssigned lc WITH(NOLOCK)
 			ON f.LicenseeId = lc.LicenseeId
 	WHERE	lc.CategoryId = @CategoryId
 			AND f.LicenseeId IN (SELECT val FROM dbo.strSplit(@SelectedLicensee,','))
-	GROUP BY f.LicenseeId, f.LicenseeName, f.RegisteredLicenseeName
+	GROUP BY f.LicenseeId, f.LicenseeName, f.RegisteredLicenseeName, f.TypeId
 	
 	SET @RowNumber = @@rowcount
 	
@@ -54,6 +56,7 @@ BEGIN
 		SELECT	@LicenseeId = LicenseeId
 				,@LicenseeName = LicenseeName
 				,@RegisteredLicenseeName = RegisteredLicenseeName
+				,@LicenseeTypeId = LicenseeTypeId
 		FROM	@tblLicensee
 		WHERE	seq = @seq
 		
@@ -64,10 +67,11 @@ BEGIN
 		FROM	dbo.f_RecipientList (CAST(@LicenseeId AS VARCHAR(10)), @CategoryId, @UserId)
 		WHERE ISNULL(Email,'') <> ''
 	
-		INSERT INTO @tblResult (LicenseeId, LicenseeName, RegisteredLicenseeName, ToList, CcList, AddtoCcList, BccList)
+		INSERT INTO @tblResult (LicenseeId, LicenseeName, RegisteredLicenseeName, LicenseeTypeId, ToList, CcList, AddtoCcList, BccList)
 		SELECT	@LicenseeId
 				,@LicenseeName
 				,@RegisteredLicenseeName
+				,@LicenseeTypeId
 				,CASE WHEN ISNULL(@ToList,'') = '' THEN '' ELSE LEFT(@ToList,LEN(@ToList) - 1) END
 				,CASE WHEN ISNULL(@CcList,'') = '' THEN '' ELSE LEFT(@CcList,LEN(@CcList) - 1) END
 				,CASE WHEN ISNULL(@AddtoCcList,'') = '' THEN '' ELSE LEFT(@AddtoCcList,LEN(@AddtoCcList) - 1) END
@@ -83,6 +87,7 @@ BEGIN
 	SELECT	LicenseeId
 			,LicenseeName
 			,RegisteredLicenseeName
+			,LicenseeTypeId
 			,ToList
 			,AddtoCcList
 			,CcList

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_OIC]
 GO
 
@@ -14,6 +14,7 @@ AS
 	Revisions:  
 		- 20191111@Hogan: Create stored procedure OIC_MailRecordSiteNameByMailRecordIdSel [RedmineID: #120949]
 		- 20231227@Cody: Get LicenseeTypeId [RedmineID: #198195]
+		- 20240708@Cody: Change the solution to get LicenseeTypeId [RedmineId: #207804]
  */ 
 BEGIN
 	SET NOCOUNT ON
@@ -27,10 +28,8 @@ BEGIN
 			,msn.MSiteMailId	AS MSiteMailId
 			,msn.[Status]
 			,msn.CountSend
-			,l.TypeId			AS LicenseeTypeId
+			,msn.LicenseeTypeMail
 	FROM dbo.MailRecordSiteName msn WITH(NOLOCK) 
-		LEFT JOIN dbo.Licensee l WITH(NOLOCK)
-			ON msn.[Type] = 0 AND msn.ToRecipientId = l.LicenseeId
 	WHERE msn.MailRecordId = @MailRecordId
 END
 GO
