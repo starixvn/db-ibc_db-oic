@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_LogListSel_Details]
 	@ActionID INT
@@ -29,6 +29,7 @@ AS
 		- 20220513@Kai: Manage the main contact of licensee [Redmine:#172568]
 		- 20221006@Kai: Support sending emails automatically [Redmine:#176447]
 		- 20221206@Cody: Enhance Client group [RedmineId: 174401]
+		- 20240305@Kai: Insert client from Site Builder [Redmine:#197581]
 		
 */
 BEGIN
@@ -39,7 +40,7 @@ BEGIN
 	DECLARE @LogActionId INT
 	SELECT  @LogActionId = LogActionId FROM dbo.UserLog_RunSP WITH(NOLOCK) WHERE Id = @ActionID
 
-	IF @LogActionId IN (7,8) -- Insert/Update Client
+	IF @LogActionId IN (7,8,9) -- Insert/Update Client/Insert from Site Builder
 	BEGIN
 		DECLARE
 			@TypeOfLicensee NVARCHAR(40),

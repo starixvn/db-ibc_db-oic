@@ -1,10 +1,10 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_MailRecordSiteNameMSiteMailUpd]
 	@MailRecordSiteId			INT,
 	@MSiteMailId				BIGINT,		
 	@UserId						INT,
-	@LatestSendTime				DATETIME,	
+	@LatestSendTime				DATETIME		= NULL,
 	@Language					VARCHAR(10)		= 'E',
 	@IP							VARCHAR(50)		= NULL,
 	@ErrCode					INT				= 0			OUTPUT,
@@ -19,6 +19,7 @@ AS
 	Revisions:  
 		- 20191128@Hogan: Create stored procedure OIC_MailRecordSiteNameMSiteMailUpd [RedmineID: #120949]
 		- 20230313@Kai: Enhance try catch deal to throw exceptions when have errors [RedmineId: #184690]
+		- 20240321@Kai: Support LatestSendTime is NULL [Redmine:#197581]
  */ 
 BEGIN
 	SET NOCOUNT ON;

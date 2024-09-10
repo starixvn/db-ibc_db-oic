@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_LogListSel]
 	@UserId			INT,
@@ -29,6 +29,7 @@ AS
 		- 20211207@Kai: Enhancement of Type of Licensee [RedmineID: #163521]
 		- 20220214@Howard: Licensee Contact - support DoneBy from LAP [Redmine:#165286]
 		- 20230719@Cody: Migrate bodb_OIC to db054/db055 - [RedmineId: #191392]
+		- 20240229@Kai: Insert client -- support DoneBy from Site Builder [Redmine:#197581]
 
 	Param's Explanation:
 		- @ActionID: '1,2' -- List of LogActionID
@@ -86,9 +87,9 @@ BEGIN
 	FROM dbo.UserLog_RunSP ul WITH(NOLOCK)
 		INNER JOIN dbo.UserLog_RunSP_Detail uld WITH(NOLOCK) ON ul.Id = uld.Id
 		LEFT JOIN @ModifyUser m ON ul.UserId = m.ID
-	WHERE (m.ID IS NOT NULL  
-			OR (ul.UserId = -1 AND ul.ExtraInfo LIKE @DoneBy) -- from LAP
-		)  
+	WHERE ( m.ID IS NOT NULL  
+			OR (ul.UserId < 0 AND ul.ExtraInfo LIKE @DoneBy) -- from LAP, Site Builder
+		)
 		AND (@ActionID = 'All' OR ul.LogActionId IN (SELECT ActionID FROM @Action))
 		AND ul.LogDate BETWEEN @FDate AND @TDate
 		AND EXISTS (
