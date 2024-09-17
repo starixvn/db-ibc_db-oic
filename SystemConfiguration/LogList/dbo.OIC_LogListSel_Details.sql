@@ -1872,7 +1872,100 @@ BEGIN
 			(2, N'Reminder Type', @ReminderType, @ReminderType_old),
 			(3, N'Reminder Options', @ReminderOption, @ReminderOption_old)		
 	END
-	
+	ELSE IF @LogActionId IN (3018) -- Delete Auto Mail
+	BEGIN
+		DECLARE
+			@AutoMailTypeName_Del 	NVARCHAR(50),
+			@LicenseeTypeName_Del 	NVARCHAR(50),
+			@RecipientGroupName_Del NVARCHAR(50),
+			@Email				NVARCHAR(50),
+			@RecipientType		TINYINT
+
+		SELECT
+			@AutoMailTypeName_Del = od.c.value('@atn', 'NVARCHAR(50)'),
+			@LicenseeTypeName_Del = od.c.value('@ltn', 'NVARCHAR(50)'), 
+			@RecipientGroupName_Del = od.c.value('@rgn', 'NVARCHAR(50)'),
+			@Email = od.c.value('@m', 'NVARCHAR(50)'),
+			@RecipientType = od.c.value('@rt', 'TINYINT')
+			
+		FROM (
+			SELECT
+				CASE WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<r />') ELSE OldData END AS OldData
+			FROM (
+				SELECT CONVERT(XML, OldData).query('/r') AS OldData
+				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+				WHERE Id = @ActionID
+			) B
+		) A
+			OUTER APPLY A.OldData.nodes('r') od(c)
+
+		INSERT INTO @Result (ID, Field, NewValue, OldValue)
+		VALUES
+			(1, @RecipientGroupName_Del + ' (' + @LicenseeTypeName_Del + ')', '', @Email + ' - ' + CASE WHEN @RecipientType = 0 THEN 'To List' ELSE 'CC List' END)
+	END
+	ELSE IF @LogActionId IN (3016, 3017) -- Insert/Update Auto Mail
+	BEGIN
+		DECLARE
+			@AutoMailTypeName 	NVARCHAR(50),
+			@LicenseeTypeName 	NVARCHAR(50),
+			@RecipientGroupName NVARCHAR(50),
+			
+			@Emails	NVARCHAR(MAX),
+			@Emails_old NVARCHAR(MAX)
+
+		SELECT
+			@AutoMailTypeName = d.c.value('@atn', 'NVARCHAR(50)'),
+			@LicenseeTypeName = d.c.value('@ltn', 'NVARCHAR(50)'),
+			@RecipientGroupName = d.c.value('@rgn', 'NVARCHAR(50)')
+		FROM (
+			SELECT
+				CASE 
+					WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<r />') 
+					ELSE Data 
+				END AS Data
+			FROM (
+				SELECT 
+					CONVERT(XML, Data).query('/r') AS Data
+				FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+				WHERE Id = @ActionID
+			) B
+		) A
+		OUTER APPLY A.Data.nodes('r') d(c);
+
+		;WITH CTE_AutoMail AS (
+			SELECT
+				d.c.value('@m', 'NVARCHAR(50)') AS Email,
+				d.c.value('@rt', 'TINYINT') AS RecipientType,
+				od.c.value('@m', 'NVARCHAR(50)') AS Email_old,
+				od.c.value('@rt', 'TINYINT') AS RecipientType_old
+			FROM (
+				SELECT
+					CASE 
+						WHEN CONVERT(NVARCHAR(MAX), ISNULL(Data, N'')) = N'' THEN CONVERT(XML, N'<row />')
+						ELSE Data 
+					END AS Data,
+					CASE 
+						WHEN CONVERT(NVARCHAR(MAX), ISNULL(OldData, N'')) = N'' THEN CONVERT(XML, N'<row />')
+						ELSE OldData 
+					END AS OldData
+				FROM (
+					SELECT 
+						CONVERT(XML, Data).query('/r/ar/row') AS Data,
+						CONVERT(XML, OldData).query('/r/ar/row') AS OldData
+					FROM dbo.UserLog_RunSP_Detail ud WITH(NOLOCK)
+					WHERE Id = @ActionID
+				) B
+			) A
+			OUTER APPLY A.Data.nodes('row') d(c)
+			OUTER APPLY A.OldData.nodes('row') od(c)
+		)
+		SELECT	@Emails = (SELECT STUFF((SELECT '<br/>' + Email + ' - ' + CASE WHEN RecipientType = 0 THEN 'To List' ELSE 'CC List' END FROM (SELECT DISTINCT Email, RecipientType FROM CTE_AutoMail) CTE_AutoMail FOR XML PATH('')), 1, 11, '')),
+				@Emails_old = (SELECT STUFF((SELECT '<br/>' + Email_old + ' - ' + CASE WHEN RecipientType_old = 0 THEN 'To List' ELSE 'CC List' END FROM (SELECT DISTINCT Email_old, RecipientType_old FROM CTE_AutoMail) CTE_AutoMail FOR XML PATH('')), 1, 11, ''))
+
+		INSERT INTO @Result (ID, Field, NewValue, OldValue)
+		VALUES
+			(1, @RecipientGroupName + ' (' + @LicenseeTypeName + ')', @Emails, @Emails_old)
+	END
 	-- return result
 	IF @LogActionId NOT IN (101, 401, 3014, 202, 502) -- Update Contact/Training/Reminder
 	BEGIN
