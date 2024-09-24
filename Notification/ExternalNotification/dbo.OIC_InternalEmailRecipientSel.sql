@@ -4,7 +4,7 @@ USE [bodb_OIC]
 GO
 
 ALTER PROCEDURE [dbo].[OIC_InternalEmailRecipientSel]
-	@StatusId           TINYINT
+	@MailTypeId         TINYINT
     ,@LicenseeTypeId    TINYINT
     ,@SpecialGroupIds	VARCHAR(50) = ''
 AS
@@ -29,20 +29,20 @@ AS
 
 BEGIN
 	SET NOCOUNT ON;
+	SELECT @SpecialGroupIds = LTRIM(RTRIM(ISNULL(@SpecialGroupIds, '')))
 
 	SELECT a.Id
 			,a.GroupId
 			,a.LicenseeTypeId
-			,a.TypeId
 			,a.Email
 			,a.RecipientType
 			,a.IsTest
 	FROM dbo.AutoMail a WITH(NOLOCK)
 		INNER JOIN dbo.AutoMailGroup ag WITH(NOLOCK)
 			ON ag.GroupId = a.GroupId
-	WHERE  a.TypeId = @StatusId
+	WHERE  a.TypeId = @MailTypeId
 			AND a.LicenseeTypeId = @LicenseeTypeId
-			AND (@SpecialGroupIds = '' OR ag.SpecialGroupId IN (SELECT val FROM dbo.strSplit(@SpecialGroupIds, ',')))
+			AND (@SpecialGroupIds = '' OR ag.SpecialGroupId IN (SELECT CONVERT(TINYINT, value) value FROM STRING_SPLIT(@SpecialGroupIds, ',')))
 
 END
 GO

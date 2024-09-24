@@ -38,7 +38,7 @@ BEGIN
 	WHERE (@GroupId = 0 OR a.GroupId = @GroupId)
 			AND (@TypeId = 0 OR a.TypeId = @TypeId)
 			AND (@LicenseeTypeId = 0 OR a.LicenseeTypeId = @LicenseeTypeId)
-			AND IsTest = 0
-	ORDER BY lt.TypeId
+			AND a.IsTest = 0
+	ORDER BY lt.TypeId, ag.GroupId
 END
 GO

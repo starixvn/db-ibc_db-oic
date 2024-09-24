@@ -23,8 +23,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-    SELECT  GroupId AS TeamId
-            ,GroupName AS TeamName
+    SELECT  GroupId
+            ,GroupName
     FROM dbo.AutoMailGroup WITH(NOLOCK)
 
 END

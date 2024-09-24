@@ -14,7 +14,7 @@ ALTER PROCEDURE [dbo].[OIC_AutoMailIns]
 	,@Language			VARCHAR(10)		= 'E'
 	,@IP				VARCHAR(50)		= NULL
     ,@ErrCode      	 	INT				= 0	        OUTPUT
-    ,@ErrMsg			NVARCHAR(MAX)	= NULL		OUTPUT
+    ,@ErrMsg			VARCHAR(300)	= NULL		OUTPUT
 	,@ExistingToList	NVARCHAR(MAX)	= NULL		OUTPUT
 	,@ExistingCcList	NVARCHAR(MAX)	= NULL		OUTPUT
 AS
@@ -44,14 +44,8 @@ BEGIN
 
 	SET @startRun = GETDATE()
 
-    DECLARE @tblMailList TABLE (Email NVARCHAR(50), RecipientType TINYINT)
-
-	INSERT INTO @tblMailList(Email, RecipientType)
-	SELECT  CONVERT(NVARCHAR(50), val), 0
-	FROM dbo.strSplit(@ToList, ',') WHERE @ToList <> ''
-	UNION ALL
-	SELECT	CONVERT(NVARCHAR(50), val), 1
-	FROM dbo.strSplit(@CcList, ',') WHERE @CcList <> ''
+	SELECT @ToList = LTRIM(RTRIM(ISNULL(@ToList, '')))
+			,@CcList = LTRIM(RTRIM(ISNULL(@CcList, '')))
 
 	-- In case both To List and CC List text are empty 
 	IF @ToList = '' AND @CcList = ''
@@ -61,6 +55,15 @@ BEGIN
 		
 		RETURN
 	END
+
+	DECLARE @tblMailList TABLE (Email NVARCHAR(50), RecipientType TINYINT)
+
+	INSERT INTO @tblMailList(Email, RecipientType)
+	SELECT  CONVERT(NVARCHAR(50), value), 0
+	FROM STRING_SPLIT(@ToList, ',') WHERE @ToList <> ''
+	UNION ALL
+	SELECT	CONVERT(NVARCHAR(50), value), 1
+	FROM STRING_SPLIT(@CcList, ',') WHERE @CcList <> ''
 
     -- In case the email already exists in the database	
 	DECLARE @tblExistingMails TABLE(RecipientType TINYINT, Email NVARCHAR(50))
@@ -100,17 +103,9 @@ BEGIN
 	END
 	
 	-- Insert data
-	BEGIN TRY
-		INSERT INTO dbo.AutoMail (Email, RecipientType, IsTest, GroupId, TypeId, LicenseeTypeId)
-		SELECT Email, RecipientType, 0, @GroupId, @TypeId, @LicenseeTypeId
-		FROM @tblMailList
-	END TRY
-	BEGIN CATCH
-		SELECT	@ErrCode = 102
-				,@ErrMsg = 'Failed to add new emails. Please try again!'
-		
-		RETURN
-	END CATCH
+	INSERT INTO dbo.AutoMail (Email, RecipientType, IsTest, GroupId, TypeId, LicenseeTypeId)
+	SELECT Email, RecipientType, 0, @GroupId, @TypeId, @LicenseeTypeId
+	FROM @tblMailList
 	
 	-- Write log
 	DECLARE @AutoMailTypeName		NVARCHAR(50)

@@ -89,19 +89,11 @@ BEGIN
 	END
 	
 	-- Delete email
-	BEGIN TRY
-		DELETE 
-		FROM dbo.AutoMail WITH(ROWLOCK, UPDLOCK)
-		WHERE Id = @EmailId
-	END TRY
-	BEGIN CATCH
-		SELECT	@ErrCode = 102
-				,@ErrMsg = 'Failed to Delete. Please try again!'
-				
-		RETURN
-	END CATCH
-	
-	SELECT	@endRun		= GETDATE()  
+	DELETE 
+	FROM dbo.AutoMail WITH(ROWLOCK, UPDLOCK)
+	WHERE Id = @EmailId
+
+	SELECT	@endRun		= GETDATE()
 			,@duration	= DATEDIFF(MILLISECOND, @startRun, @endRun)   
 			,@procName	= OBJECT_NAME(@@PROCID)
 			,@logSPData = CONVERT(NVARCHAR(MAX),@xml)

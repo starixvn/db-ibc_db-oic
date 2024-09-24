@@ -45,6 +45,9 @@ BEGIN
 		,@RecipientGroupName	NVARCHAR(50)
 	
 	SET @startRun = GETDATE()
+
+	SELECT @SelectedTo = LTRIM(RTRIM(ISNULL(@SelectedTo, '')))
+			,@SelectedCc = LTRIM(RTRIM(ISNULL(@SelectedCc, '')))
 	
 	SELECT @AutoMailTypeName = TypeName FROM dbo.AutoMailType WITH(NOLOCK) WHERE TypeId = @TypeId
 	SELECT @RecipientGroupName = GroupName FROM dbo.AutoMailGroup WITH(NOLOCK) WHERE GroupId = @GroupId
@@ -53,11 +56,11 @@ BEGIN
 	DECLARE @tblToCcList TABLE(EmailId INT, RecipientType TINYINT)
 	
 	INSERT INTO @tblToCcList (EmailId, RecipientType)
-	SELECT CONVERT(INT, val), 0
-	FROM dbo.strSplit(@SelectedTo, ',') WHERE @SelectedTo <> ''
+	SELECT CONVERT(INT, value), 0
+	FROM STRING_SPLIT(@SelectedTo, ',') WHERE @SelectedTo <> ''
 	UNION ALL
-	SELECT CONVERT(INT, val), 1
-	FROM dbo.strSplit(@SelectedCc, ',') WHERE @SelectedCc <> ''
+	SELECT CONVERT(INT, value), 1
+	FROM STRING_SPLIT(@SelectedCc, ',') WHERE @SelectedCc <> ''
 	
 	-- In case of updating all emails to Cc
 	DECLARE @tblExceptedMail TABLE(Id INT)
@@ -67,7 +70,7 @@ BEGIN
 	EXCEPT 
 	SELECT EmailId FROM @tblToCcList WHERE RecipientType = 1
 	
-	IF NOT EXISTS(SELECT TOP 1 1 FROM @tblExceptedMail) AND (@SelectedTo = '' OR @SelectedTo IS NULL)
+	IF NOT EXISTS(SELECT TOP 1 1 FROM @tblExceptedMail) AND (@SelectedTo = '')
 	BEGIN
 		SELECT	@ErrCode = 100
 				,@ErrMsg = 'Cannot Delete! TO List must contain at least 1 email!'
@@ -94,20 +97,12 @@ BEGIN
 	SELECT @logSPOldData = CONVERT(NVARCHAR(MAX), @xml)
 	
 	-- Update data
-	BEGIN TRY
-		UPDATE dbo.AutoMail WITH(ROWLOCK, UPDLOCK)
-		SET RecipientType = tc.RecipientType
-		FROM dbo.AutoMail AS a
-			INNER JOIN @tblToCcList AS tc
-				ON a.Id = tc.EmailId
-		WHERE a.RecipientType <> tc.RecipientType
-	END TRY
-	BEGIN CATCH
-		SELECT	@ErrCode = 101
-				,@ErrMsg = 'Failed to update recipient emails. Please try again!'
-		
-		RETURN
-	END CATCH
+	UPDATE dbo.AutoMail WITH(ROWLOCK, UPDLOCK)
+	SET RecipientType = tc.RecipientType
+	FROM dbo.AutoMail AS a
+		INNER JOIN @tblToCcList AS tc
+			ON a.Id = tc.EmailId
+	WHERE a.RecipientType <> tc.RecipientType
 	
 	-- Write log
 	SET @xml = (
