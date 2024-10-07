@@ -62,6 +62,23 @@ BEGIN
 	SELECT CONVERT(INT, value), 1
 	FROM STRING_SPLIT(@SelectedCc, ',') WHERE @SelectedCc <> ''
 	
+	-- In case data out of date
+	IF EXISTS (
+		SELECT TOP(1) 1 
+		FROM @tblToCcList tc 
+		LEFT JOIN dbo.AutoMail a WITH (NOLOCK) 
+			ON tc.EmailId = a.Id 
+			AND a.GroupId = @GroupId 
+			AND a.TypeId = @TypeId 
+			AND a.LicenseeTypeId = @LicenseeTypeId
+		WHERE a.Id IS NULL OR a.RecipientType = tc.RecipientType
+	)
+	BEGIN
+		SELECT	@ErrCode = 100
+				,@ErrMsg = 'Unable to edit because data is out of date. Please reload the page to try again!'
+		RETURN
+	END
+	
 	-- In case of updating all emails to Cc
 	DECLARE @tblExceptedMail TABLE(Id INT)
 	
@@ -72,7 +89,7 @@ BEGIN
 	
 	IF NOT EXISTS(SELECT TOP 1 1 FROM @tblExceptedMail) AND (@SelectedTo = '')
 	BEGIN
-		SELECT	@ErrCode = 100
+		SELECT	@ErrCode = 101
 				,@ErrMsg = 'Cannot Delete! TO List must contain at least 1 email!'
 		RETURN
 	END
