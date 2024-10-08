@@ -39,6 +39,6 @@ BEGIN
 			AND (@TypeId = 0 OR a.TypeId = @TypeId)
 			AND (@LicenseeTypeId = 0 OR a.LicenseeTypeId = @LicenseeTypeId)
 			AND a.IsTest = 0
-	ORDER BY lt.TypeId, ag.GroupId
+	ORDER BY lt.TypeId, ag.GroupId, a.Id
 END
 GO
