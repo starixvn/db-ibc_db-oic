@@ -315,6 +315,21 @@ BEGIN
 		WHERE u.DisplayName LIKE @Target
 	END
 
+	-- Target: Auto Mail Type
+	IF (@ActionID = 'All' OR EXISTS (SELECT TOP 1 1 FROM @Action WHERE ActionID IN (3016, 3017, 3018)))
+	BEGIN
+		INSERT INTO #Result (LogID, LogDate, [Action], [Target], DoneBy)
+		SELECT DISTINCT A.LogID, A.LogDate, A.[Action], d.c.value('@atn','NVARCHAR(50)'), A.DoneBy
+		FROM (
+			SELECT ll.LogID, ll.LogDate, la.[ActionNameEn] AS [Action], CONVERT(XML, ISNULL(ISNULL(ll.NewAction, ll.OldAction), N'<r></r>')) AS [Target], ll.DoneBy
+			FROM #LogList ll
+				INNER JOIN dbo.LogAction la WITH(NOLOCK) ON ll.ActionID = la.LogActionId
+			WHERE la.LogActionId IN (3016, 3017, 3018)
+		) A
+			CROSS APPLY A.[Target].nodes('r') d(c)
+		WHERE d.c.value('@atn','NVARCHAR(50)') LIKE @Target
+	END
+	
 	SELECT @TotalRecords = COUNT(*) FROM #Result
 
 	-- paging
