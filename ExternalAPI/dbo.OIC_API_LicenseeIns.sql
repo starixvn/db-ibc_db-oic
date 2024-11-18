@@ -27,6 +27,7 @@ AS
 	
 	Revisions:
 		- 20240229@Kai: Init [Redmine:#197581]
+		- 20241111@Kai: Set default value to RestrictCountryRemark column [Redmine:#213473]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -37,6 +38,7 @@ BEGIN
 		,@OfferedCurrencyIds	VARCHAR(100)
 		,@AMUserId				INT
 		,@PMUserId				INT
+		,@RestrictCountryRemark	NVARCHAR(4000)
 
 	-- For write log
 	DECLARE 
@@ -121,6 +123,12 @@ BEGIN
 	FROM dbo.Currency c WITH(NOLOCK)
 	WHERE c.Code IN (SELECT s.value FROM STRING_SPLIT(@OfferedCurrencies, ',') s )
 
+	SELECT @RestrictCountryRemark = N'1. France (includes overseas territories but excludes political dependencies) [unless Operator has a prior license]'
+		+ CHAR(13) + CHAR(10) + N'2. Kingdom of Denmark (unless Operator has a prior license)'
+		+ CHAR(13) + CHAR(10) + N'3. Kingdom of Spain (unless Operator has a prior license)'
+		+ CHAR(13) + CHAR(10) + N'4. Netherlands (includes overseas territories but excludes overseas political dependencies)'
+		+ CHAR(13) + CHAR(10) + N'5. United Kingdom (unless Operator has a prior license)'
+
 	EXEC dbo.OIC_LicenseeInfoIns_Step1
 		 @UserId					= @SourceId
 		,@PlatformId				= @PlatformId
@@ -134,6 +142,7 @@ BEGIN
 		,@LicOddsType				= @OddsTypes
 		,@InvoiceBaseCurrency		= NULL
 		,@InvoiceLanguage			= NULL
+		,@RestrictCountryRemark		= @RestrictCountryRemark
 		
 		,@Language					= @Language
 		,@IP						= @IP
