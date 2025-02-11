@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 
 USE [bodb_OIC]
 GO
@@ -22,6 +22,7 @@ AS
 	
 	Revisions:	
 		- 20171030@Scofield: #84004 - Implement Deliver notification to licensee backend
+		- 20250211@Cody: Fix the data types datetime and time are incompatible - [RedmineId: #211934]
 
 	Param's Explanation:
 		@MessageTypeId:	 
@@ -43,7 +44,7 @@ BEGIN
 	SELECT	@PageIndex   = @PageIndex, 
 			@RowStart	 = @PageSize * @PageIndex + 1,
 			@RowEnd	     = @RowStart + @PageSize - 1
-	SELECT @ToDate = DATEADD(dd, DATEDIFF(dd, 0, @ToDate), 0) + CAST('23:59:59.999' AS Time)
+	SELECT @ToDate = DATEADD(dd, DATEDIFF(dd, 0, @ToDate), 0) + CAST('23:59:59.999' AS DateTime)
 			
 	DECLARE @messageResult TABLE (
 		MessageId 		INT, 
