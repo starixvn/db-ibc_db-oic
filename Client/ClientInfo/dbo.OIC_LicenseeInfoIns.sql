@@ -9,7 +9,8 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns]
 	,@CompanyName			NVARCHAR(50)	= NULL
 	,@LicenseeStatusId		TINYINT
 	,@LicenseeGroupId		INT				= NULL
-	,@IsReseller			BIT				= 0
+	,@BusinessModelType		TINYINT			= NULL
+	,@BusinessModelTypeName	VARCHAR(1000)	= NULL
 	,@IsChineseMarketOnly	BIT				= 0
 	,@SoftLaunch			DATETIME		= NULL
 	,@FullLaunch			DATETIME		= NULL
@@ -66,6 +67,7 @@ AS
 		- 20211109@Alex: Change Type Of Licensee [RedmindId: #163521]
 		- 20220321@Kai: Enhance New Client [Redmine:#169959]
 		- 20221005@Kai: Support sending emails automatically [Redmine:#176447]
+		- 20250508@Kai: Add Business Model Type Info [Redmine:#225127]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -104,7 +106,7 @@ AS
 	* @ErrCode:
 		= 0: 
 		> 0: Specific Error.
-  
+
 	* @ErrMsg: Error description.
 	
 	* Log:
@@ -177,7 +179,7 @@ BEGIN
 		,@CompanyName				= @CompanyName
 		,@LicenseeStatusId			= @LicenseeStatusId
 		,@LicenseeGroupId			= @LicenseeGroupId
-		,@IsReseller				= @IsReseller
+		,@BusinessModelType			= @BusinessModelType
 		,@IsChineseMarketOnly		= @IsChineseMarketOnly
 		,@SoftLaunch				= @SoftLaunch
 		,@FullLaunch				= @FullLaunch
@@ -537,7 +539,7 @@ BEGIN
 				,l.Remark					AS '@rm'
 				,l.TerminationRemark		AS '@trm'
 				,l.IsChineseMarketOnly		AS '@icm'
-				,l.IsReseller				AS '@res'
+				,@BusinessModelTypeName		AS '@bmtn'
 				,l.InternalURL				AS '@iu'
 				,@location					AS '@lc'
 				,@pmn						AS '@pmn'

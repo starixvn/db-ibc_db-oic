@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd_Step1]
 	@TypeId					TINYINT
@@ -9,7 +9,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd_Step1]
 	,@CompanyName			NVARCHAR(50)	= NULL
 	,@LicenseeStatusId		TINYINT
 	,@LicenseeGroupId		INT				= NULL
-	,@IsReseller			BIT				= 0
+	,@BusinessModelType		TINYINT			= NULL
 	,@IsChineseMarketOnly	BIT				= 0
 	,@SoftLaunch			DATETIME		= NULL
 	,@FullLaunch			DATETIME		= NULL
@@ -134,7 +134,7 @@ BEGIN
 				,TypeId						= @TypeId
 				,PlatformId 				= @PlatformId
 				,IsChineseMarketOnly		= @IsChineseMarketOnly
-				,IsReseller					= @IsReseller
+				,BusinessModelType			= @BusinessModelType
 				,InvoiceBaseCurrency		= @InvoiceBaseCurrency
 				,InvoiceLanguage			= @InvoiceLanguage
 		WHERE	LicenseeId					= @LicenseeId

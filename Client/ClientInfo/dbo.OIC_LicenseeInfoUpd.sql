@@ -1,39 +1,41 @@
 /*<info serverAlias="DBOIC-bodb_OIC" executers="wsv_nap" viewers="" isFunction="0" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd]	
-	@LicenseeId				INT
-	,@UpdateStep1			BIT				= 1
-	,@TypeId				TINYINT			= NULL
-	,@PlatformId			TINYINT			= NULL
-	,@IntegrationMethods 	VARCHAR(1000)	= NULL
-	,@SiteName				NVARCHAR(50)	= NULL
-	,@RegisteredSiteName	NVARCHAR(50)
-	,@CompanyName			NVARCHAR(50)	= NULL
-	,@LicenseeStatusId		TINYINT			= NULL
-	,@LicenseeGroupId		INT				= NULL
-	,@IsReseller			BIT				= 0
-	,@IsChineseMarketOnly	BIT				= 0
-	,@SoftLaunch			DATETIME		= NULL
-	,@FullLaunch			DATETIME		= NULL
-	,@RelaunchDate			DATETIME		= NULL
-	,@SuspendedDate			DATETIME		= NULL
-	,@TerminatedDate		DATETIME		= NULL
-	,@MainUrl				VARCHAR(3000)	= NULL
-	,@APIUrl				VARCHAR(3000)	= NULL
-	,@LicBackUpLink			XML				= NULL
-	,@LocationId			INT				= NULL
-	,@CurrenciesOffered		VARCHAR(1000)	= NULL
-	,@LicTargetMarket		VARCHAR(1000)	= NULL
-	,@LicLanguage			XML				= NULL
-	,@LicLanguageSB			XML				= NULL
-	,@LicOddsType			VARCHAR(100)	= NULL
-	,@LicService			XML				= NULL
-	,@LicRestrictCountry	VARCHAR(1000)	= NULL
-	,@RestrictCountryRemark	NVARCHAR(500)	= NULL
-	,@Remark				NVARCHAR(300)	= NULL
-	,@TerminationRemark		NVARCHAR(300)	= NULL
-	,@InvoiceBaseCurrency	VARCHAR(4)
-	,@InvoiceLanguage		NVARCHAR(50)
+	@LicenseeId					INT
+	,@UpdateStep1				BIT				= 1
+	,@TypeId					TINYINT			= NULL
+	,@PlatformId				TINYINT			= NULL
+	,@IntegrationMethods 		VARCHAR(1000)	= NULL
+	,@SiteName					NVARCHAR(50)	= NULL
+	,@RegisteredSiteName		NVARCHAR(50)
+	,@CompanyName				NVARCHAR(50)	= NULL
+	,@LicenseeStatusId			TINYINT			= NULL
+	,@LicenseeGroupId			INT				= NULL
+	,@BusinessModelType			TINYINT			= NULL
+	,@BusinessModelTypeNameOld	VARCHAR(1000)	= NULL
+	,@BusinessModelTypeName		VARCHAR(1000)	= NULL
+	,@IsChineseMarketOnly		BIT				= 0
+	,@SoftLaunch				DATETIME		= NULL
+	,@FullLaunch				DATETIME		= NULL
+	,@RelaunchDate				DATETIME		= NULL
+	,@SuspendedDate				DATETIME		= NULL
+	,@TerminatedDate			DATETIME		= NULL
+	,@MainUrl					VARCHAR(3000)	= NULL
+	,@APIUrl					VARCHAR(3000)	= NULL
+	,@LicBackUpLink				XML				= NULL
+	,@LocationId				INT				= NULL
+	,@CurrenciesOffered			VARCHAR(1000)	= NULL
+	,@LicTargetMarket			VARCHAR(1000)	= NULL
+	,@LicLanguage				XML				= NULL
+	,@LicLanguageSB				XML				= NULL
+	,@LicOddsType				VARCHAR(100)	= NULL
+	,@LicService				XML				= NULL
+	,@LicRestrictCountry		VARCHAR(1000)	= NULL
+	,@RestrictCountryRemark		NVARCHAR(500)	= NULL
+	,@Remark					NVARCHAR(300)	= NULL
+	,@TerminationRemark			NVARCHAR(300)	= NULL
+	,@InvoiceBaseCurrency		VARCHAR(4)
+	,@InvoiceLanguage			NVARCHAR(50)
 	
 	,@UpdateStep2			BIT				= 1
 	,@LicProduct			XML				= NULL
@@ -72,6 +74,7 @@ AS
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20211109@Alex: Change Type Of Licensee [RedmindId: #163521]
 		- 20221028@Kai: Extend size of OfferedCurrencies [RedmindId: #179694]
+		- 20250508@Kai: Add Business Model Type Info [Redmine:#225127]
 
 	Param's Explanation:
 	* @LicBackupLink
@@ -110,7 +113,7 @@ AS
 	* @ErrCode:
 		= 0: 
 		> 0: Specific Error.
-  
+
 	* @ErrMsg: Error description.
 	
 	
@@ -345,7 +348,7 @@ BEGIN
 							,l.Remark					AS '@rm'
 							,l.TerminationRemark		AS '@trm'
 							,l.IsChineseMarketOnly		AS '@icm'
-							,l.IsReseller				AS '@res'
+							,@BusinessModelTypeNameOld	AS '@bmtn'
 							,l.InternalURL				AS '@iu'
 							,@location					AS '@lc'
 							,@AMDisplayName				AS '@amn'
@@ -391,7 +394,7 @@ BEGIN
 			,@CompanyName				= @CompanyName
 			,@LicenseeStatusId			= @LicenseeStatusId
 			,@LicenseeGroupId			= @LicenseeGroupId
-			,@IsReseller				= @IsReseller
+			,@BusinessModelType			= @BusinessModelType
 			,@IsChineseMarketOnly		= @IsChineseMarketOnly
 			,@SoftLaunch				= @SoftLaunch
 			,@FullLaunch				= @FullLaunch
@@ -646,7 +649,7 @@ BEGIN
 								,l.Remark					AS '@rm'
 								,l.TerminationRemark		AS '@trm'
 								,l.IsChineseMarketOnly		AS '@icm'
-								,l.IsReseller				AS '@res'
+								,@BusinessModelTypeName		AS '@bmtn'
 								,l.InternalURL				AS '@iu'
 								,@location					AS '@lc'
 								,@AMDisplayName				AS '@amn'

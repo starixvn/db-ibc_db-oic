@@ -13,7 +13,8 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeListSel]
 	,@SelectedOddsType				VARCHAR(50)		= 'All'
 	,@AMUserId						INT				= 0			--All
 	,@PMUserId						INT				= 0			--All
-	,@ResellerType					INT				= -1		--All
+	,@BusinessModelType				TINYINT			= 255		--All (FULL_BIT = 11111111)
+	,@ExcludeNoneValue				BIT				= 0			--Include None Value
 	,@MarketType					INT				= -1		--All
 	,@PageSize						INT 			= 10
 	,@PageIndex						INT				= 0 
@@ -44,6 +45,7 @@ AS
 		- 20221209@Cody: Enhance Client group [RedmineId: #174401]
 		- 20240112@Cody: Supports filtering by RegisteredLicenseeName [RedmineId: #198455]
 		- 20240227@Kai: Enhance - Get all by AM/PM user [RedmineId: #197581]
+		- 20250508@Kai: Add Business Model Type Info [Redmine:#225127]
 
 	Param's Explanation:
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
@@ -101,7 +103,7 @@ BEGIN
 			,MainContactName		NVARCHAR(50)
 			,currency				VARCHAR(400)
 			,OddsType				VARCHAR(100)
-			,IsReseller				BIT
+			,BusinessModelType		TINYINT
 			,IsChineseMarketOnly 	BIT
 			,InvoiceBaseCurrency	VARCHAR(4)
 			,InvoiceLanguage		NVARCHAR(50)
@@ -211,12 +213,12 @@ BEGIN
 			,FullLaunch
 			,MainContactId
 			,MainContactName
-			,IsReseller
+			,BusinessModelType
 			,IsChineseMarketOnly
 			,InvoiceBaseCurrency
 			,InvoiceLanguage
 	)	
-		 
+	
 	SELECT	ROW_NUMBER() OVER(ORDER BY LicenseeName) AS RowNumber
 			,l.LicenseeId
 			,l.LicenseeGroupId
@@ -230,7 +232,7 @@ BEGIN
 			,l.FullLaunch
 			,c.ContactID
 			,c.ContactName
-			,l.IsReseller
+			,l.BusinessModelType
 			,l.IsChineseMarketOnly
 			,l.InvoiceBaseCurrency
 			,l.InvoiceLanguage
@@ -249,7 +251,7 @@ BEGIN
 			AND l.LicenseeId IN (SELECT lim.LicenseeId FROM dbo.LicenseeIntegrationMethod lim WITH(NOLOCK) WHERE lim.IntegrationMethodId IN (SELECT IntegrationMethodId FROM @tblIntegrationMethod))
 			AND (@PMUserId = 0 OR l.LicenseeId IN (SELECT LicenseeId FROM  @tblLicenseePM))
 			AND (@AMUserId = 0 OR l.LicenseeId IN (SELECT LicenseeId FROM  @tblLicenseeAM))
-			AND (@ResellerType = -1 OR l.IsReseller = @ResellerType)
+			AND ((@ExcludeNoneValue = 0 AND ISNULL(l.BusinessModelType, 0) = 0) OR ((ISNULL(l.BusinessModelType, 0) & @BusinessModelType) <> 0))
 			AND (@MarketType = -1 OR @MarketType = l.IsChineseMarketOnly)
 			AND (@SelectedOddsType = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeOddsType))
 			AND (@SelectedCurrency = 'All' OR l.LicenseeId IN (SELECT LicenseeId FROM @tblLicenseeCurrency)) 
@@ -279,7 +281,7 @@ BEGIN
 			,t.MainContactName
 			,Currency.value AS currency 
 			,OddsType.value AS OddsType
-			,t.IsReseller
+			,t.BusinessModelType
 			,t.IsChineseMarketOnly
 			,t.InvoiceBaseCurrency
 			,t.InvoiceLanguage
