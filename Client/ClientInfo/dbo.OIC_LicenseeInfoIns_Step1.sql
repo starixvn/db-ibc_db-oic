@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns_Step1]
 	@UserId					INT
@@ -10,7 +10,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns_Step1]
 	,@CompanyName			NVARCHAR(50)	= NULL
 	,@LicenseeStatusId		TINYINT
 	,@LicenseeGroupId		INT				= NULL
-	,@IsReseller			BIT				= 0
+	,@BusinessModelType		TINYINT			= NULL
 	,@IsChineseMarketOnly	BIT				= 0
 	,@SoftLaunch			DATETIME		= NULL
 	,@FullLaunch			DATETIME		= NULL
@@ -58,6 +58,7 @@ AS
 		- 20210810@Hogan: Add invoice base currency and invoice language for licensee [RedmindId: #157466]
 		- 20211110@Alex: Change Type Of Licensee [RedmindId: #163521]
 		- 20221005@Kai: Support sending emails automatically [Redmine:#176447]
+		- 20250508@Kai: Add Business Model Type Info [Redmine:#225127]
 	
 	Param's Explanation:
 	* @LicBackupLink
@@ -112,7 +113,7 @@ BEGIN
 			,Remark
 			,TerminationRemark
 			,IsChineseMarketOnly
-			,IsReseller
+			,BusinessModelType
 			,InvoiceBaseCurrency
 			,InvoiceLanguage
 			)
@@ -136,7 +137,7 @@ BEGIN
 			,@Remark
 			,@TerminationRemark
 			,@IsChineseMarketOnly
-			,@IsReseller
+			,@BusinessModelType
 			,@InvoiceBaseCurrency
 			,@InvoiceLanguage
 		)

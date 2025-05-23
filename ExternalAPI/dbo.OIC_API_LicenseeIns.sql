@@ -28,6 +28,8 @@ AS
 	Revisions:
 		- 20240229@Kai: Init [Redmine:#197581]
 		- 20241111@Kai: Set default value to RestrictCountryRemark column [Redmine:#213473]
+		- 20250508@Kai: Add Business Model Type Info [Redmine:#225127]
+
 */
 BEGIN
 	SET NOCOUNT ON
@@ -287,8 +289,7 @@ BEGIN
 									ON lim.IntegrationMethodId = im.IntegrationMethodId
 							WHERE lim.LicenseeId = @LicenseeId
 							FOR XML PATH('row'), ROOT('lot')
-	
-								 )
+								)
 
 	DECLARE @pmn NVARCHAR(100), @amn NVARCHAR(100)
 	
@@ -322,7 +323,7 @@ BEGIN
 				,l.Remark					AS '@rm'
 				,l.TerminationRemark		AS '@trm'
 				,l.IsChineseMarketOnly		AS '@icm'
-				,l.IsReseller				AS '@res'
+				,NULL						AS '@bmtn'
 				,l.InternalURL				AS '@iu'
 				,@pmn						AS '@pmn'
 				,@amn						AS '@amn'

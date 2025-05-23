@@ -1,4 +1,4 @@
-/*<info serverAlias="DBOIC-bodb_OIC" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBOIC-bodb_OIC" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[OIC_LicenseeInfoSel]	
 	@LicenseeId		INT
@@ -24,6 +24,7 @@ AS
 		- 20211115@Alex: Change Type Of Licensee [RedmindId: #163521]
 		- 20221005@Kai: Support sending emails automatically [Redmine:#176447]
 		- 20221028@Kai: Extend size of OfferedCurrencies [RedmindId: #179694]
+		- 20250508@Kai: Add Business Model Type Info [Redmine:#225127]
 	
 	Param's Explanation:
 		@Step: 1,2,3
@@ -127,7 +128,7 @@ BEGIN
 				,l.Remark					AS LicenseeRemark
 				,l.TerminationRemark
 				,l.IsChineseMarketOnly		AS IsChineseMarketOnly
-				,l.IsReseller				AS IsReseller
+				,l.BusinessModelType		AS BusinessModelType
 				,l.InvoiceBaseCurrency		AS InvoiceBaseCurrency
 				,l.InvoiceLanguage			AS InvoiceLanguage
 				,l.PlatformId				AS PlatformId

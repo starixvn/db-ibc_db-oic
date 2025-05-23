@@ -30,6 +30,7 @@ AS
 		- 20221006@Kai: Support sending emails automatically [Redmine:#176447]
 		- 20221206@Cody: Enhance Client group [RedmineId: 174401]
 		- 20240305@Kai: Insert client from Site Builder [Redmine:#197581]
+		- 20250508@Kai: Add Business Model Type Info [Redmine:#225127]
 		
 */
 BEGIN
@@ -98,7 +99,7 @@ BEGIN
 			@CS NVARCHAR(MAX),
 			@TA NVARCHAR(MAX),
 			@IsChineseMarketOnly NVARCHAR(MAX),
-			@Reseller NVARCHAR(MAX),
+			@BusinessModelTypeName NVARCHAR(1000),
 			@InternalURL NVARCHAR(MAX),
 
 			@TypeOfLicensee_old NVARCHAR(40),
@@ -156,7 +157,7 @@ BEGIN
 			@CS_old NVARCHAR(MAX),
 			@TA_old NVARCHAR(MAX),
 			@IsChineseMarketOnly_old NVARCHAR(MAX),
-			@Reseller_old NVARCHAR(MAX),
+			@BusinessModelTypeName_old NVARCHAR(1000),
 			@InternalURL_old NVARCHAR(MAX)
 
 		-- Client Info
@@ -182,7 +183,7 @@ BEGIN
 			@PM = d.c.value('@pmn', 'NVARCHAR(50)'), -- project manager
 			@AM = d.c.value('@amn', 'NVARCHAR(50)'), -- account manager
 			@IsChineseMarketOnly = d.c.value('@icm', 'NVARCHAR(1)'),
-			@Reseller = d.c.value('@res', 'NVARCHAR(1)'),
+			@BusinessModelTypeName = d.c.value('@bmtn', 'NVARCHAR(1000)'),
 			@InternalURL = d.c.value('@iu', 'NVARCHAR(MAX)'),
 			@InvoiceBaseCurrency = d.c.value('@ibc', 'VARCHAR(4)'), -- invoice base currency
 			@InvoiceLanguage = d.c.value('@il', 'NVARCHAR(50)'), -- invoice language
@@ -208,7 +209,7 @@ BEGIN
 			@PM_old = od.c.value('@pmn', 'NVARCHAR(50)'), -- project manager
 			@AM_old = od.c.value('@amn', 'NVARCHAR(50)'), -- account manager
 			@IsChineseMarketOnly_old = od.c.value('@icm', 'NVARCHAR(1)'),
-			@Reseller_old = od.c.value('@res', 'NVARCHAR(1)'),
+			@BusinessModelTypeName_old = od.c.value('@bmtn', 'NVARCHAR(1000)'),
 			@InternalURL_old = od.c.value('@iu', 'NVARCHAR(MAX)'),
 			@InvoiceBaseCurrency_old = od.c.value('@ibc', 'VARCHAR(4)'), -- invoice base currency
 			@InvoiceLanguage_old = od.c.value('@il', 'NVARCHAR(50)') -- invoice language
@@ -234,21 +235,11 @@ BEGIN
 			SELECT @IsChineseMarketOnly_old = 'Unchecked'
 		ELSE
 			SELECT @IsChineseMarketOnly_old = 'Checked'
-			
-		IF ISNULL(@Reseller, '0') = '0'
-			SELECT @Reseller = 'No'
-		ELSE
-			SELECT @Reseller = 'Yes'
-		
-		IF ISNULL(@Reseller_old, '0') = '0'
-			SELECT @Reseller_old = 'No'
-		ELSE
-			SELECT @Reseller_old = 'Yes'
 
 		IF @LogActionId = 7
 		BEGIN
 			SELECT @IsChineseMarketOnly_old = NULL
-			SELECT @Reseller_old = NULL
+			SELECT @BusinessModelTypeName_old = NULL
 		END
 
 		-- Backup domain
@@ -675,7 +666,7 @@ BEGIN
 			(6, N'Company name', @CompanyName, @CompanyName_old),
 			(7, N'Client Status', @ClientStatus, @ClientStatus_old),
 			(8, N'China Market Only', @IsChineseMarketOnly, @IsChineseMarketOnly_old),
-			(9, N'Reseller', @Reseller, @Reseller_old),
+			(9, N'Business Model Types', @BusinessModelTypeName, @BusinessModelTypeName_old),
 			(10, N'Soft Launch', @SoftLaunch, @SoftLaunch_old),
 			(11, N'Full Launch', @FullLaunch, @FullLaunch_old),
 			(12, N'Relaunch Date', @RelaunchDate, @RelaunchDate_old),
