@@ -25,6 +25,7 @@ AS
 		- 20221005@Kai: Support sending emails automatically [Redmine:#176447]
 		- 20221028@Kai: Extend size of OfferedCurrencies [RedmindId: #179694]
 		- 20250508@Kai: Add Business Model Type Info [Redmine:#225127]
+		- 20251002@Kelvin: Offered Currencies list is truncated compared to the list pushed by SiteBuilder [Redmine:#240611]
 	
 	Param's Explanation:
 		@Step: 1,2,3
@@ -34,7 +35,7 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @LicBackupLink			XML
-			,@OfferedCurrencies		VARCHAR(1000)
+			,@OfferedCurrencies		VARCHAR(4000)
 			,@LicTargetMarket		VARCHAR(1000)
 			,@LicLanguage			XML
 			,@LicLanguageSB			XML

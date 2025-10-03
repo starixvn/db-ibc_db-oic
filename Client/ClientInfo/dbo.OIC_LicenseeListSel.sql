@@ -9,7 +9,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeListSel]
 	,@LicenseeStatusIds				VARCHAR(50)		= 'All'
 	,@LicenseeGroupIds				VARCHAR(50)		= 'All'
 	,@SelectedProduct				VARCHAR(500)	= 'All'
-	,@SelectedCurrency				VARCHAR(100)	= 'All'
+	,@SelectedCurrency				VARCHAR(4000)	= 'All'
 	,@SelectedOddsType				VARCHAR(50)		= 'All'
 	,@AMUserId						INT				= 0			--All
 	,@PMUserId						INT				= 0			--All
@@ -46,6 +46,7 @@ AS
 		- 20240112@Cody: Supports filtering by RegisteredLicenseeName [RedmineId: #198455]
 		- 20240227@Kai: Enhance - Get all by AM/PM user [RedmineId: #197581]
 		- 20250508@Kai: Add Business Model Type Info [Redmine:#225127]
+		- 20251002@Kelvin: Offered Currencies list is truncated compared to the list pushed by SiteBuilder [Redmine:#240611]
 
 	Param's Explanation:
 	* @SelectedProduct: multiple selection dropdown(select 'All' or (1 or many product))(Product offered to the client)
