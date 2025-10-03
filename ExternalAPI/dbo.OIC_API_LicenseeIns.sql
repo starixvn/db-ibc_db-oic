@@ -9,7 +9,7 @@ ALTER PROCEDURE [dbo].[OIC_API_LicenseeIns]
 	,@IntegrationMethods	VARCHAR(1000)
 	,@GroupName				NVARCHAR(200)	= NULL
 	,@OddsTypes				VARCHAR(100)    = NULL
-	,@OfferedCurrencies		VARCHAR(1000)	= NULL
+	,@OfferedCurrencies		VARCHAR(4000)	= NULL
 	,@StatusId				TINYINT
 	,@AMUserName			NVARCHAR(100)			
 	,@PMUserName			NVARCHAR(100)
@@ -29,6 +29,7 @@ AS
 		- 20240229@Kai: Init [Redmine:#197581]
 		- 20241111@Kai: Set default value to RestrictCountryRemark column [Redmine:#213473]
 		- 20250508@Kai: Add Business Model Type Info [Redmine:#225127]
+		- 20251002@Kelvin: Offered Currencies list is truncated compared to the list pushed by SiteBuilder [Redmine:#240611]
 
 */
 BEGIN
@@ -37,7 +38,7 @@ BEGIN
 	DECLARE 
 		 @LicenseeId			INT
 		,@LicenseeGroupId		INT
-		,@OfferedCurrencyIds	VARCHAR(100)
+		,@OfferedCurrencyIds	VARCHAR(4000)
 		,@AMUserId				INT
 		,@PMUserId				INT
 		,@RestrictCountryRemark	NVARCHAR(4000)

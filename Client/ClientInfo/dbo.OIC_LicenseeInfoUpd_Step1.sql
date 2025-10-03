@@ -20,7 +20,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoUpd_Step1]
 	,@APIUrl				VARCHAR(3000)	= NULL
 	,@LicBackUpLink			XML				= NULL
 	,@LocationId			INT				= NULL
-	,@CurrenciesOffered		VARCHAR(1000)	= NULL
+	,@CurrenciesOffered		VARCHAR(4000)	= NULL
 	,@LicTargetMarket		VARCHAR(1000)	= NULL
 	,@LicLanguage			XML				= NULL
 	,@LicLanguageSB			XML				= NULL
@@ -59,6 +59,7 @@ AS
 		- 20211110@Alex: Change Type Of Licensee [RedmindId: #163521]
 		- 20221005@Kai: Support sending emails automatically [Redmine:#176447]
 		- 20221028@Kai: Extend size of OfferedCurrencies [RedmindId: #179694]
+		- 20251002@Kelvin: Offered Currencies list is truncated compared to the list pushed by SiteBuilder [Redmine:#240611]
 		
 	Param's Explanation:
 	* @LicBackupLink

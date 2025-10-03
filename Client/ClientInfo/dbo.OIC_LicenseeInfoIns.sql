@@ -21,7 +21,7 @@ ALTER PROCEDURE [dbo].[OIC_LicenseeInfoIns]
 	,@APIUrl				VARCHAR(3000)	= NULL
 	,@LicBackUpLink			XML				= NULL
 	,@LocationId			INT				= NULL
-	,@CurrenciesOffered		VARCHAR(100)	= NULL
+	,@CurrenciesOffered		VARCHAR(4000)	= NULL
 	,@LicTargetMarket		VARCHAR(1000)	= NULL
 	,@LicLanguage			XML				= NULL
 	,@LicLanguageSB			XML				= NULL
@@ -68,6 +68,7 @@ AS
 		- 20220321@Kai: Enhance New Client [Redmine:#169959]
 		- 20221005@Kai: Support sending emails automatically [Redmine:#176447]
 		- 20250508@Kai: Add Business Model Type Info [Redmine:#225127]
+		- 20251002@Kelvin: Offered Currencies list is truncated compared to the list pushed by SiteBuilder [Redmine:#240611]
 	
 	Param's Explanation:
 	* @LicBackupLink
